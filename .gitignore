@@ -1,0 +1,11 @@
+node_modules
+.next
+.wrangler
+tokokino_source
+out
+dist
+*.tsbuildinfo
+.env
+.env.local
+dev.db
+dev.db-journal

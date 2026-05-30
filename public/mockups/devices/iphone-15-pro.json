@@ -1,0 +1,12 @@
+{
+  "name": "iPhone 15 Pro",
+  "frameWidth": 393,
+  "frameHeight": 852,
+  "screen": {
+    "x": 7.2,
+    "y": 3.2,
+    "width": 85.6,
+    "height": 93.6,
+    "radius": 8
+  }
+}

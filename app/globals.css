@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "EasyFrame Sans";
+  src: url("/fonts/Manrope-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EasyFrame Sans";
+  src: url("/fonts/Manrope-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EasyFrame Sans";
+  src: url("/fonts/Manrope-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EasyFrame Sans";
+  src: url("/fonts/Manrope-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EasyFrame Sans";
+  src: url("/fonts/Manrope-Bold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+  --font-sans: "EasyFrame Sans", Manrope, "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --app-bg: #08090b;
+  --app-bg-soft: #0c0d10;
+  --panel: rgba(18, 19, 23, 0.82);
+  --panel-raised: rgba(24, 25, 30, 0.92);
+  --panel-soft: rgba(255, 255, 255, 0.045);
+  --stroke: rgba(255, 255, 255, 0.095);
+  --stroke-strong: rgba(255, 255, 255, 0.16);
+  --text-primary: #f5f7fb;
+  --text-secondary: rgba(245, 247, 251, 0.72);
+  --text-muted: rgba(245, 247, 251, 0.52);
+  --text-dim: rgba(245, 247, 251, 0.36);
+  --accent: #8b8cf6;
+  --accent-2: #58d5c9;
+  --accent-warm: #ff765f;
+  --accent-gradient: linear-gradient(135deg, #9a9bff 0%, #6f7bff 52%, #58d5c9 100%);
+  --shadow-soft: 0 18px 54px rgba(0, 0, 0, 0.28);
+  --shadow-panel: 0 28px 90px rgba(0, 0, 0, 0.36);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.18), transparent 30%),
+    radial-gradient(circle at 8% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
+    var(--app-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  letter-spacing: 0;
+}
+
+.glass-panel {
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  backdrop-filter: blur(20px);
+}
+
+.checkerboard {
+  background-image:
+    linear-gradient(45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(0, 0, 0, 0.04) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(0, 0, 0, 0.04) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(0, 0, 0, 0.04) 75%);
+  background-size: 22px 22px;
+  background-position:
+    0 0,
+    0 11px,
+    11px -11px,
+    -11px 0;
+}
+
+.range {
+  accent-color: #111312;
+}
