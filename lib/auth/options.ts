@@ -3,15 +3,18 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
-export const isGoogleAuthConfigured =
-  Boolean(process.env.GOOGLE_CLIENT_ID) &&
-  Boolean(process.env.GOOGLE_CLIENT_SECRET) &&
-  process.env.GOOGLE_CLIENT_ID !== "your-google-oauth-client-id" &&
-  process.env.GOOGLE_CLIENT_SECRET !== "your-google-oauth-client-secret";
+export function isGoogleAuthConfigured() {
+  return (
+    Boolean(process.env.GOOGLE_CLIENT_ID) &&
+    Boolean(process.env.GOOGLE_CLIENT_SECRET) &&
+    process.env.GOOGLE_CLIENT_ID !== "your-google-oauth-client-id" &&
+    process.env.GOOGLE_CLIENT_SECRET !== "your-google-oauth-client-secret"
+  );
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  providers: isGoogleAuthConfigured
+  providers: isGoogleAuthConfigured()
     ? [
         GoogleProvider({
           clientId: process.env.GOOGLE_CLIENT_ID!,

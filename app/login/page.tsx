@@ -69,7 +69,7 @@ function LoginContent() {
 
   const handleGoogleSignIn = async () => {
     if (googleReady === false) {
-      setLocalError("Google sign-in is not configured in this EasyFrame copy. Add valid Google OAuth values to .env.local, then restart the dev server.");
+      setLocalError("Google sign-in is not configured for this EasyFrame deployment yet. Add valid Google OAuth values in Vercel, then redeploy.");
       return;
     }
     setLocalError(null);
