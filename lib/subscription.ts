@@ -7,6 +7,7 @@ export type AccessStatus = {
   exportCount: number;
   exportsRemaining: number | null;
   expiresAt: Date | null;
+  trialUsed: boolean;
 };
 
 const ACTIVE_STATUSES = new Set(["active", "trialing"]);
@@ -28,7 +29,8 @@ export async function getUserAccess(userId: string): Promise<AccessStatus> {
       status: "active",
       exportCount: user.subscription?.exportCount ?? user.exportCount,
       exportsRemaining: null,
-      expiresAt: null
+      expiresAt: null,
+      trialUsed: user.trialUsed
     };
   }
 
@@ -41,19 +43,40 @@ export async function getUserAccess(userId: string): Promise<AccessStatus> {
   const isExpired = subscription.expiresAt ? subscription.expiresAt.getTime() <= now.getTime() : false;
   const active = ACTIVE_STATUSES.has(subscription.status) && !isExpired;
   const isTrial = subscription.planType === "trial";
-  const exportsRemaining = isTrial ? Math.max(0, 5 - subscription.exportCount) : null;
+  const trialExportLimit = subscription.trialExportLimit ?? 5;
+  const exportsRemaining = isTrial ? Math.max(0, trialExportLimit - subscription.exportCount) : null;
+  const trialLimitReached = isTrial && (exportsRemaining ?? 0) <= 0;
 
   return {
-    hasAccess: active,
+    hasAccess: active && !trialLimitReached,
     planType: subscription.planType as AccessStatus["planType"],
-    status: isExpired ? "expired" : subscription.status,
+    status: isExpired ? "expired" : trialLimitReached ? "trial_limit_reached" : subscription.status,
     exportCount: subscription.exportCount,
     exportsRemaining,
-    expiresAt: subscription.expiresAt
+    expiresAt: subscription.expiresAt,
+    trialUsed: user.trialUsed
   };
 }
 
-export async function grantTrialAccess(userId: string) {
+export async function grantTrialAccess(userId: string): Promise<AccessStatus> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { subscription: true }
+  });
+
+  if (!user) {
+    return noAccess();
+  }
+
+  if (user.lifetimeAccess || (user.subscription && user.subscription.planType !== "trial" && ACTIVE_STATUSES.has(user.subscription.status))) {
+    return getUserAccess(userId);
+  }
+
+  if (user.trialUsed || user.subscription?.planType === "trial") {
+    return getUserAccess(userId);
+  }
+
+  const trialStartedAt = new Date();
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await prisma.subscription.upsert({
@@ -63,12 +86,16 @@ export async function grantTrialAccess(userId: string) {
       planType: "trial",
       status: "trialing",
       exportCount: 0,
+      trialExportLimit: 5,
+      trialStartedAt,
       expiresAt
     },
     update: {
       planType: "trial",
       status: "trialing",
       exportCount: 0,
+      trialExportLimit: 5,
+      trialStartedAt,
       expiresAt
     }
   });
@@ -78,12 +105,22 @@ export async function grantTrialAccess(userId: string) {
     data: {
       subscriptionPlan: "trial",
       subscriptionStatus: "trialing",
+      trialUsed: true,
+      trialStartedAt,
+      trialEndsAt: expiresAt,
       exportCount: 0
     }
   });
+
+  return getUserAccess(userId);
 }
 
-export async function grantPaidAccess(userId: string, planType: "monthly" | "yearly" | "lifetime", dodoSubscriptionId?: string | null) {
+export async function grantPaidAccess(
+  userId: string,
+  planType: "monthly" | "yearly" | "lifetime",
+  dodoSubscriptionId?: string | null,
+  dodoCustomerId?: string | null
+) {
   const expiresAt =
     planType === "monthly"
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -99,13 +136,18 @@ export async function grantPaidAccess(userId: string, planType: "monthly" | "yea
       status: "active",
       exportCount: 0,
       expiresAt,
-      dodoSubscriptionId
+      dodoCustomerId,
+      dodoSubscriptionId,
+      lastPaymentAt: new Date()
     },
     update: {
       planType,
       status: "active",
       expiresAt,
-      dodoSubscriptionId: dodoSubscriptionId ?? undefined
+      dodoCustomerId: dodoCustomerId ?? undefined,
+      dodoSubscriptionId: dodoSubscriptionId ?? undefined,
+      cancelAtPeriodEnd: false,
+      lastPaymentAt: new Date()
     }
   });
 
@@ -114,7 +156,9 @@ export async function grantPaidAccess(userId: string, planType: "monthly" | "yea
     data: {
       subscriptionPlan: planType,
       subscriptionStatus: "active",
-      lifetimeAccess: planType === "lifetime"
+      dodoCustomerId: dodoCustomerId ?? undefined,
+      lifetimeAccess: planType === "lifetime",
+      trialUsed: true
     }
   });
 }
@@ -138,7 +182,7 @@ export async function consumeExport(userId: string): Promise<AccessStatus> {
     where: {
       userId,
       planType: "trial",
-      exportCount: { lt: 5 }
+      exportCount: { lt: access.exportsRemaining === null ? 5 : access.exportCount + (access.exportsRemaining ?? 0) }
     },
     data: { exportCount: { increment: 1 } }
   });
@@ -161,8 +205,9 @@ function noAccess(status = "free", plan?: string | null): AccessStatus {
     hasAccess: false,
     planType: (plan ?? "free") as AccessStatus["planType"],
     status,
-    exportCount: 0,
-    exportsRemaining: 0,
-    expiresAt: null
-  };
+      exportCount: 0,
+      exportsRemaining: 0,
+      expiresAt: null,
+      trialUsed: false
+    };
 }

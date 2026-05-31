@@ -16,7 +16,7 @@ npm install
 cp .env.local.example .env.local
 ```
 
-3. Generate the Prisma client and create the local SQLite database:
+3. Generate the Prisma client and create the Supabase/Postgres tables:
 
 ```bash
 npm run db:generate
@@ -53,14 +53,13 @@ For a hosted domain such as `https://easyframe.app`, configure these environment
 - `NEXTAUTH_URL=https://your-domain.com`
 - `DODO_WEBHOOK_SECRET`
 - `DODO_MONTHLY_PRODUCT_ID`
-- `DODO_YEARLY_PRODUCT_ID`
 - `DODO_LIFETIME_PRODUCT_ID`
 - `DODO_MONTHLY_CHECKOUT_URL`
-- `DODO_YEARLY_CHECKOUT_URL`
+- `DODO_LIFETIME_CHECKOUT_URL`
 
 Set `ALLOW_LOCAL_MOCK_SESSION=false` or omit it in production.
 
-Before public launch, replace the local SQLite database with a hosted production database and update the Prisma datasource as needed. SQLite is fine for local development, but it is not a durable production database on most serverless hosts.
+EasyFrame now expects a Postgres database. Supabase is the recommended production database.
 
 Google OAuth also needs the production callback URL:
 
@@ -73,6 +72,37 @@ Dodo webhook URL:
 ```text
 https://your-domain.com/api/dodo/webhook
 ```
+
+## Supabase + OAuth Setup
+
+Create one Supabase project for production, then copy the pooled Postgres connection string into `DATABASE_URL` in Vercel. Run:
+
+```bash
+npm run db:push
+```
+
+Prisma creates the required tables automatically. Do not create them by hand unless we are debugging a migration. The schema creates:
+
+- `User`: account profile, Google user link, trial flags, and high-level plan state.
+- `Account`: NextAuth OAuth account connection.
+- `Session`: NextAuth session storage compatibility.
+- `VerificationToken`: NextAuth token support.
+- `Subscription`: active plan, trial export count, Dodo customer/subscription IDs, expiration, and renewal status.
+- `PaymentEvent`: Dodo webhook audit trail.
+- `MockupProject`: saved mockup project data.
+
+Google OAuth needs:
+
+- Authorized JavaScript origin: `https://easyframe.app`
+- Authorized redirect URI: `https://easyframe.app/api/auth/callback/google`
+- Local redirect URI while developing: `http://localhost:3000/api/auth/callback/google`
+
+Trial behavior:
+
+- First Google sign-in creates the user.
+- Starting the trial creates a one-time 24-hour trial with 5 exports.
+- When the trial expires or export limit is reached, `/studio` redirects to `/pricing?reason=trial-ended`.
+- Paid Dodo webhook events update the user's `Subscription` row and unlock monthly or lifetime access.
 
 ## Environment
 
@@ -90,7 +120,7 @@ https://your-domain.com/api/dodo/webhook
 - `components/MockupStudio.tsx`: Main three-column interface and mockup editor.
 - `store/useMockupStore.ts`: Zustand editor state, including future AI state fields.
 - `lib/mockup-data.ts`: Device, template, background, and edge-style presets.
-- `prisma/schema.prisma`: Local SQLite SaaS schema for users, sessions, projects, and payment events.
+- `prisma/schema.prisma`: Supabase/Postgres SaaS schema for users, sessions, projects, trials, subscriptions, and payment events.
 - `app/api/auth/[...nextauth]/route.ts`: Google OAuth through NextAuth.
 - `app/api/dodo/webhook/route.ts`: Dodo sandbox webhook receiver.
 - `app/api/generate-ai-mockup/route.ts`: Reserved future AI endpoint.
@@ -101,7 +131,6 @@ https://your-domain.com/api/dodo/webhook
 The schema supports:
 
 - Monthly recurring plan: `DODO_MONTHLY_PRODUCT_ID`
-- Yearly recurring plan: `DODO_YEARLY_PRODUCT_ID`
 - One-time lifetime plan: `DODO_LIFETIME_PRODUCT_ID`
 
 The Dodo webhook updates `User.subscriptionStatus`, `User.subscriptionPlan`, `User.dodoCustomerId`, and `User.lifetimeAccess` for paid events such as `subscription.created`, `subscription.active`, and `payment.successful`.

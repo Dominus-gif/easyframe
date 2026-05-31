@@ -26,7 +26,7 @@ const plans = [
   {
     eyebrow: "Most popular",
     name: "1-Month Plan",
-    price: "$5",
+    price: "$3",
     suffix: "/month",
     accent: "coral",
     description: "Simple monthly access.",
@@ -34,12 +34,11 @@ const plans = [
   },
   {
     eyebrow: "Best value",
-    name: "1-Year Plan",
-    price: "$50",
-    suffix: "/year",
+    name: "Lifetime Plan",
+    price: "$80",
     accent: "blue",
-    description: "Save with annual billing.",
-    features: ["Unlimited exports", "All features included", "Best value"]
+    description: "One payment for all features and future updates.",
+    features: ["Unlimited exports", "All features included", "Future updates included"]
   }
 ];
 
@@ -111,7 +110,7 @@ export default function EasyFrameHome() {
       <section className="pricing-section" id="pricing">
         <span className="pricing-kicker"><Sparkles size={16} /> Choose your access</span>
         <h2>Unlock the EasyFrame studio.</h2>
-        <p className="pricing-copy">Start with a one-day trial or choose unlimited exports with monthly or yearly billing.</p>
+        <p className="pricing-copy">Start with a one-day trial, choose monthly access, or get lifetime access with all future updates.</p>
         <div className="plan-grid">
           {plans.map((plan) => (
             <article key={plan.name} className={`plan-card ${plan.accent}`}>
@@ -131,8 +130,8 @@ export default function EasyFrameHome() {
                 ))}
               </ul>
               <Link href="/login">
-                {plan.name === "1-Year Plan" ? <Crown size={17} /> : null}
-                {plan.name === "1-Day Free Trial" ? "Start free trial" : plan.name === "1-Month Plan" ? "Choose monthly" : "Choose yearly"}
+                {plan.name === "Lifetime Plan" ? <Crown size={17} /> : null}
+                {plan.name === "1-Day Free Trial" ? "Start free trial" : plan.name === "1-Month Plan" ? "Choose monthly" : "Choose lifetime"}
               </Link>
             </article>
           ))}
@@ -163,14 +162,10 @@ function ProductPreview() {
           <div className="studio-preview-card open">
             <div className="studio-preview-card-head">
               <span>
-                <strong>Templates & Devices</strong>
+                <strong>Templates</strong>
                 <small>Editing controls visible</small>
               </span>
               <b>-</b>
-            </div>
-            <div className="studio-preview-switch">
-              <em>Templates</em>
-              <span>Devices</span>
             </div>
             {["EasyFrame", "X", "Instagram", "LinkedIn"].map((item, index) => (
               <div className="studio-preview-folder" key={item}>

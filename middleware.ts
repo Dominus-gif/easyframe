@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const protectedPaths = ["/studio", "/pricing", "/api/billing"];
+const protectedPaths = ["/studio", "/api/billing"];
 
 export async function middleware(request: NextRequest) {
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
@@ -21,5 +21,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/studio/:path*", "/pricing/:path*", "/api/billing/:path*"]
+  matcher: ["/studio/:path*", "/api/billing/:path*"]
 };

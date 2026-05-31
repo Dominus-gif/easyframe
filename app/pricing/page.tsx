@@ -19,7 +19,7 @@ const plans = [
     id: "monthly",
     badge: "Most popular",
     name: "1-Month Plan",
-    price: "$5",
+    price: "$3",
     suffix: "/month",
     description: "Simple monthly access.",
     features: ["Unlimited exports", "All features included", "Cancel anytime"],
@@ -27,27 +27,23 @@ const plans = [
     cta: "Choose monthly"
   },
   {
-    id: "yearly",
+    id: "lifetime",
     badge: "Best value",
-    name: "1-Year Plan",
-    price: "$50",
-    suffix: "/year",
-    description: "Save with annual billing.",
-    features: ["Unlimited exports", "All features included", "Best value"],
+    name: "Lifetime Plan",
+    price: "$80",
+    description: "One payment for all features and future updates.",
+    features: ["Unlimited exports", "All features included", "Future updates included"],
     action: "/api/billing/checkout",
-    cta: "Choose yearly"
+    cta: "Choose lifetime"
   }
 ];
 
-export default async function PricingPage() {
+export default async function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
   const session = await getServerSession(authOptions);
+  const reason = searchParams?.reason;
 
-  if (!localBypass && !session?.user?.id) {
-    redirect("/login");
-  }
-
-  if (session?.user?.id) {
+  if (!localBypass && session?.user?.id) {
     const access = await getUserAccess(session.user.id);
     if (access.hasAccess) {
       redirect("/studio");
@@ -67,7 +63,10 @@ export default async function PricingPage() {
       <section className="paywall-hero">
         <span><Sparkles size={16} /> Choose your access</span>
         <h1>Unlock the EasyFrame studio.</h1>
-        <p>Start with a one-day trial or choose unlimited exports with monthly or yearly billing.</p>
+        <p>Start with a one-day trial, choose monthly access, or get lifetime access with all future updates.</p>
+        {reason === "trial-ended" ? (
+          <div className="paywall-notice">Your free trial has ended. Choose monthly or lifetime access to continue creating.</div>
+        ) : null}
       </section>
 
       <section className="paywall-grid">
@@ -85,7 +84,7 @@ export default async function PricingPage() {
             <form action={plan.action} method="post">
               {plan.id !== "trial" ? <input type="hidden" name="plan" value={plan.id} /> : null}
               <button type="submit">
-                {plan.id === "yearly" ? <Crown size={17} /> : null}
+                {plan.id === "lifetime" ? <Crown size={17} /> : null}
                 {plan.cta}
               </button>
             </form>
@@ -185,6 +184,18 @@ function PaywallStyles() {
         line-height: 1.5;
       }
 
+      .paywall-notice {
+        width: min(100%, 620px);
+        margin: 22px auto 0;
+        padding: 13px 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(104, 213, 236, 0.28);
+        color: var(--text-primary);
+        background: rgba(104, 213, 236, 0.09);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
       .paywall-grid {
         width: min(100%, 1240px);
         margin: 0 auto;
@@ -213,7 +224,7 @@ function PaywallStyles() {
       }
 
       .paywall-card.monthly b { color: #ff7367; }
-      .paywall-card.yearly b { color: #6aa8ff; }
+      .paywall-card.lifetime b { color: #6aa8ff; }
 
       .paywall-card h2 {
         margin: 24px 0 10px;

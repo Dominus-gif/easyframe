@@ -5,7 +5,7 @@ import { grantPaidAccess } from "@/lib/subscription";
 
 const checkoutUrls = {
   monthly: process.env.DODO_MONTHLY_CHECKOUT_URL,
-  yearly: process.env.DODO_YEARLY_CHECKOUT_URL
+  lifetime: process.env.DODO_LIFETIME_CHECKOUT_URL
 };
 
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
 
-  if (plan !== "monthly" && plan !== "yearly") {
+  if (plan !== "monthly" && plan !== "lifetime") {
     return NextResponse.redirect(new URL("/pricing", request.url), 303);
   }
 

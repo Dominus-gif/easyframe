@@ -11,5 +11,5 @@ export default async function AuthRedirectPage() {
   }
 
   const access = await getUserAccess(session.user.id);
-  redirect(access.hasAccess ? "/studio" : "/pricing");
+  redirect(access.hasAccess ? "/studio" : `/pricing?reason=${access.trialUsed ? "trial-ended" : "plan-required"}`);
 }

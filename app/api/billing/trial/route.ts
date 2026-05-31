@@ -15,6 +15,10 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/login?reason=session-required", request.url), 303);
   }
 
-  await grantTrialAccess(session.user.id);
+  const access = await grantTrialAccess(session.user.id);
+  if (!access.hasAccess) {
+    return NextResponse.redirect(new URL("/pricing?reason=trial-ended", request.url), 303);
+  }
+
   return NextResponse.redirect(new URL("/studio", request.url), 303);
 }

@@ -34,18 +34,18 @@ export async function POST(request: Request) {
 
     if (user) {
       const plan =
-        productId === process.env.DODO_LIFETIME_PRODUCT_ID
+        productId && productId === process.env.DODO_LIFETIME_PRODUCT_ID
           ? "lifetime"
-          : productId === process.env.DODO_YEARLY_PRODUCT_ID
+          : productId && productId === process.env.DODO_YEARLY_PRODUCT_ID
             ? "yearly"
-            : productId === process.env.DODO_MONTHLY_PRODUCT_ID
+            : productId && productId === process.env.DODO_MONTHLY_PRODUCT_ID
               ? "monthly"
               : user.subscriptionPlan;
 
       const paidEvent = ["subscription.created", "subscription.active", "payment.successful"].includes(eventType);
 
       if (paidEvent && (plan === "monthly" || plan === "yearly" || plan === "lifetime")) {
-        await grantPaidAccess(user.id, plan, payload.data?.subscription_id);
+        await grantPaidAccess(user.id, plan, payload.data?.subscription_id, customerId);
       } else {
         await prisma.user.update({
           where: { id: user.id },
@@ -53,7 +53,8 @@ export async function POST(request: Request) {
             dodoCustomerId: customerId ?? user.dodoCustomerId,
             subscriptionPlan: plan,
             subscriptionStatus: payload.data?.status ?? user.subscriptionStatus,
-            lifetimeAccess: plan === "lifetime" ? true : user.lifetimeAccess
+            lifetimeAccess: plan === "lifetime" ? true : user.lifetimeAccess,
+            trialUsed: true
           }
         });
 
@@ -64,12 +65,14 @@ export async function POST(request: Request) {
             planType: plan ?? "free",
             status: payload.data?.status ?? "canceled",
             dodoCustomerId: customerId,
-            dodoSubscriptionId: payload.data?.subscription_id
+            dodoSubscriptionId: payload.data?.subscription_id,
+            cancelAtPeriodEnd: ["subscription.cancelled", "subscription.canceled"].includes(eventType)
           },
           update: {
             status: payload.data?.status ?? "canceled",
             dodoCustomerId: customerId ?? undefined,
-            dodoSubscriptionId: payload.data?.subscription_id ?? undefined
+            dodoSubscriptionId: payload.data?.subscription_id ?? undefined,
+            cancelAtPeriodEnd: ["subscription.cancelled", "subscription.canceled"].includes(eventType)
           }
         });
       }

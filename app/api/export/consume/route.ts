@@ -25,7 +25,8 @@ export async function POST() {
     return NextResponse.json(
       {
         error: "Trial export limit reached",
-        access: { ...before, hasAccess: true, exportsRemaining: 0, expiresAt: before.expiresAt?.toISOString() ?? null }
+        access: { ...before, hasAccess: false, exportsRemaining: 0, expiresAt: before.expiresAt?.toISOString() ?? null },
+        redirectTo: "/pricing?reason=trial-ended"
       },
       { status: 403 }
     );

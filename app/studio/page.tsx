@@ -14,7 +14,8 @@ export default async function StudioPage() {
 
     const access = await getUserAccess(session.user.id);
     if (!access.hasAccess) {
-      redirect("/pricing");
+      const reason = access.trialUsed ? "trial-ended" : "plan-required";
+      redirect(`/pricing?reason=${reason}`);
     }
   }
 

@@ -5,7 +5,6 @@ import { toJpeg, toPng } from "html-to-image";
 import { signOut, useSession } from "next-auth/react";
 import {
   ArrowUpRight,
-  Check,
   Copy,
   Crop,
   Crown,
@@ -73,6 +72,7 @@ type LocalMockup = {
   id: string;
   name: string;
   url: string;
+  kind?: string;
   frameWidth?: number;
   frameHeight?: number;
   screen?: MockupScreen;
@@ -843,7 +843,7 @@ export default function MockupStudio() {
         access == null
           ? "Checking your plan. Try exporting again in a moment."
           : trialLimitReached
-            ? "Your free trial includes 5 exports. Choose monthly or yearly to unlock unlimited exports."
+            ? "Your free trial includes 5 exports. Choose monthly or lifetime access to unlock unlimited exports."
             : "An active plan is required before exporting."
       );
       return false;
@@ -853,7 +853,7 @@ export default function MockupStudio() {
     const payload = await consumeResponse.json().catch(() => null) as { access?: AccessSummary; error?: string } | null;
     if (!consumeResponse.ok) {
       if (payload?.access) setAccess(payload.access);
-      alert(payload?.error ?? "Export limit reached. Choose monthly or yearly to continue exporting.");
+      alert(payload?.error ?? "Export limit reached. Choose monthly or lifetime access to continue exporting.");
       return false;
     }
     if (payload?.access) setAccess(payload.access);
@@ -1437,7 +1437,6 @@ function LeftPanel({
   onPresentPreset: (id: string) => void;
   onLayoutPreset: (id: string) => void;
 }) {
-  const [panelTab, setPanelTab] = useState<"templates" | "devices">("templates");
   const [colorTarget, setColorTarget] = useState<"border" | "glow" | "shadow" | "edge">("border");
   const [effectColorTarget, setEffectColorTarget] = useState<"shadow" | "glass" | "glow" | "vignette" | "border">("shadow");
   const [backgroundUrlDraft, setBackgroundUrlDraft] = useState("");
@@ -1478,13 +1477,7 @@ function LeftPanel({
 
   return (
     <aside className="side-panel">
-      <ToolSection id="library" title="Templates & Devices" openId={openTools} onToggle={toggleTool}>
-        <div className="library-switch compact-tabs">
-          <button className={panelTab === "templates" ? "active" : ""} onClick={() => setPanelTab("templates")}>Templates</button>
-          <button className={panelTab === "devices" ? "active" : ""} onClick={() => setPanelTab("devices")}>Devices</button>
-        </div>
-
-        {panelTab === "templates" ? (
+      <ToolSection id="library" title="Templates" openId={openTools} onToggle={toggleTool}>
           <div className="template-folder-list">
             {Object.entries(templateGroups).map(([platform, orientationGroups]) => (
               <details key={platform} className="template-folder">
@@ -1515,39 +1508,6 @@ function LeftPanel({
               </details>
             ))}
           </div>
-        ) : (
-          <>
-          <PanelTitle title="Devices" />
-          <div className="mockup-device-list">
-            <button className={!selectedMockupUrl ? "mockup-device-row active" : "mockup-device-row"} onClick={() => {
-              onDevice("blank-canvas");
-              onSelectedMockup(null);
-            }}>
-              <span className="mockup-device-thumb empty"><MonitorUp size={18} /></span>
-              <span className="mockup-device-copy">
-                <strong>Blank Tile</strong>
-                <small>Custom image tile</small>
-              </span>
-              {!selectedMockupUrl ? <Check size={16} /> : null}
-            </button>
-            {localMockups.map((mockup) => (
-              <button key={mockup.id} className={selectedMockupUrl === mockup.url ? "mockup-device-row active" : "mockup-device-row"} onClick={() => {
-                onDevice("blank-canvas");
-                onSelectedMockup(mockup.url, mockup.name);
-              }}>
-                <span className="mockup-device-thumb">
-                  <img src={mockup.url} alt="" />
-                </span>
-                <span className="mockup-device-copy">
-                  <strong>{mockup.name}</strong>
-                  <small>{mockup.id}</small>
-                </span>
-                {selectedMockupUrl === mockup.url ? <Check size={16} /> : null}
-              </button>
-            ))}
-          </div>
-          </>
-        )}
       </ToolSection>
 
       <ToolSection id="backgrounds" title="Backgrounds" openId={openTools} onToggle={toggleTool}>
@@ -4546,7 +4506,7 @@ function StudioStyles() {
 
       .mockup-screen {
         position: absolute;
-        z-index: 2;
+        z-index: 3;
         display: grid;
         place-items: center;
         overflow: hidden;
@@ -4565,7 +4525,7 @@ function StudioStyles() {
       .mockup-frame {
         position: absolute;
         inset: 0;
-        z-index: 6;
+        z-index: 2;
         width: 100% !important;
         height: 100% !important;
         object-fit: contain !important;
@@ -5494,6 +5454,10 @@ function StudioStyles() {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 8px;
+      }
+
+      .hidden-library-switch {
+        display: none !important;
       }
 
       .text-property-panel {
