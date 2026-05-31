@@ -3053,7 +3053,7 @@ async function resizeExport(sourceDataUrl: string, width: number, height: number
   const context = canvas.getContext("2d");
   if (!context) return sourceDataUrl;
   context.clearRect(0, 0, width, height);
-  const scale = Math.min(width / image.width, height / image.height);
+  const scale = Math.max(width / image.width, height / image.height);
   const drawWidth = image.width * scale;
   const drawHeight = image.height * scale;
   context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
