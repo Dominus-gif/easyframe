@@ -228,6 +228,8 @@ export default function MockupStudio() {
   const [access, setAccess] = useState<AccessSummary | null>(null);
   const [localTrialExportCount, setLocalTrialExportCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [studioReady, setStudioReady] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaAsset[]>([]);
   const [studioLayers, setStudioLayers] = useState<StudioLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
@@ -411,6 +413,20 @@ export default function MockupStudio() {
       alive = false;
     };
   }, []);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    const frame = window.requestAnimationFrame(() => {
+      const randomBackground = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+      if (randomBackground) setBackground(randomBackground.id);
+      timer = window.setTimeout(() => setStudioReady(true), 180);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [setBackground]);
 
   useEffect(() => {
     let alive = true;
@@ -860,9 +876,16 @@ export default function MockupStudio() {
     }
   };
 
+  const updateExportProgress = async (value: number) => {
+    setExportProgress(value);
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  };
+
   const renderExportDataUrl = async (format: "png" | "jpg" | "webp" = exportFormat) => {
     if (!stageRef.current) return null;
+    await updateExportProgress(28);
     const exportBackground = isTransparentBackground && format === "png" ? undefined : theme === "dark" ? "#111312" : "#f4f1e8";
+    await updateExportProgress(42);
     const sourceDataUrl = format === "jpg"
         ? await toJpeg(stageRef.current, {
             quality: exportQuality / 100,
@@ -877,38 +900,48 @@ export default function MockupStudio() {
             backgroundColor: exportBackground,
             filter: (node) => !(node instanceof HTMLElement && node.dataset.exportIgnore === "true")
           });
+    await updateExportProgress(82);
     return resizeExport(sourceDataUrl, exportWidth, exportHeight, format, exportQuality);
   };
 
   const exportImage = async () => {
     setIsExporting(true);
+    setExportProgress(8);
     try {
       if (!(await consumeExportAccess())) return;
       const dataUrl = await renderExportDataUrl(exportFormat);
       if (!dataUrl) return;
+      await updateExportProgress(94);
       const link = document.createElement("a");
       link.download = `easyframe-export.${exportFormat}`;
       link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setExportProgress(100);
     } catch (error) {
       console.error("Export failed", error);
       alert("Export failed. Try a different image or refresh the page, then export again.");
     } finally {
-      setIsExporting(false);
+      window.setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 350);
     }
   };
 
   const copyExportImage = async () => {
     setIsExporting(true);
+    setExportProgress(8);
     try {
       if (!(await consumeExportAccess())) return;
       const dataUrl = await renderExportDataUrl("png");
       if (!dataUrl) return;
+      await updateExportProgress(92);
       const blob = await (await fetch(dataUrl)).blob();
       if ("ClipboardItem" in window && navigator.clipboard?.write) {
         await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+        setExportProgress(100);
         alert("Copied PNG to clipboard.");
         return;
       }
@@ -918,11 +951,15 @@ export default function MockupStudio() {
       document.body.appendChild(link);
       link.click();
       link.remove();
+      setExportProgress(100);
     } catch (error) {
       console.error("Copy failed", error);
       alert("Copy failed. Your browser may require HTTPS or clipboard permission.");
     } finally {
-      setIsExporting(false);
+      window.setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress(0);
+      }, 350);
     }
   };
 
@@ -1044,6 +1081,10 @@ export default function MockupStudio() {
     setSelectedLayerId(draft.selectedLayerId ?? null);
     setSelectedSlotId(draft.selectedSlotId ?? null);
   };
+
+  if (!studioReady) {
+    return <StudioLoadingScreen theme={theme} />;
+  }
 
   return (
     <main className={`studio-app ${theme}`}>
@@ -1241,6 +1282,7 @@ export default function MockupStudio() {
         <RightPanel
           access={effectiveAccess}
           isExporting={isExporting}
+          exportProgress={exportProgress}
           exportDisabled={exportDisabled}
           exportUpgradeMode={exportUpgradeMode}
           mediaItems={mediaItems}
@@ -1701,6 +1743,7 @@ function LeftPanel({
 function RightPanel({
   access,
   isExporting,
+  exportProgress,
   exportDisabled,
   exportUpgradeMode,
   mediaItems,
@@ -1781,6 +1824,7 @@ function RightPanel({
 }: {
   access: AccessSummary | null;
   isExporting: boolean;
+  exportProgress: number;
   exportDisabled: boolean;
   exportUpgradeMode: boolean;
   mediaItems: MediaAsset[];
@@ -1924,10 +1968,16 @@ function RightPanel({
 
   return (
     <aside className="side-panel right-panel">
-      <button className="export-card" onClick={onExport} disabled={exportDisabled}>
+      <button
+        className={`export-card ${isExporting ? "exporting" : ""}`}
+        onClick={onExport}
+        disabled={exportDisabled}
+        style={{ "--export-progress": `${exportProgress}%` } as React.CSSProperties}
+      >
+        <i className="export-progress-fill" />
         <span>
           <strong>{exportUpgradeMode ? "Upgrade to export" : isExporting ? "Exporting..." : "Export"}</strong>
-          <small>{exportCaption}</small>
+          <small>{isExporting ? `${Math.max(8, Math.round(exportProgress))}% preparing file` : exportCaption}</small>
         </span>
         <ArrowUpRight size={18} />
       </button>
@@ -2897,6 +2947,118 @@ function formatExpiryLine(access: AccessSummary | null) {
     month: "short",
     year: "numeric"
   })}`;
+}
+
+function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
+  return (
+    <main className={`studio-loading-shell ${theme}`}>
+      <section className="studio-loading-card">
+        <span className="studio-loading-mark"><MonitorUp size={28} /></span>
+        <small>EasyFrame Studio</small>
+        <h1>Studio is loading</h1>
+        <p>Preparing your canvas, presets, media tools, and export controls.</p>
+        <div className="studio-loading-bar"><i /></div>
+      </section>
+      <style jsx global>{`
+        .studio-loading-shell {
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          padding: 28px;
+          color: #f5f7fb;
+          background:
+            radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.22), transparent 30%),
+            radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.1), transparent 28%),
+            linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
+          font-family: var(--font-sans);
+        }
+
+        .studio-loading-shell.light {
+          color: #101827;
+          background:
+            radial-gradient(circle at 8% 8%, rgba(112, 224, 218, 0.26), transparent 32%),
+            radial-gradient(circle at 92% 0%, rgba(139, 140, 246, 0.26), transparent 34%),
+            linear-gradient(145deg, #f8fbff 0%, #eef5f7 52%, #f7f2ff 100%);
+        }
+
+        .studio-loading-card {
+          width: min(100%, 520px);
+          padding: 34px;
+          border-radius: 28px;
+          border: 1px solid rgba(255,255,255,.12);
+          background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
+          box-shadow: 0 34px 110px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.08);
+          text-align: center;
+        }
+
+        .studio-loading-shell.light .studio-loading-card {
+          border-color: rgba(15, 23, 42, 0.1);
+          background: rgba(255,255,255,.78);
+          box-shadow: 0 28px 90px rgba(15, 23, 42, 0.12);
+        }
+
+        .studio-loading-mark {
+          width: 64px;
+          height: 64px;
+          display: grid;
+          place-items: center;
+          margin: 0 auto 18px;
+          border-radius: 20px;
+          color: white;
+          background: linear-gradient(135deg, #7779f6, #56d0d2);
+          box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+        }
+
+        .studio-loading-card small {
+          color: #68d5ec;
+          font-size: 13px;
+          font-weight: 850;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+
+        .studio-loading-card h1 {
+          margin: 14px 0 10px;
+          font-size: clamp(38px, 6vw, 58px);
+          line-height: 0.98;
+          letter-spacing: -0.06em;
+        }
+
+        .studio-loading-card p {
+          max-width: 390px;
+          margin: 0 auto 24px;
+          color: rgba(245, 247, 251, 0.68);
+          font-size: 15px;
+          line-height: 1.55;
+        }
+
+        .studio-loading-shell.light .studio-loading-card p {
+          color: rgba(16, 24, 39, 0.62);
+        }
+
+        .studio-loading-bar {
+          height: 9px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: rgba(255,255,255,.12);
+        }
+
+        .studio-loading-bar i {
+          display: block;
+          width: 42%;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #7779f6, #56d0d2);
+          animation: studio-loading-slide 1.05s ease-in-out infinite;
+        }
+
+        @keyframes studio-loading-slide {
+          0% { transform: translateX(-110%); }
+          100% { transform: translateX(250%); }
+        }
+      `}</style>
+    </main>
+  );
 }
 
 function escapeHtml(value: string) {
@@ -5031,6 +5193,8 @@ function StudioStyles() {
 
       .export-card {
         min-height: 70px;
+        position: relative;
+        overflow: hidden;
         justify-content: space-between;
         padding: 16px;
         border-radius: 22px;
@@ -5038,6 +5202,29 @@ function StudioStyles() {
         color: white;
         background: #151713;
         box-shadow: 0 20px 52px rgba(21, 23, 19, 0.24);
+      }
+
+      .export-card > span,
+      .export-card > svg {
+        position: relative;
+        z-index: 1;
+      }
+
+      .export-progress-fill {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: var(--export-progress, 0%);
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.88);
+        box-shadow: 0 0 26px rgba(255, 255, 255, 0.42);
+        opacity: 0;
+        transition: width 220ms ease, opacity 160ms ease;
+      }
+
+      .export-card.exporting .export-progress-fill {
+        opacity: 1;
       }
 
       .export-card:disabled {

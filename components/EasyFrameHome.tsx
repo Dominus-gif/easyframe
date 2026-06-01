@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   Check,
@@ -43,6 +44,23 @@ const plans = [
 ];
 
 export default function EasyFrameHome() {
+  const [homeReady, setHomeReady] = useState(false);
+
+  useEffect(() => {
+    let timer: number | undefined;
+    const frame = window.requestAnimationFrame(() => {
+      timer = window.setTimeout(() => setHomeReady(true), 120);
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
+
+  if (!homeReady) {
+    return <HomeLoadingScreen />;
+  }
+
   return (
     <main className="home-shell">
       <nav className="home-nav" aria-label="Main navigation">
@@ -156,8 +174,13 @@ export default function EasyFrameHome() {
 }
 
 function ProductPreview() {
+  const [useFallback, setUseFallback] = useState(false);
+
   return (
     <div className="product-preview" aria-label="EasyFrame editor preview">
+      {!useFallback ? (
+        <img className="custom-home-preview" src="/home-preview/studio-preview.png" alt="EasyFrame studio preview" onError={() => setUseFallback(true)} />
+      ) : null}
       <div className="studio-preview-top">
         <div className="studio-preview-brand">
           <span><MonitorUp size={14} /></span>
@@ -268,6 +291,96 @@ function ProductPreview() {
         </aside>
       </div>
     </div>
+  );
+}
+
+function HomeLoadingScreen() {
+  return (
+    <main className="home-loading-shell">
+      <section className="home-loading-card">
+        <span><MonitorUp size={28} /></span>
+        <small>EasyFrame</small>
+        <h1>Loading experience</h1>
+        <p>Preparing a polished workspace preview.</p>
+        <div><i /></div>
+      </section>
+      <style jsx global>{`
+        .home-loading-shell {
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          padding: 28px;
+          color: #f5f7fb;
+          background:
+            radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
+            radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.09), transparent 28%),
+            linear-gradient(145deg, #07080a 0%, #0b0c10 48%, #08090b 100%);
+          font-family: var(--font-sans);
+        }
+
+        .home-loading-card {
+          width: min(100%, 480px);
+          padding: 32px;
+          border-radius: 28px;
+          border: 1px solid rgba(255,255,255,.1);
+          background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+          box-shadow: 0 32px 100px rgba(0,0,0,.32);
+          text-align: center;
+        }
+
+        .home-loading-card > span {
+          width: 64px;
+          height: 64px;
+          display: grid;
+          place-items: center;
+          margin: 0 auto 18px;
+          border-radius: 20px;
+          color: white;
+          background: linear-gradient(135deg, #7779f6, #56d0d2);
+        }
+
+        .home-loading-card small {
+          color: #68d5ec;
+          font-size: 13px;
+          font-weight: 850;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+        }
+
+        .home-loading-card h1 {
+          margin: 12px 0 10px;
+          font-size: clamp(38px, 6vw, 56px);
+          line-height: 0.98;
+          letter-spacing: -0.06em;
+        }
+
+        .home-loading-card p {
+          margin: 0 0 24px;
+          color: rgba(245,247,251,.68);
+        }
+
+        .home-loading-card div {
+          height: 9px;
+          overflow: hidden;
+          border-radius: 999px;
+          background: rgba(255,255,255,.12);
+        }
+
+        .home-loading-card i {
+          display: block;
+          width: 42%;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #7779f6, #56d0d2);
+          animation: home-loading-slide 1.05s ease-in-out infinite;
+        }
+
+        @keyframes home-loading-slide {
+          0% { transform: translateX(-110%); }
+          100% { transform: translateX(250%); }
+        }
+      `}</style>
+    </main>
   );
 }
 
@@ -496,6 +609,7 @@ function HomeStyles() {
 
       .product-preview {
         min-height: 560px;
+        position: relative;
         border-radius: 28px;
         overflow: hidden;
         border: 1px solid rgba(255,255,255,.13);
@@ -1647,6 +1761,17 @@ function HomeStyles() {
       .product-preview,
       .plan-card {
         border-radius: 28px;
+      }
+
+      .custom-home-preview {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+        background: #0b0c10;
       }
 
       .preview-left,
