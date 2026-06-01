@@ -159,6 +159,12 @@ type AccessSummary = {
   expiresAt: string | null;
 };
 
+type ExportConsumePayload = {
+  access?: AccessSummary;
+  error?: string;
+  redirectTo?: string;
+};
+
 type FontOption = {
   label: string;
   family: string;
@@ -183,6 +189,7 @@ const exportPresets = [
 ];
 
 const draftStorageKey = "easyframe-studio-draft-v2";
+const trialExportLimit = 5;
 const defaultFrameScreen: MockupScreen = { x: 7.2, y: 3.2, width: 85.6, height: 93.6, radius: 8 };
 
 const presentPresets = [
@@ -218,6 +225,7 @@ export default function MockupStudio() {
   const { data: session, status: sessionStatus } = useSession();
   const [profileOpen, setProfileOpen] = useState(false);
   const [access, setAccess] = useState<AccessSummary | null>(null);
+  const [localTrialExportCount, setLocalTrialExportCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaAsset[]>([]);
   const [studioLayers, setStudioLayers] = useState<StudioLayer[]>([]);
@@ -333,11 +341,27 @@ export default function MockupStudio() {
     () => buildShadow(shadow.shadow, shadowIntensity, glowIntensity, effectId, shadowColor, glowColor),
     [shadow.shadow, shadowIntensity, glowIntensity, effectId, shadowColor, glowColor]
   );
+  const localTrialKey = useMemo(() => {
+    const userKey = session?.user?.email || session?.user?.id || "anonymous";
+    return `easyframe-trial-exports:${userKey}`;
+  }, [session?.user?.email, session?.user?.id]);
+  const effectiveAccess = useMemo(() => {
+    if (!access || access.planType !== "trial") return access;
+    const countedExports = Math.max(access.exportCount, localTrialExportCount ?? access.exportCount);
+    const exportsRemaining = Math.max(0, trialExportLimit - countedExports);
+    return {
+      ...access,
+      exportCount: countedExports,
+      exportsRemaining,
+      hasAccess: access.hasAccess && exportsRemaining > 0,
+      status: exportsRemaining <= 0 ? "trial_limit_reached" : access.status
+    };
+  }, [access, localTrialExportCount]);
   const [localMockups, setLocalMockups] = useState<LocalMockup[]>([]);
   const selectedMockup = useMemo(() => localMockups.find((mockup) => mockup.url === selectedMockupUrl) ?? null, [localMockups, selectedMockupUrl]);
   const [isPreviewFull, setIsPreviewFull] = useState(false);
-  const trialLimitReached = access?.planType === "trial" && (access.exportsRemaining ?? 0) <= 0;
-  const exportDisabled = isExporting || access == null || access.hasAccess === false;
+  const trialLimitReached = effectiveAccess?.planType === "trial" && (effectiveAccess.exportsRemaining ?? 0) <= 0;
+  const exportDisabled = isExporting || effectiveAccess == null || (effectiveAccess.hasAccess === false && !trialLimitReached);
   const exportUpgradeMode = trialLimitReached;
   const selectedLayer = studioLayers.find((layer) => layer.id === selectedLayerId) ?? null;
   const selectedSlot = extraMediaSlots.find((slot) => slot.id === selectedSlotId) ?? null;
@@ -422,6 +446,21 @@ export default function MockupStudio() {
       void refreshAccess();
     }
   }, [sessionStatus]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (!access || access.planType !== "trial") {
+      setLocalTrialExportCount(null);
+      if (access?.hasAccess) localStorage.removeItem(localTrialKey);
+      return;
+    }
+
+    const stored = Number(localStorage.getItem(localTrialKey) ?? "0");
+    const nextCount = Math.max(Number.isFinite(stored) ? stored : 0, access.exportCount);
+    localStorage.setItem(localTrialKey, String(nextCount));
+    setLocalTrialExportCount(nextCount);
+  }, [access, localTrialKey]);
 
   const shareApp = async () => {
     const displayName = session?.user?.name || "a creator";
@@ -835,7 +874,7 @@ export default function MockupStudio() {
 
   const consumeExportAccess = async () => {
     if (exportUpgradeMode) {
-      window.location.href = "/pricing";
+      window.location.href = "/pricing?reason=trial-ended";
       return false;
     }
     if (exportDisabled) {
@@ -849,15 +888,47 @@ export default function MockupStudio() {
       return false;
     }
 
-    const consumeResponse = await fetch("/api/export/consume", { method: "POST" });
-    const payload = await consumeResponse.json().catch(() => null) as { access?: AccessSummary; error?: string } | null;
-    if (!consumeResponse.ok) {
+    try {
+      const consumeResponse = await fetch("/api/export/consume", { method: "POST" });
+      const payload = await consumeResponse.json().catch(() => null) as ExportConsumePayload | null;
+      if (!consumeResponse.ok) {
+        if (payload?.access) setAccess(payload.access);
+        if (payload?.redirectTo) {
+          window.location.href = payload.redirectTo;
+          return false;
+        }
+        alert(payload?.error ?? "Export limit reached. Choose monthly or lifetime access to continue exporting.");
+        return false;
+      }
       if (payload?.access) setAccess(payload.access);
-      alert(payload?.error ?? "Export limit reached. Choose monthly or lifetime access to continue exporting.");
-      return false;
+      return true;
+    } catch (error) {
+      if (effectiveAccess?.planType !== "trial") {
+        return Boolean(effectiveAccess?.hasAccess);
+      }
+
+      const currentCount = Math.max(effectiveAccess.exportCount, localTrialExportCount ?? 0);
+      if (currentCount >= trialExportLimit) {
+        const exhaustedAccess = { ...effectiveAccess, hasAccess: false, exportsRemaining: 0, status: "trial_limit_reached" };
+        setAccess(exhaustedAccess);
+        localStorage.setItem(localTrialKey, String(trialExportLimit));
+        setLocalTrialExportCount(trialExportLimit);
+        window.location.href = "/pricing?reason=trial-ended";
+        return false;
+      }
+
+      const nextCount = currentCount + 1;
+      localStorage.setItem(localTrialKey, String(nextCount));
+      setLocalTrialExportCount(nextCount);
+      setAccess({
+        ...effectiveAccess,
+        exportCount: nextCount,
+        exportsRemaining: Math.max(0, trialExportLimit - nextCount),
+        hasAccess: nextCount < trialExportLimit,
+        status: nextCount >= trialExportLimit ? "trial_limit_reached" : effectiveAccess.status
+      });
+      return true;
     }
-    if (payload?.access) setAccess(payload.access);
-    return true;
   };
 
   const renderExportDataUrl = async (format: "png" | "jpg" | "webp" = exportFormat) => {
@@ -1234,7 +1305,7 @@ export default function MockupStudio() {
         </section>
 
         <RightPanel
-          access={access}
+          access={effectiveAccess}
           isExporting={isExporting}
           exportDisabled={exportDisabled}
           exportUpgradeMode={exportUpgradeMode}

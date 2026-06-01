@@ -29,9 +29,15 @@ export async function POST(request: Request) {
   const checkoutUrl = checkoutUrls[plan];
   if (checkoutUrl) {
     const url = new URL(checkoutUrl);
+    const origin = new URL(request.url).origin;
+    const returnUrl = new URL("/billing/return", origin);
+    returnUrl.searchParams.set("plan", plan);
     if (session.user.email) url.searchParams.set("email", session.user.email);
     url.searchParams.set("user_id", session.user.id);
     url.searchParams.set("plan", plan);
+    url.searchParams.set("return_url", returnUrl.toString());
+    url.searchParams.set("redirect_url", returnUrl.toString());
+    url.searchParams.set("success_url", returnUrl.toString());
     return NextResponse.redirect(url, 303);
   }
 

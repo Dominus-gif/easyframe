@@ -31,14 +31,14 @@ const plans = [
     badge: "Best value",
     name: "Lifetime Plan",
     price: "$80",
-    description: "One payment for all features and future updates.",
+    description: "Pay once. Keep everything.",
     features: ["Unlimited exports", "All features included", "Future updates included"],
     action: "/api/billing/checkout",
     cta: "Choose lifetime"
   }
 ];
 
-export default async function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
+export default async function PricingPage({ searchParams }: { searchParams?: { reason?: string; checkout?: string } }) {
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
   const session = await getServerSession(authOptions);
   const reason = searchParams?.reason;
@@ -66,6 +66,9 @@ export default async function PricingPage({ searchParams }: { searchParams?: { r
         <p>Start with a one-day trial, choose monthly access, or get lifetime access with all future updates.</p>
         {reason === "trial-ended" ? (
           <div className="paywall-notice">Your free trial has ended. Choose monthly or lifetime access to continue creating.</div>
+        ) : null}
+        {searchParams?.checkout === "pending" ? (
+          <div className="paywall-notice">Your payment is still being confirmed. If you completed checkout, try opening the studio again in a moment.</div>
         ) : null}
       </section>
 
@@ -250,6 +253,10 @@ function PaywallStyles() {
       .paywall-card p,
       .paywall-card li {
         color: rgba(248,246,239,.68);
+      }
+
+      .paywall-card > p {
+        min-height: 44px;
       }
 
       .paywall-card ul {
