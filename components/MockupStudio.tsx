@@ -223,10 +223,8 @@ export default function MockupStudio() {
   const fileRef = useRef<HTMLInputElement>(null);
   const backgroundFileRef = useRef<HTMLInputElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
   const { data: session, status: sessionStatus } = useSession();
   const [profileOpen, setProfileOpen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   const [access, setAccess] = useState<AccessSummary | null>(null);
   const [localTrialExportCount, setLocalTrialExportCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -455,9 +453,6 @@ export default function MockupStudio() {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false);
       }
-      if (shareRef.current && !shareRef.current.contains(event.target as Node)) {
-        setShareOpen(false);
-      }
     };
 
     document.addEventListener("pointerdown", handlePointerDown);
@@ -480,22 +475,7 @@ export default function MockupStudio() {
   }, [access, localTrialKey]);
 
   const shareApp = async () => {
-    const shareUrl = "https://www.easyframe.app/";
-    const shareText = `Create polished screenshots and mockups with EasyFrame. ${shareUrl}`;
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      if (navigator.share) {
-        await navigator.share({ title: "EasyFrame", text: shareText, url: shareUrl });
-      } else {
-        setShareOpen(true);
-      }
-    } catch {
-      try {
-        await navigator.clipboard?.writeText(shareUrl);
-      } finally {
-        setShareOpen(true);
-      }
-    }
+    await navigator.clipboard?.writeText("https://www.easyframe.app/");
   };
 
   const addMediaAsset = (url: string, name: string) => {
@@ -1073,30 +1053,14 @@ export default function MockupStudio() {
             <span className="brand-mark"><MonitorUp size={20} /></span>
             <span>
               <strong>EasyFrame</strong>
-              <small>Create polished mockups for every launch.</small>
+              <small>Create polished visuals for every image.</small>
             </span>
           </div>
-          <div className="brand-share-wrap" ref={shareRef}>
+          <div className="brand-share-wrap">
             <button className="brand-share-button" onClick={shareApp}>
               <Share2 size={16} />
               Share app
             </button>
-            {shareOpen ? (
-              <div className="share-popover">
-                <strong>Link copied</strong>
-                <small>Share EasyFrame anywhere.</small>
-                <div className="share-link-row">
-                  <input value="https://www.easyframe.app/" readOnly />
-                  <button onClick={() => navigator.clipboard.writeText("https://www.easyframe.app/")}>Copy</button>
-                </div>
-                <div className="share-network-row">
-                  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.easyframe.app%2F" target="_blank" rel="noreferrer">Facebook</a>
-                  <a href="mailto:?subject=Try EasyFrame&body=https%3A%2F%2Fwww.easyframe.app%2F">Mail</a>
-                  <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.easyframe.app%2F" target="_blank" rel="noreferrer">LinkedIn</a>
-                  <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fwww.easyframe.app%2F&text=Create%20polished%20screenshots%20and%20mockups%20with%20EasyFrame." target="_blank" rel="noreferrer">X</a>
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
 
@@ -1599,36 +1563,35 @@ function LeftPanel({
               ))}
             </div>
           </div>
+          <div className="custom-gradient-card">
+            <label className="custom-gradient-toggle">
+              <input
+                type="checkbox"
+                checked={backgroundMode === "custom-gradient"}
+                onChange={(event) => {
+                  if (event.target.checked) onCustomGradientColors(customGradientColors);
+                  else onBackground(activeBackgroundId);
+                }}
+              />
+              <span>Use custom gradient</span>
+            </label>
+            <div className="custom-gradient-preview" style={{ background: `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[1]} 52%, ${customGradientColors[2]})` }} />
+            <div className="custom-gradient-pickers">
+              {gradientDrafts.map((color, index) => (
+                <label key={index}>
+                  <span>{index === 0 ? "First" : index === 1 ? "Second" : "Third"}</span>
+                  <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : customGradientColors[index]} onChange={(event) => updateCustomGradientColor(index, event.target.value)} />
+                  <input
+                    value={color}
+                    maxLength={7}
+                    onChange={(event) => updateCustomGradientColor(index, event.target.value)}
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       </ToolSection>
-
-      <div className="custom-gradient-card custom-gradient-above-presets">
-        <label className="custom-gradient-toggle">
-          <input
-            type="checkbox"
-            checked={backgroundMode === "custom-gradient"}
-            onChange={(event) => {
-              if (event.target.checked) onCustomGradientColors(customGradientColors);
-              else onBackground(activeBackgroundId);
-            }}
-          />
-          <span>Use custom gradient</span>
-        </label>
-        <div className="custom-gradient-preview" style={{ background: `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[1]} 52%, ${customGradientColors[2]})` }} />
-        <div className="custom-gradient-pickers">
-          {gradientDrafts.map((color, index) => (
-            <label key={index}>
-              <span>{index === 0 ? "First" : index === 1 ? "Second" : "Third"}</span>
-              <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : customGradientColors[index]} onChange={(event) => updateCustomGradientColor(index, event.target.value)} />
-              <input
-                value={color}
-                maxLength={7}
-                onChange={(event) => updateCustomGradientColor(index, event.target.value)}
-              />
-            </label>
-          ))}
-        </div>
-      </div>
 
       <ToolSection id="presets" title="Presets & Layouts" openId={openTools} onToggle={toggleTool}>
         <div className="preset-preview-grid left-preset-grid">
@@ -9378,81 +9341,6 @@ function StudioStyles() {
         stroke: currentColor !important;
       }
 
-      .brand-share-wrap {
-        position: relative !important;
-      }
-
-      .share-popover {
-        position: absolute !important;
-        z-index: 60 !important;
-        top: calc(100% + 10px) !important;
-        right: 0 !important;
-        width: 320px !important;
-        display: grid !important;
-        gap: 10px !important;
-        padding: 14px !important;
-        border-radius: 18px !important;
-        color: var(--ef-text) !important;
-        background:
-          linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035)),
-          rgba(17, 19, 24, 0.96) !important;
-        border: 1px solid var(--ef-border-premium) !important;
-        box-shadow: 0 24px 70px rgba(0,0,0,.32) !important;
-        backdrop-filter: blur(18px) !important;
-      }
-
-      .share-popover strong {
-        font-size: 14px !important;
-      }
-
-      .share-popover small {
-        color: var(--ef-text-muted) !important;
-        font-size: 12px !important;
-      }
-
-      .share-link-row {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) 68px !important;
-        gap: 8px !important;
-      }
-
-      .share-link-row input,
-      .share-link-row button,
-      .share-network-row a {
-        min-height: 38px !important;
-        border-radius: 12px !important;
-        border: 1px solid var(--ef-border-premium) !important;
-        color: var(--ef-text) !important;
-        background: rgba(255,255,255,.06) !important;
-        font-size: 12px !important;
-        font-weight: 760 !important;
-      }
-
-      .share-link-row input {
-        min-width: 0 !important;
-        padding: 0 10px !important;
-      }
-
-      .share-network-row {
-        display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 8px !important;
-      }
-
-      .share-network-row a {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-decoration: none !important;
-      }
-
-      .studio-app.light .share-popover {
-        color: #172033 !important;
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.9)),
-          rgba(255, 255, 255, 0.96) !important;
-      }
-
       .layer-select-grid select {
         min-height: 46px !important;
         border-radius: 16px !important;
@@ -9849,10 +9737,6 @@ function StudioStyles() {
           linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
           rgba(255, 255, 255, 0.055) !important;
         border: 1px solid var(--ef-border-premium) !important;
-      }
-
-      .custom-gradient-above-presets {
-        margin: 16px 8px 18px !important;
       }
 
       .custom-gradient-toggle {

@@ -138,6 +138,18 @@ export default function EasyFrameHome() {
         </div>
       </section>
 
+      <footer className="home-footer">
+        <div>
+          <strong>EasyFrame</strong>
+          <span>Create polished visuals for every image.</span>
+        </div>
+        <nav aria-label="Footer navigation">
+          <Link href="/Terms">Terms</Link>
+          <Link href="/Privacy">Privacy Policy</Link>
+          <a className="support-link" href="mailto:contact@easyframe.app">Contact support</a>
+        </nav>
+      </footer>
+
       <HomeStyles />
     </main>
   );
@@ -1499,6 +1511,49 @@ function HomeStyles() {
         font-weight: 900;
       }
 
+      .home-footer {
+        width: min(100% - 56px, 1320px);
+        margin: 0 auto;
+        padding: 0 0 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .home-footer div,
+      .home-footer nav {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .home-footer strong {
+        color: #fffdf7;
+        font-size: 18px;
+        letter-spacing: -0.03em;
+      }
+
+      .home-footer span,
+      .home-footer a {
+        color: rgba(248,246,239,.62);
+        font-size: 15px;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .home-footer .support-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        border-radius: 14px;
+        color: white;
+        background: linear-gradient(135deg, #7779f6, #56d0d2);
+        box-shadow: 0 14px 34px rgba(85, 118, 255, 0.22);
+      }
+
       .home-shell {
         --home-bg: #08090b;
         --home-panel: rgba(18, 19, 24, 0.84);
@@ -1720,6 +1775,17 @@ function HomeStyles() {
 
         .showcase-grid {
           grid-template-columns: 1fr;
+        }
+
+        .home-footer,
+        .home-footer div,
+        .home-footer nav {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .home-footer {
+          width: min(100% - 28px, 1780px);
         }
       }
     `}</style>
