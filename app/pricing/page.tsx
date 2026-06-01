@@ -45,7 +45,7 @@ export default async function PricingPage({ searchParams }: { searchParams?: { r
 
   if (!localBypass && session?.user?.id) {
     const access = await getUserAccess(session.user.id);
-    if (access.hasAccess) {
+    if (access.hasAccess && access.planType === "lifetime") {
       redirect("/studio");
     }
   }

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { cancelDodoSubscription } from "@/lib/dodo";
 
 export type AccessStatus = {
   hasAccess: boolean;
@@ -121,6 +122,15 @@ export async function grantPaidAccess(
   dodoSubscriptionId?: string | null,
   dodoCustomerId?: string | null
 ) {
+  const existingSubscription = await prisma.subscription.findUnique({ where: { userId } });
+  if (planType === "lifetime" && existingSubscription?.planType === "monthly" && existingSubscription.dodoSubscriptionId) {
+    try {
+      await cancelDodoSubscription(existingSubscription.dodoSubscriptionId);
+    } catch (error) {
+      console.error("Failed to cancel monthly Dodo subscription during lifetime upgrade", error);
+    }
+  }
+
   const expiresAt =
     planType === "monthly"
       ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)

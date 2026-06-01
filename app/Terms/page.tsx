@@ -63,7 +63,7 @@ const sections = [
   {
     title: "Contact",
     body: [
-      "For questions about these Terms, contact us at support@easyframe.app. If this contact address changes, we will update these Terms."
+      "For questions about these Terms, contact us at contact@easyframe.app. If this contact address changes, we will update these Terms."
     ]
   }
 ];

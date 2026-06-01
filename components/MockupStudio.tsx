@@ -222,8 +222,11 @@ export default function MockupStudio() {
   const stageRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const backgroundFileRef = useRef<HTMLInputElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const shareRef = useRef<HTMLDivElement>(null);
   const { data: session, status: sessionStatus } = useSession();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [access, setAccess] = useState<AccessSummary | null>(null);
   const [localTrialExportCount, setLocalTrialExportCount] = useState<number | null>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -448,6 +451,20 @@ export default function MockupStudio() {
   }, [sessionStatus]);
 
   useEffect(() => {
+    const handlePointerDown = (event: globalThis.PointerEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+      if (shareRef.current && !shareRef.current.contains(event.target as Node)) {
+        setShareOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, []);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
 
     if (!access || access.planType !== "trial") {
@@ -463,89 +480,21 @@ export default function MockupStudio() {
   }, [access, localTrialKey]);
 
   const shareApp = async () => {
-    const displayName = session?.user?.name || "a creator";
-    const origin = typeof window !== "undefined" ? window.location.origin : "https://easyframe.app";
-    const shareUrl = origin || "https://easyframe.app";
-    const shareText = `Check out EasyFrame.App: a clean studio for turning screenshots into polished visuals. ${shareUrl}`;
-    const canvas = document.createElement("canvas");
-    canvas.width = 1200;
-    canvas.height = 630;
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    const background = context.createLinearGradient(0, 0, canvas.width, canvas.height);
-    background.addColorStop(0, "#08090b");
-    background.addColorStop(0.48, "#111827");
-    background.addColorStop(1, "#0f172a");
-    context.fillStyle = background;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const glow = context.createRadialGradient(930, 80, 20, 930, 80, 520);
-    glow.addColorStop(0, "rgba(86, 208, 210, 0.55)");
-    glow.addColorStop(0.42, "rgba(119, 121, 246, 0.24)");
-    glow.addColorStop(1, "rgba(119, 121, 246, 0)");
-    context.fillStyle = glow;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    context.fillStyle = "rgba(255, 255, 255, 0.06)";
-    context.fillRect(72, 72, 1056, 486);
-    context.strokeStyle = "rgba(255, 255, 255, 0.14)";
-    context.lineWidth = 2;
-    context.strokeRect(72, 72, 1056, 486);
-
-    context.fillStyle = "#ffffff";
-    context.font = "800 54px Inter, Arial, sans-serif";
-    context.fillText("EasyFrame.App", 126, 170);
-    context.font = "700 72px Inter, Arial, sans-serif";
-    context.fillText("Create polished", 126, 285);
-    context.fillText("visuals in seconds.", 126, 368);
-
-    context.fillStyle = "rgba(255, 255, 255, 0.72)";
-    context.font = "500 30px Inter, Arial, sans-serif";
-    context.fillText(`${displayName} thinks you should check this app out.`, 126, 438);
-
-    const chip = context.createLinearGradient(126, 480, 520, 536);
-    chip.addColorStop(0, "#7779f6");
-    chip.addColorStop(1, "#56d0d2");
-    context.fillStyle = chip;
-    context.fillRect(126, 484, 410, 58);
-    context.fillStyle = "#ffffff";
-    context.font = "800 24px Inter, Arial, sans-serif";
-    context.fillText(shareUrl.replace(/^https?:\/\//, ""), 152, 522);
-
-    const imageUrl = canvas.toDataURL("image/png");
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
-    const preview = window.open("", "_blank", "width=920,height=720");
-    if (preview) {
-      preview.document.write(`
-        <html>
-          <head><title>Share EasyFrame.App</title></head>
-          <body style="margin:0;background:#08090b;color:#fff;font-family:Inter,Arial,sans-serif;display:grid;place-items:center;min-height:100vh;padding:28px;box-sizing:border-box;">
-            <main style="max-width:860px;width:100%;display:grid;gap:18px;">
-              <img src="${imageUrl}" alt="EasyFrame share card" style="width:100%;border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.45);" />
-              <p style="color:rgba(255,255,255,.72);font-size:16px;line-height:1.5;margin:0;">${escapeHtml(shareText)}</p>
-            </main>
-          </body>
-        </html>
-      `);
-      preview.document.close();
-    }
-
+    const shareUrl = "https://www.easyframe.app/";
+    const shareText = `Create polished screenshots and mockups with EasyFrame. ${shareUrl}`;
     try {
-      if (blob && "ClipboardItem" in window && navigator.clipboard?.write) {
-        await navigator.clipboard.write([
-          new ClipboardItem({
-            "image/png": blob,
-            "text/plain": new Blob([shareText], { type: "text/plain" })
-          })
-        ]);
+      await navigator.clipboard.writeText(shareUrl);
+      if (navigator.share) {
+        await navigator.share({ title: "EasyFrame", text: shareText, url: shareUrl });
       } else {
-        await navigator.clipboard.writeText(shareText);
+        setShareOpen(true);
       }
-      alert("Share image and text copied to your clipboard.");
     } catch {
-      await navigator.clipboard?.writeText(shareText);
-      alert("Share text copied. The image opened in a new window.");
+      try {
+        await navigator.clipboard?.writeText(shareUrl);
+      } finally {
+        setShareOpen(true);
+      }
     }
   };
 
@@ -1124,13 +1073,31 @@ export default function MockupStudio() {
             <span className="brand-mark"><MonitorUp size={20} /></span>
             <span>
               <strong>EasyFrame</strong>
-              <small>Clean screenshots and social frames for easyframe.app</small>
+              <small>Create polished mockups for every launch.</small>
             </span>
           </div>
-          <button className="brand-share-button" onClick={shareApp}>
-            <Share2 size={16} />
-            Share app
-          </button>
+          <div className="brand-share-wrap" ref={shareRef}>
+            <button className="brand-share-button" onClick={shareApp}>
+              <Share2 size={16} />
+              Share app
+            </button>
+            {shareOpen ? (
+              <div className="share-popover">
+                <strong>Link copied</strong>
+                <small>Share EasyFrame anywhere.</small>
+                <div className="share-link-row">
+                  <input value="https://www.easyframe.app/" readOnly />
+                  <button onClick={() => navigator.clipboard.writeText("https://www.easyframe.app/")}>Copy</button>
+                </div>
+                <div className="share-network-row">
+                  <a href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fwww.easyframe.app%2F" target="_blank" rel="noreferrer">Facebook</a>
+                  <a href="mailto:?subject=Try EasyFrame&body=https%3A%2F%2Fwww.easyframe.app%2F">Mail</a>
+                  <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.easyframe.app%2F" target="_blank" rel="noreferrer">LinkedIn</a>
+                  <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fwww.easyframe.app%2F&text=Create%20polished%20screenshots%20and%20mockups%20with%20EasyFrame." target="_blank" rel="noreferrer">X</a>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className="top-actions">
@@ -1156,7 +1123,7 @@ export default function MockupStudio() {
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             {theme === "dark" ? "Light" : "Dark"}
           </button>
-          <div className="profile-menu">
+          <div className="profile-menu" ref={profileRef}>
             <button className="profile-button" onClick={() => setProfileOpen((value) => !value)}>
               {session?.user?.image ? <img src={session.user.image} alt="" /> : <span>{session?.user?.name?.[0] ?? "E"}</span>}
               <strong>{session?.user?.name ?? "Local user"}</strong>
@@ -1169,6 +1136,9 @@ export default function MockupStudio() {
                   <span>{formatAccessLine(access)}</span>
                   <span>{formatExpiryLine(access)}</span>
                 </div>
+                {access?.planType === "trial" || access?.planType === "monthly" ? (
+                  <a className="account-upgrade-button" href="/pricing">Upgrade plan</a>
+                ) : null}
                 <button onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
               </div>
             ) : null}
@@ -1632,6 +1602,34 @@ function LeftPanel({
         </div>
       </ToolSection>
 
+      <div className="custom-gradient-card custom-gradient-above-presets">
+        <label className="custom-gradient-toggle">
+          <input
+            type="checkbox"
+            checked={backgroundMode === "custom-gradient"}
+            onChange={(event) => {
+              if (event.target.checked) onCustomGradientColors(customGradientColors);
+              else onBackground(activeBackgroundId);
+            }}
+          />
+          <span>Use custom gradient</span>
+        </label>
+        <div className="custom-gradient-preview" style={{ background: `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[1]} 52%, ${customGradientColors[2]})` }} />
+        <div className="custom-gradient-pickers">
+          {gradientDrafts.map((color, index) => (
+            <label key={index}>
+              <span>{index === 0 ? "First" : index === 1 ? "Second" : "Third"}</span>
+              <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : customGradientColors[index]} onChange={(event) => updateCustomGradientColor(index, event.target.value)} />
+              <input
+                value={color}
+                maxLength={7}
+                onChange={(event) => updateCustomGradientColor(index, event.target.value)}
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
       <ToolSection id="presets" title="Presets & Layouts" openId={openTools} onToggle={toggleTool}>
         <div className="preset-preview-grid left-preset-grid">
           {presentPresets.map((preset) => (
@@ -1648,33 +1646,6 @@ function LeftPanel({
               onClick={() => onPresentPreset(preset.id)}
             />
           ))}
-        </div>
-        <div className="custom-gradient-card">
-          <label className="custom-gradient-toggle">
-            <input
-              type="checkbox"
-              checked={backgroundMode === "custom-gradient"}
-              onChange={(event) => {
-                if (event.target.checked) onCustomGradientColors(customGradientColors);
-                else onBackground(activeBackgroundId);
-              }}
-            />
-            <span>Use custom gradient</span>
-          </label>
-          <div className="custom-gradient-preview" style={{ background: `linear-gradient(135deg, ${customGradientColors[0]}, ${customGradientColors[1]} 52%, ${customGradientColors[2]})` }} />
-          <div className="custom-gradient-pickers">
-            {gradientDrafts.map((color, index) => (
-              <label key={index}>
-                <span>{index === 0 ? "First" : index === 1 ? "Second" : "Third"}</span>
-                <input type="color" value={/^#[0-9a-fA-F]{6}$/.test(color) ? color : customGradientColors[index]} onChange={(event) => updateCustomGradientColor(index, event.target.value)} />
-                <input
-                  value={color}
-                  maxLength={7}
-                  onChange={(event) => updateCustomGradientColor(index, event.target.value)}
-                />
-              </label>
-            ))}
-          </div>
         </div>
         <small className="muted tight">Layouts use your current media library and add extra screenshots.</small>
         <div className="preset-preview-grid left-preset-grid">
@@ -2633,6 +2604,11 @@ function MockupCanvas({
         onPointerMove={handleStagePointerMove}
         onPointerUp={handleStagePointerUp}
         onPointerCancel={handleStagePointerUp}
+        onPointerDown={(event) => {
+          if (!(event.target as HTMLElement).closest(".annotation-item")) {
+            onSelectLayer(null);
+          }
+        }}
         style={
           {
             padding,
@@ -3578,6 +3554,21 @@ function StudioStyles() {
         border-radius: 12px;
         color: #151713;
         background: #f7f4ec;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .account-upgrade-button {
+        width: 100%;
+        min-height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        color: #ffffff;
+        background: linear-gradient(135deg, #7779f6, #56d0d2);
+        text-decoration: none;
         font-size: 13px;
         font-weight: 900;
       }
@@ -9387,6 +9378,81 @@ function StudioStyles() {
         stroke: currentColor !important;
       }
 
+      .brand-share-wrap {
+        position: relative !important;
+      }
+
+      .share-popover {
+        position: absolute !important;
+        z-index: 60 !important;
+        top: calc(100% + 10px) !important;
+        right: 0 !important;
+        width: 320px !important;
+        display: grid !important;
+        gap: 10px !important;
+        padding: 14px !important;
+        border-radius: 18px !important;
+        color: var(--ef-text) !important;
+        background:
+          linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035)),
+          rgba(17, 19, 24, 0.96) !important;
+        border: 1px solid var(--ef-border-premium) !important;
+        box-shadow: 0 24px 70px rgba(0,0,0,.32) !important;
+        backdrop-filter: blur(18px) !important;
+      }
+
+      .share-popover strong {
+        font-size: 14px !important;
+      }
+
+      .share-popover small {
+        color: var(--ef-text-muted) !important;
+        font-size: 12px !important;
+      }
+
+      .share-link-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) 68px !important;
+        gap: 8px !important;
+      }
+
+      .share-link-row input,
+      .share-link-row button,
+      .share-network-row a {
+        min-height: 38px !important;
+        border-radius: 12px !important;
+        border: 1px solid var(--ef-border-premium) !important;
+        color: var(--ef-text) !important;
+        background: rgba(255,255,255,.06) !important;
+        font-size: 12px !important;
+        font-weight: 760 !important;
+      }
+
+      .share-link-row input {
+        min-width: 0 !important;
+        padding: 0 10px !important;
+      }
+
+      .share-network-row {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .share-network-row a {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-decoration: none !important;
+      }
+
+      .studio-app.light .share-popover {
+        color: #172033 !important;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.9)),
+          rgba(255, 255, 255, 0.96) !important;
+      }
+
       .layer-select-grid select {
         min-height: 46px !important;
         border-radius: 16px !important;
@@ -9783,6 +9849,10 @@ function StudioStyles() {
           linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03)),
           rgba(255, 255, 255, 0.055) !important;
         border: 1px solid var(--ef-border-premium) !important;
+      }
+
+      .custom-gradient-above-presets {
+        margin: 16px 8px 18px !important;
       }
 
       .custom-gradient-toggle {
