@@ -15,10 +15,30 @@ export default function BillingReturnPage() {
     if (typeof window === "undefined") return "plan";
     return new URLSearchParams(window.location.search).get("plan") ?? "plan";
   }, []);
+  const paymentId = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("payment_id");
+  }, []);
+  const paymentStatus = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("status");
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     let attempts = 0;
+
+    const confirmPayment = async () => {
+      if (!paymentId || paymentStatus !== "succeeded" || (plan !== "monthly" && plan !== "lifetime")) return false;
+
+      const response = await fetch("/api/billing/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId, plan })
+      });
+
+      return response.ok;
+    };
 
     const checkAccess = async () => {
       attempts += 1;
@@ -28,6 +48,12 @@ export default function BillingReturnPage() {
 
         if (cancelled) return;
         if (response.ok && data?.hasAccess) {
+          setStatus("ready");
+          window.location.replace("/studio");
+          return;
+        }
+
+        if (attempts === 1 && await confirmPayment()) {
           setStatus("ready");
           window.location.replace("/studio");
           return;
@@ -50,7 +76,7 @@ export default function BillingReturnPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [paymentId, paymentStatus, plan]);
 
   return (
     <main className="billing-return-shell">

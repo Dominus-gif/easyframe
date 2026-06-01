@@ -6,9 +6,11 @@ type DodoPayload = {
   id?: string;
   type?: string;
   data?: {
-    customer?: { email?: string; id?: string };
+    customer?: { email?: string; id?: string; customer_id?: string };
     customer_email?: string;
     product_id?: string;
+    product_cart?: Array<{ product_id?: string }>;
+    payment_id?: string;
     subscription_id?: string;
     status?: string;
   };
@@ -24,8 +26,8 @@ export async function POST(request: Request) {
   const eventId = payload.id ?? crypto.randomUUID();
   const eventType = payload.type ?? "unknown";
   const customerEmail = payload.data?.customer?.email ?? payload.data?.customer_email;
-  const customerId = payload.data?.customer?.id;
-  const productId = payload.data?.product_id;
+  const customerId = payload.data?.customer?.customer_id ?? payload.data?.customer?.id;
+  const productId = payload.data?.product_id ?? payload.data?.product_cart?.[0]?.product_id;
 
   let userId: string | undefined;
   if (customerEmail) {
@@ -42,7 +44,7 @@ export async function POST(request: Request) {
               ? "monthly"
               : user.subscriptionPlan;
 
-      const paidEvent = ["subscription.created", "subscription.active", "payment.successful"].includes(eventType);
+      const paidEvent = ["subscription.created", "subscription.active", "payment.successful", "payment.succeeded", "payment.success"].includes(eventType);
 
       if (paidEvent && (plan === "monthly" || plan === "yearly" || plan === "lifetime")) {
         await grantPaidAccess(user.id, plan, payload.data?.subscription_id, customerId);
