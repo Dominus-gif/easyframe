@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EasyFrame app icon">
+  <defs>
+    <radialGradient id="ef-app-bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(156 96) rotate(48) scale(390 374)">
+      <stop stop-color="#20115E"/>
+      <stop offset="0.5" stop-color="#07112D"/>
+      <stop offset="1" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="ef-app-a" x1="122" y1="124" x2="236" y2="364" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F58BFF"/>
+      <stop offset="0.48" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#5B21B6"/>
+    </linearGradient>
+    <linearGradient id="ef-app-b" x1="195" y1="80" x2="320" y2="404" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B5CFF"/>
+      <stop offset="0.45" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="ef-app-c" x1="280" y1="112" x2="424" y2="384" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B4DFF"/>
+      <stop offset="0.45" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect x="28" y="28" width="456" height="456" rx="108" fill="url(#ef-app-bg)"/>
+  <path d="M124 118L225 177V405L124 346V118Z" fill="url(#ef-app-a)" opacity="0.64"/>
+  <path d="M205 72L319 139V440L205 373V72Z" fill="url(#ef-app-b)" opacity="0.78"/>
+  <path d="M294 115L430 194V395L294 316V115Z" fill="url(#ef-app-c)" opacity="0.92"/>
+</svg>

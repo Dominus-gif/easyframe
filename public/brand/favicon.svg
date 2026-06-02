@@ -1,0 +1,23 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="EasyFrame">
+  <defs>
+    <linearGradient id="ef-fav-a" x1="12" y1="12" x2="30" y2="50" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F58BFF"/>
+      <stop offset="0.5" stop-color="#A855F7"/>
+      <stop offset="1" stop-color="#5B21B6"/>
+    </linearGradient>
+    <linearGradient id="ef-fav-b" x1="23" y1="6" x2="42" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B5CFF"/>
+      <stop offset="0.45" stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#1E1B4B"/>
+    </linearGradient>
+    <linearGradient id="ef-fav-c" x1="36" y1="11" x2="56" y2="52" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B4DFF"/>
+      <stop offset="0.45" stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#020617"/>
+  <path d="M14 16L29 25V49L14 40V16Z" fill="url(#ef-fav-a)" opacity="0.64"/>
+  <path d="M25 10L42 20V54L25 44V10Z" fill="url(#ef-fav-b)" opacity="0.78"/>
+  <path d="M37 15L55 26V49L37 39V15Z" fill="url(#ef-fav-c)" opacity="0.92"/>
+</svg>
