@@ -10,10 +10,10 @@ import {
   FolderOpen,
   ImagePlus,
   Layers3,
-  MonitorUp,
   ShieldCheck,
   Sparkles
 } from "lucide-react";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 const plans = [
   {
@@ -27,7 +27,7 @@ const plans = [
   {
     eyebrow: "Most popular",
     name: "1-Month Plan",
-    price: "$3",
+    price: "$4",
     suffix: "/month",
     accent: "coral",
     description: "Simple monthly access.",
@@ -65,7 +65,7 @@ export default function EasyFrameHome() {
     <main className="home-shell">
       <nav className="home-nav" aria-label="Main navigation">
         <Link className="home-brand" href="/">
-          <span><MonitorUp size={22} /></span>
+          <span><EasyFrameMark size={26} /></span>
           <strong>EasyFrame</strong>
         </Link>
 
@@ -183,7 +183,7 @@ function ProductPreview() {
       ) : null}
       <div className="studio-preview-top">
         <div className="studio-preview-brand">
-          <span><MonitorUp size={14} /></span>
+          <span><EasyFrameMark size={16} /></span>
           <strong>EasyFrame</strong>
         </div>
         <div className="studio-preview-actions">
@@ -298,7 +298,7 @@ function HomeLoadingScreen() {
   return (
     <main className="home-loading-shell">
       <section className="home-loading-card">
-        <span><MonitorUp size={28} /></span>
+        <span><EasyFrameMark size={32} /></span>
         <small>EasyFrame</small>
         <h1>Loading experience</h1>
         <p>Preparing a polished workspace preview.</p>
@@ -455,8 +455,8 @@ function HomeStyles() {
         place-items: center;
         border-radius: 14px;
         color: #fff;
-        background: linear-gradient(135deg, #ff6554, #f12b8f 54%, #6d5dfc);
-        box-shadow: 0 18px 46px rgba(241, 43, 143, 0.28);
+        background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
+        box-shadow: 0 18px 46px rgba(37, 99, 235, 0.28);
       }
 
       .home-brand strong {
@@ -653,7 +653,7 @@ function HomeStyles() {
         place-items: center;
         border-radius: 8px;
         color: #fff;
-        background: linear-gradient(135deg, #7779f6, #56d0d2);
+        background: linear-gradient(135deg, #020617, #1e1b4b 54%, #0f172a);
       }
 
       .studio-preview-brand strong {

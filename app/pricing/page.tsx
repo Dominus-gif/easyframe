@@ -1,8 +1,5 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { Check, Crown, MonitorUp, Sparkles } from "lucide-react";
-import { authOptions } from "@/lib/auth/options";
-import { getUserAccess } from "@/lib/subscription";
+import { Check, Crown, Sparkles } from "lucide-react";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 const plans = [
   {
@@ -19,7 +16,7 @@ const plans = [
     id: "monthly",
     badge: "Most popular",
     name: "1-Month Plan",
-    price: "$3",
+    price: "$4",
     suffix: "/month",
     description: "Simple monthly access.",
     features: ["Unlimited exports", "All features included", "Cancel anytime"],
@@ -39,22 +36,13 @@ const plans = [
 ];
 
 export default async function PricingPage({ searchParams }: { searchParams?: { reason?: string; checkout?: string } }) {
-  const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
-  const session = await getServerSession(authOptions);
   const reason = searchParams?.reason;
-
-  if (!localBypass && session?.user?.id) {
-    const access = await getUserAccess(session.user.id);
-    if (access.hasAccess && access.planType === "lifetime") {
-      redirect("/studio");
-    }
-  }
 
   return (
     <main className="paywall-shell">
       <header className="paywall-nav">
         <a className="paywall-brand" href="/">
-          <span><MonitorUp size={22} /></span>
+          <span><EasyFrameMark size={26} /></span>
           <strong>EasyFrame</strong>
         </a>
         <a href="/login">Account</a>
@@ -143,7 +131,8 @@ function PaywallStyles() {
         display: grid;
         place-items: center;
         border-radius: 14px;
-        background: linear-gradient(135deg, #ff6554, #f12b8f 54%, #6d5dfc);
+        background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
+        box-shadow: 0 18px 46px rgba(37, 99, 235, 0.28);
       }
 
       .paywall-brand strong {
