@@ -32,6 +32,7 @@ import {
 import { backgrounds, devices, edgeStyles, effects, shadows, templates } from "@/lib/mockup-data";
 import { useMockupStore } from "@/store/useMockupStore";
 import type { DevicePreset, TemplatePreset } from "@/lib/types";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 type TransformKey =
   | "rotateX"
@@ -1091,7 +1092,7 @@ export default function MockupStudio() {
       <header className="topbar">
         <div className="brand-area">
           <div className="brand">
-            <span className="brand-mark"><MonitorUp size={20} /></span>
+            <span className="brand-mark"><EasyFrameMark size={28} /></span>
             <span>
               <strong>EasyFrame</strong>
               <small>Create polished visuals for every image.</small>
@@ -2953,7 +2954,7 @@ function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
   return (
     <main className={`studio-loading-shell ${theme}`}>
       <section className="studio-loading-card">
-        <span className="studio-loading-mark"><MonitorUp size={28} /></span>
+        <span className="studio-loading-mark"><EasyFrameMark size={34} /></span>
         <small>EasyFrame Studio</small>
         <h1>Studio is loading</h1>
         <p>Preparing your canvas, presets, media tools, and export controls.</p>
@@ -3005,8 +3006,8 @@ function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
           margin: 0 auto 18px;
           border-radius: 20px;
           color: white;
-          background: linear-gradient(135deg, #7779f6, #56d0d2);
-          box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+          background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
+          box-shadow: 0 18px 44px rgba(37, 99, 235, 0.24);
         }
 
         .studio-loading-card small {
@@ -3507,14 +3508,13 @@ function StudioStyles() {
       }
 
       .brand-mark {
-        width: 42px;
+        width: 38px;
         height: 42px;
         display: grid;
         place-items: center;
-        border-radius: 15px;
         color: white;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
-        box-shadow: 0 18px 48px rgba(241, 43, 143, 0.22);
+        background: transparent;
+        box-shadow: none;
       }
 
       .brand strong,
@@ -6143,7 +6143,7 @@ function StudioStyles() {
         --ef-surface-raised: rgba(255, 255, 255, 0.88);
         --ef-control: rgba(23, 25, 21, 0.055);
         --ef-control-hover: rgba(23, 25, 21, 0.09);
-        --ef-brand: linear-gradient(135deg, #ff6858 0%, #f12b8f 55%, #6d5dfc 100%);
+        --ef-brand: linear-gradient(135deg, #4f46e5 0%, #2563eb 45%, #06b6d4 100%);
         --ef-shadow-soft: 0 16px 42px rgba(27, 28, 24, 0.1);
         --ef-shadow-panel: 0 18px 56px rgba(27, 28, 24, 0.13);
         font-family: var(--ef-font);
@@ -6185,8 +6185,7 @@ function StudioStyles() {
       .brand-mark {
         width: 40px;
         height: 40px;
-        border-radius: 12px;
-        box-shadow: 0 14px 34px rgba(241, 43, 143, 0.24);
+        box-shadow: none;
       }
 
       .brand strong,
@@ -6532,11 +6531,10 @@ function StudioStyles() {
       .brand-mark {
         width: 34px;
         height: 34px;
-        border-radius: 999px;
-        background:
-          radial-gradient(circle at 35% 25%, #fff 0 10%, transparent 11%),
-          linear-gradient(135deg, #ff6a52 0%, #ff4738 100%);
-        box-shadow: 0 12px 34px rgba(255, 71, 56, 0.34);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
       }
 
       .brand strong {
@@ -7375,9 +7373,10 @@ function StudioStyles() {
       .brand-mark {
         width: 34px;
         height: 34px;
-        border-radius: 11px;
-        background: var(--ef-premium-gradient);
-        box-shadow: 0 14px 34px rgba(113, 120, 255, 0.28);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
       }
 
       .brand strong,
@@ -9492,8 +9491,17 @@ function StudioStyles() {
       .brand-mark {
         width: 44px !important;
         height: 44px !important;
-        border-radius: 14px !important;
+        border-radius: 0 !important;
         flex: 0 0 44px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+
+      .brand-mark img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
       }
 
       .brand strong {
@@ -9616,8 +9624,10 @@ function StudioStyles() {
       }
 
       .brand-mark {
-        background: linear-gradient(135deg, #7779f6 0%, #56d0d2 100%) !important;
-        box-shadow: 0 18px 38px rgba(86, 208, 210, 0.24) !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
       }
 
       .studio-app.light .brand-area {
@@ -9889,9 +9899,11 @@ function StudioStyles() {
       .brand-mark {
         width: 50px !important;
         height: 50px !important;
-        border-radius: 16px !important;
-        background: linear-gradient(135deg, #7779f6 0%, #56d0d2 100%) !important;
-        box-shadow: 0 18px 38px rgba(86, 208, 210, 0.25) !important;
+        border-radius: 0 !important;
+        flex: 0 0 50px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
       }
 
       .brand strong {
