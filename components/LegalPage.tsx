@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MonitorUp } from "lucide-react";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 type LegalSection = {
   title: string;
@@ -21,7 +21,7 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
     <main className="legal-shell">
       <nav className="legal-nav">
         <Link className="legal-brand" href="/">
-          <span><MonitorUp size={22} /></span>
+          <span><EasyFrameMark size={34} /></span>
           <strong>EasyFrame</strong>
         </Link>
         <div className="legal-links">

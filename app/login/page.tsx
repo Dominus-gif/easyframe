@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Chrome, MonitorUp, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Chrome, ShieldCheck, Sparkles } from "lucide-react";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 const authErrorMessages: Record<string, string> = {
   Configuration: "Google sign-in is not configured for this EasyFrame environment yet.",
@@ -28,7 +29,7 @@ function LoginFallback() {
   return (
     <main className="auth-shell">
       <Link className="auth-brand" href="/">
-        <span><MonitorUp size={22} /></span>
+        <span><EasyFrameMark size={34} /></span>
         <strong>EasyFrame</strong>
       </Link>
       <section className="auth-card">
@@ -85,7 +86,7 @@ function LoginContent() {
   return (
     <main className="auth-shell">
       <Link className="auth-brand" href="/">
-        <span><MonitorUp size={22} /></span>
+        <span><EasyFrameMark size={34} /></span>
         <strong>EasyFrame</strong>
       </Link>
 

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Loader2, MonitorUp } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 type AccessResponse = {
   hasAccess?: boolean;
@@ -81,7 +82,7 @@ export default function BillingReturnPage() {
   return (
     <main className="billing-return-shell">
       <Link className="billing-return-brand" href="/">
-        <span><MonitorUp size={22} /></span>
+        <span><EasyFrameMark size={34} /></span>
         <strong>EasyFrame</strong>
       </Link>
 
