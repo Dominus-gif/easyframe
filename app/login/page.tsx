@@ -147,8 +147,16 @@ function AuthStyles() {
         height: 44px;
         display: grid;
         place-items: center;
-        border-radius: 14px;
-        background: linear-gradient(135deg, #ff6554, #f12b8f 54%, #6d5dfc);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+      }
+
+      .auth-brand span img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
 
       .auth-brand strong {
@@ -268,10 +276,14 @@ function AuthStyles() {
           linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
       }
 
-      .auth-brand span,
       .oauth-button {
         background: var(--accent-gradient);
         box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+      }
+
+      .auth-brand span {
+        background: transparent;
+        box-shadow: none;
       }
 
       .auth-brand strong {

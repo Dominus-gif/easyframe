@@ -3004,10 +3004,16 @@ function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
           display: grid;
           place-items: center;
           margin: 0 auto 18px;
-          border-radius: 20px;
+          border-radius: 0;
           color: white;
-          background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
-          box-shadow: 0 18px 44px rgba(37, 99, 235, 0.24);
+          background: transparent;
+          box-shadow: none;
+        }
+
+        .studio-loading-mark img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
 
         .studio-loading-card small {

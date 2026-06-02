@@ -334,9 +334,15 @@ function HomeLoadingScreen() {
           display: grid;
           place-items: center;
           margin: 0 auto 18px;
-          border-radius: 20px;
+          border-radius: 0;
           color: white;
-          background: linear-gradient(135deg, #7779f6, #56d0d2);
+          background: transparent;
+        }
+
+        .home-loading-card > span img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
 
         .home-loading-card small {

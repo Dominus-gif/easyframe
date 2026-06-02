@@ -130,9 +130,16 @@ function PaywallStyles() {
         height: 44px;
         display: grid;
         place-items: center;
-        border-radius: 14px;
-        background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
-        box-shadow: 0 18px 46px rgba(37, 99, 235, 0.28);
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        overflow: visible;
+      }
+
+      .paywall-brand span img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
       }
 
       .paywall-brand strong {
@@ -292,10 +299,14 @@ function PaywallStyles() {
           linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
       }
 
-      .paywall-brand span,
       .paywall-card button {
         background: var(--accent-gradient);
         box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+      }
+
+      .paywall-brand span {
+        background: transparent;
+        box-shadow: none;
       }
 
       .paywall-brand strong {

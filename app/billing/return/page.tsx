@@ -127,7 +127,6 @@ export default function BillingReturnPage() {
           text-decoration: none;
         }
 
-        .billing-return-brand span,
         .billing-return-icon {
           display: grid;
           place-items: center;
@@ -138,7 +137,18 @@ export default function BillingReturnPage() {
         .billing-return-brand span {
           width: 44px;
           height: 44px;
-          border-radius: 14px;
+          display: grid;
+          place-items: center;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
+        }
+
+        .billing-return-brand span img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
 
         .billing-return-brand strong {

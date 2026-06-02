@@ -96,9 +96,16 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
           height: 44px;
           display: grid;
           place-items: center;
-          border-radius: 14px;
-          background: var(--accent-gradient);
-          box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
+        }
+
+        .legal-brand span img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
         }
 
         .legal-brand strong {
