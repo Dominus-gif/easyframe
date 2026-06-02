@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Chrome, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
 
 const authErrorMessages: Record<string, string> = {
@@ -98,7 +98,7 @@ function LoginContent() {
         {message ? <div className="auth-error">{message}</div> : null}
 
         <button className="oauth-button" onClick={handleGoogleSignIn} disabled={isStarting || googleReady === null}>
-          <Chrome size={19} />
+          <GoogleLogo />
           {isStarting ? "Opening Google..." : googleReady === null ? "Checking Google..." : "Continue with Google"}
           <ArrowRight size={17} />
         </button>
@@ -113,6 +113,17 @@ function LoginContent() {
 
       <AuthStyles />
     </main>
+  );
+}
+
+function GoogleLogo() {
+  return (
+    <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09Z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C4 20.53 7.7 23 12 23Z" />
+      <path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.84Z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 4 3.47 2.18 7.06L5.84 9.9C6.71 7.3 9.14 5.38 12 5.38Z" />
+    </svg>
   );
 }
 
@@ -222,14 +233,30 @@ function AuthStyles() {
       }
 
       .oauth-button {
-        color: white;
-        background: linear-gradient(135deg, #ff6858 0%, #f12b8f 55%, #6d5dfc 100%);
-        box-shadow: 0 18px 46px rgba(241, 43, 143, 0.28);
+        color: #172033;
+        background: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.92);
       }
 
       .oauth-button:disabled {
         cursor: wait;
         opacity: 0.72;
+      }
+
+      .oauth-button:hover:not(:disabled),
+      .oauth-button:focus-visible:not(:disabled) {
+        color: #0f172a;
+        background: #ffffff;
+        border-color: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 18px 44px rgba(88, 213, 201, 0.18), 0 0 0 1px rgba(88, 213, 201, 0.18);
+      }
+
+      .google-logo {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 20px;
+        display: block;
       }
 
       .auth-error {
@@ -278,8 +305,10 @@ function AuthStyles() {
       }
 
       .oauth-button {
-        background: var(--accent-gradient);
-        box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+        color: #172033;
+        background: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.82);
+        box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.92);
       }
 
       .auth-brand span {
