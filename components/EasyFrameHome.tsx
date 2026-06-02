@@ -449,14 +449,13 @@ function HomeStyles() {
       }
 
       .home-brand span {
-        width: 44px;
+        width: 38px;
         height: 44px;
         display: grid;
         place-items: center;
-        border-radius: 14px;
         color: #fff;
-        background: radial-gradient(circle at 24% 18%, rgba(124, 58, 237, 0.95), transparent 44%), linear-gradient(135deg, #020617, #1e1b4b 48%, #0f172a);
-        box-shadow: 0 18px 46px rgba(37, 99, 235, 0.28);
+        background: transparent;
+        box-shadow: none;
       }
 
       .home-brand strong {
@@ -647,13 +646,12 @@ function HomeStyles() {
       }
 
       .studio-preview-brand span {
-        width: 24px;
+        width: 20px;
         height: 24px;
         display: grid;
         place-items: center;
-        border-radius: 8px;
         color: #fff;
-        background: linear-gradient(135deg, #020617, #1e1b4b 54%, #0f172a);
+        background: transparent;
       }
 
       .studio-preview-brand strong {
@@ -1692,11 +1690,27 @@ function HomeStyles() {
       }
 
       .home-brand span,
-      .preview-brand span,
+      .studio-preview-brand span,
       .trial-button,
       .plan-card a {
         background: var(--home-accent);
         box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+      }
+
+      .home-brand span,
+      .studio-preview-brand span {
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible !important;
+      }
+
+      .home-brand span img,
+      .studio-preview-brand span img {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain !important;
+        border-radius: 0 !important;
       }
 
       .home-brand strong {
