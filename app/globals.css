@@ -121,3 +121,64 @@ button {
 .range {
   accent-color: #111312;
 }
+
+.home-shell,
+.auth-shell,
+.paywall-shell,
+.legal-shell,
+.billing-return-shell,
+.studio-app,
+.home-loading-shell,
+.studio-loading-shell {
+  min-height: 100vh;
+  color: var(--text-primary);
+  background:
+    radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
+    radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
+    linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
+  font-family: var(--font-sans);
+}
+
+.auth-shell,
+.billing-return-shell,
+.home-loading-shell,
+.studio-loading-shell {
+  display: grid;
+  place-items: center;
+  padding: 28px;
+}
+
+.auth-brand,
+.legal-brand,
+.paywall-brand,
+.billing-return-brand,
+.home-brand {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 750;
+}
+
+.auth-card,
+.paywall-card,
+.legal-card,
+.billing-return-card,
+.home-loading-card,
+.studio-loading-card {
+  border: 1px solid var(--stroke);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
+    var(--panel);
+  box-shadow: var(--shadow-panel);
+}
+
+.oauth-button,
+.local-link,
+.paywall-card button,
+.paywall-contact-button {
+  font: inherit;
+}
+
+.oauth-button {
+  color: #172033;
+  background: #fff;
+}

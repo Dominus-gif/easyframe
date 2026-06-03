@@ -13,7 +13,7 @@ const authErrorMessages: Record<string, string> = {
   OAuthSignin: "Could not start Google sign-in. Check the OAuth client configuration.",
   OAuthCallback: "Google returned an invalid callback. Check NEXTAUTH_URL and Google redirect URIs.",
   OAuthCreateAccount: "Google sign-in worked, but EasyFrame could not create the account.",
-  Callback: "EasyFrame could not finish the sign-in callback.",
+  Callback: "EasyFrame could not finish the sign-in, please refresh the page and try again.",
   Default: "Sign-in failed. Please try again."
 };
 

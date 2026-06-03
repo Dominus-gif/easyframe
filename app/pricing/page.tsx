@@ -1,5 +1,6 @@
 import { Check, Crown, Sparkles } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import { PricingContactButton } from "@/components/PricingContactButton";
 
 const plans = [
   {
@@ -45,7 +46,10 @@ export default async function PricingPage({ searchParams }: { searchParams?: { r
           <span><EasyFrameMark size={26} /></span>
           <strong>EasyFrame</strong>
         </a>
-        <a href="/login">Account</a>
+        <div className="paywall-nav-actions">
+          <a href="/login">Account/Login</a>
+          <PricingContactButton />
+        </div>
       </header>
 
       <section className="paywall-hero">
@@ -112,6 +116,7 @@ function PaywallStyles() {
         width: min(100%, 1240px);
         margin: 0 auto;
         justify-content: space-between;
+        gap: 18px;
       }
 
       .paywall-brand,
@@ -122,6 +127,12 @@ function PaywallStyles() {
       }
 
       .paywall-brand {
+        gap: 12px;
+      }
+
+      .paywall-nav-actions {
+        display: flex;
+        align-items: center;
         gap: 12px;
       }
 
@@ -145,6 +156,20 @@ function PaywallStyles() {
       .paywall-brand strong {
         font-size: 25px;
         letter-spacing: -0.04em;
+      }
+
+      .paywall-contact-button {
+        min-height: 42px;
+        padding: 0 16px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 14px;
+        color: #ffffff;
+        background: var(--accent-gradient);
+        box-shadow: 0 16px 38px rgba(113, 120, 255, 0.2);
+        font: inherit;
+        font-size: 14px;
+        font-weight: 850;
+        cursor: pointer;
       }
 
       .paywall-hero {

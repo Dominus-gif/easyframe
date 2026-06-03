@@ -885,7 +885,7 @@ export default function MockupStudio() {
   const renderExportDataUrl = async (format: "png" | "jpg" | "webp" = exportFormat) => {
     if (!stageRef.current) return null;
     await updateExportProgress(28);
-    const exportBackground = isTransparentBackground && format === "png" ? undefined : theme === "dark" ? "#111312" : "#f4f1e8";
+    const exportBackground = format === "png" && (isTransparentBackground || canvasRadius > 0) ? undefined : theme === "dark" ? "#111312" : "#f4f1e8";
     await updateExportProgress(42);
     const sourceDataUrl = format === "jpg"
         ? await toJpeg(stageRef.current, {
@@ -902,7 +902,7 @@ export default function MockupStudio() {
             filter: (node) => !(node instanceof HTMLElement && node.dataset.exportIgnore === "true")
           });
     await updateExportProgress(82);
-    return resizeExport(sourceDataUrl, exportWidth, exportHeight, format, exportQuality);
+    return resizeExport(sourceDataUrl, exportWidth, exportHeight, format, exportQuality, canvasRadius);
   };
 
   const exportImage = async () => {
@@ -910,11 +910,12 @@ export default function MockupStudio() {
     setExportProgress(8);
     try {
       if (!(await consumeExportAccess())) return;
-      const dataUrl = await renderExportDataUrl(exportFormat);
+      const safeFormat = canvasRadius > 0 && exportFormat !== "png" ? "png" : exportFormat;
+      const dataUrl = await renderExportDataUrl(safeFormat);
       if (!dataUrl) return;
       await updateExportProgress(94);
       const link = document.createElement("a");
-      link.download = `easyframe-export.${exportFormat}`;
+      link.download = `easyframe-export.${safeFormat}`;
       link.href = dataUrl;
       document.body.appendChild(link);
       link.click();
@@ -1094,7 +1095,10 @@ export default function MockupStudio() {
           <div className="brand">
             <span className="brand-mark"><EasyFrameMark size={28} /></span>
             <span>
-              <strong>EasyFrame</strong>
+              <span className="brand-title-line">
+                <strong>EasyFrame</strong>
+                <b>v.1.5</b>
+              </span>
               <small>Create polished visuals for every image.</small>
             </span>
           </div>
@@ -3219,7 +3223,7 @@ function getEdgeChromeWidth(edgeStyleId: string, edgeWidth: number) {
   return edgeWidth;
 }
 
-async function resizeExport(sourceDataUrl: string, width: number, height: number, format: "png" | "jpg" | "webp", quality: number) {
+async function resizeExport(sourceDataUrl: string, width: number, height: number, format: "png" | "jpg" | "webp", quality: number, cornerRadius = 0) {
   const image = await new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -3235,10 +3239,34 @@ async function resizeExport(sourceDataUrl: string, width: number, height: number
   const scale = Math.max(width / image.width, height / image.height);
   const drawWidth = image.width * scale;
   const drawHeight = image.height * scale;
+  const outputRadius = Math.min(width / 2, height / 2, Math.max(0, cornerRadius * scale));
+  if (format === "png" && outputRadius > 0) {
+    context.save();
+    drawRoundedRectPath(context, 0, 0, width, height, outputRadius);
+    context.clip();
+  }
   context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+  if (format === "png" && outputRadius > 0) {
+    context.restore();
+  }
   if (format === "jpg") return canvas.toDataURL("image/jpeg", quality / 100);
   if (format === "webp") return canvas.toDataURL("image/webp", quality / 100);
   return canvas.toDataURL("image/png");
+}
+
+function drawRoundedRectPath(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+  const r = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + r, y);
+  context.lineTo(x + width - r, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + r);
+  context.lineTo(x + width, y + height - r);
+  context.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+  context.lineTo(x + r, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - r);
+  context.lineTo(x, y + r);
+  context.quadraticCurveTo(x, y, x + r, y);
+  context.closePath();
 }
 
 function buildShadow(baseShadow: string, shadowIntensity: number, glowIntensity: number, effectId: string, shadowColor: string, glowColor: string) {
@@ -3531,6 +3559,27 @@ function StudioStyles() {
         display: block;
         font-size: 14px;
         line-height: 1.2;
+      }
+
+      .brand-title-line {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .brand-title-line b {
+        display: inline-flex;
+        align-items: center;
+        min-height: 20px;
+        padding: 0 7px;
+        border-radius: 999px;
+        border: 1px solid var(--stroke);
+        color: var(--text-secondary);
+        background: var(--panel-soft);
+        font-size: 11px;
+        font-weight: 850;
+        line-height: 1;
       }
 
       .brand small,
