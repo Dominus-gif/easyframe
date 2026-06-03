@@ -3574,12 +3574,18 @@ function StudioStyles() {
         min-height: 20px;
         padding: 0 7px;
         border-radius: 999px;
-        border: 1px solid var(--stroke);
-        color: var(--text-secondary);
-        background: var(--panel-soft);
+        border: 1px solid var(--ef-line, var(--stroke));
+        color: var(--ef-text-soft, var(--text-secondary));
+        background: var(--ef-panel-soft, var(--panel-soft));
         font-size: 11px;
         font-weight: 850;
         line-height: 1;
+      }
+
+      .studio-app.light .brand-title-line b {
+        color: #172033 !important;
+        border-color: rgba(17, 24, 39, 0.14) !important;
+        background: rgba(255, 255, 255, 0.76) !important;
       }
 
       .brand small,

@@ -182,3 +182,126 @@ button {
   color: #172033;
   background: #fff;
 }
+
+.auth-brand {
+  position: fixed;
+  top: 28px;
+  left: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-brand span {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.auth-brand span img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.auth-brand strong {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.auth-card {
+  width: min(100%, 520px);
+  padding: 34px;
+  border-radius: 30px;
+}
+
+.auth-kicker {
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--stroke);
+  border-radius: 999px;
+  color: rgba(248, 246, 239, 0.86);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.auth-card h1 {
+  margin: 24px 0 14px;
+  color: var(--text-primary);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.auth-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.oauth-button,
+.local-link {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.oauth-button {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.local-link {
+  color: #f8f6ef;
+  border: 1px solid var(--stroke);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.auth-error {
+  margin-top: 20px;
+  padding: 13px 14px;
+  border: 1px solid rgba(255, 104, 88, 0.32);
+  border-radius: 15px;
+  color: #ffd6d1;
+  background: rgba(255, 104, 88, 0.12);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.auth-notes {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.auth-notes span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
