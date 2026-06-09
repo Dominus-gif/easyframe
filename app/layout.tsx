@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { AppAnalytics } from "@/components/AppAnalytics";
 import Providers from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.easyframe.app"),
   title: "EasyFrame - Create polished visuals",
   description: "Turn Images into polished mockups for social, websites, and product launches.",
   icons: {
@@ -20,7 +22,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="dark">
-      <body><Providers>{children}</Providers></body>
+      <body>
+        <Providers>{children}</Providers>
+        <AppAnalytics />
+      </body>
     </html>
   );
 }
