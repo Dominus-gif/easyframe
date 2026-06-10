@@ -165,6 +165,9 @@ export default function EasyFrameHome() {
           <Link href="/Terms">Terms</Link>
           <Link href="/Privacy">Privacy Policy</Link>
           <a className="support-link" href="mailto:contact@easyframe.app">Contact support</a>
+          <a className="fazier-badge" href="https://fazier.com/launches/www.easyframe.app" target="_blank" rel="noopener noreferrer" aria-label="View EasyFrame on Fazier">
+            <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark" width={120} height={31} alt="Fazier badge" />
+          </a>
         </nav>
       </footer>
 
@@ -1670,6 +1673,18 @@ function HomeStyles() {
         color: white;
         background: linear-gradient(135deg, #7779f6, #56d0d2);
         box-shadow: 0 14px 34px rgba(85, 118, 255, 0.22);
+      }
+
+      .home-footer .fazier-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 44px;
+      }
+
+      .home-footer .fazier-badge img {
+        display: block;
+        width: 120px;
+        height: auto;
       }
 
       .home-shell {
