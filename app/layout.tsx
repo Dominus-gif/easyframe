@@ -16,6 +16,9 @@ export const metadata: Metadata = {
     title: "EasyFrame - Create polished visuals",
     description: "Turn Images into polished mockups for social, websites, and product launches.",
     images: ["/brand/easyframe-app-icon.svg"]
+  },
+  other: {
+    "scrolllaunch-verify": "c0a0bc9f16b0312c060ca0b5a42c1bdf"
   }
 };
 
