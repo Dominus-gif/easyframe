@@ -168,6 +168,9 @@ export default function EasyFrameHome() {
           <a className="fazier-badge" href="https://fazier.com/launches/www.easyframe.app" target="_blank" rel="noopener noreferrer" aria-label="View EasyFrame on Fazier">
             <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark" width={120} height={31} alt="Fazier badge" />
           </a>
+          <a className="scrolllaunch-badge" href="https://www.scrolllaunch.com/products/easyframe?utm_source=badge&utm_medium=embed&utm_campaign=easyframe&ref=scrolllaunch" target="_blank" rel="noopener noreferrer" aria-label="View EasyFrame on ScrollLaunch">
+            <img src="https://www.scrolllaunch.com/api/badge/easyframe" alt="Featured on ScrollLaunch" width={220} height={48} loading="lazy" />
+          </a>
         </nav>
       </footer>
 
@@ -1675,7 +1678,8 @@ function HomeStyles() {
         box-shadow: 0 14px 34px rgba(85, 118, 255, 0.22);
       }
 
-      .home-footer .fazier-badge {
+      .home-footer .fazier-badge,
+      .home-footer .scrolllaunch-badge {
         display: inline-flex;
         align-items: center;
         min-height: 44px;
@@ -1684,6 +1688,13 @@ function HomeStyles() {
       .home-footer .fazier-badge img {
         display: block;
         width: 120px;
+        height: auto;
+      }
+
+      .home-footer .scrolllaunch-badge img {
+        display: block;
+        width: 220px;
+        max-width: 100%;
         height: auto;
       }
 
