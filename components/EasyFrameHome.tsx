@@ -412,17 +412,17 @@ function HomeStyles() {
       }
 
       body {
-        background: #090a0b;
+        background: #0b0d0f;
       }
 
       .home-shell {
         min-height: 100vh;
         overflow: hidden;
-        color: #f8f6ef;
+        color: #f4f5f7;
         background:
-          radial-gradient(circle at 8% 12%, rgba(255, 100, 84, 0.22), transparent 28%),
-          radial-gradient(circle at 86% 10%, rgba(99, 102, 241, 0.26), transparent 30%),
-          linear-gradient(145deg, #08090a 0%, #101211 48%, #171612 100%);
+          radial-gradient(1100px 620px at 84% -10%, rgba(109, 93, 252, 0.26), transparent 60%),
+          radial-gradient(900px 520px at 6% 8%, rgba(255, 95, 143, 0.12), transparent 58%),
+          linear-gradient(180deg, #0b0d0f 0%, #090a0c 100%);
         font-family: var(--font-sans);
       }
 
@@ -473,6 +473,10 @@ function HomeStyles() {
       .home-brand strong {
         font-size: 28px;
         letter-spacing: -0.04em;
+        background: linear-gradient(135deg, #9a8bff 0%, #c08bff 45%, #ff7fa6 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
       }
 
       .nav-links {
@@ -514,8 +518,13 @@ function HomeStyles() {
 
       .trial-button {
         color: white;
-        background: linear-gradient(135deg, #ff6858 0%, #f12b8f 55%, #6d5dfc 100%);
-        box-shadow: 0 18px 46px rgba(241, 43, 143, 0.32);
+        background: linear-gradient(135deg, #6d5dfc 0%, #8b5cf6 46%, #ff5f8f 100%);
+        box-shadow: 0 18px 46px rgba(109, 93, 252, 0.4);
+      }
+
+      .trial-button:hover {
+        box-shadow: 0 22px 54px rgba(109, 93, 252, 0.55);
+        transform: translateY(-1px);
       }
 
       .trial-button.large {
@@ -578,7 +587,7 @@ function HomeStyles() {
 
       .hero-copy h1 span {
         color: transparent;
-        background: linear-gradient(100deg, #ff6b5f, #f12b8f 45%, #8b5cf6 82%);
+        background: linear-gradient(100deg, #6d5dfc, #ff5f8f 45%, #8b5cf6 82%);
         -webkit-background-clip: text;
         background-clip: text;
       }
@@ -891,7 +900,7 @@ function HomeStyles() {
         display: grid;
         place-items: center;
         border-radius: 30px;
-        background: linear-gradient(135deg, #ff6858 0%, #f12b8f 52%, #6d5dfc 100%);
+        background: linear-gradient(135deg, #6d5dfc 0%, #ff5f8f 52%, #6d5dfc 100%);
         box-shadow:
           inset 0 0 0 1px rgba(255,255,255,.18),
           0 34px 80px rgba(0,0,0,.34);
@@ -1057,7 +1066,7 @@ function HomeStyles() {
         place-items: center;
         border-radius: 7px;
         color: #fff;
-        background: linear-gradient(135deg, #ff6554, #f12b8f 54%, #6d5dfc);
+        background: linear-gradient(135deg, #6d5dfc, #ff5f8f 54%, #6d5dfc);
         font-size: 10px;
         font-weight: 900;
       }
@@ -1242,7 +1251,7 @@ function HomeStyles() {
         border-radius: 28px;
         background:
           radial-gradient(circle at 24% 20%, rgba(255,255,255,.48), transparent 30%),
-          linear-gradient(135deg, #ff6b5f 0%, #f12b8f 50%, #6d5dfc 100%);
+          linear-gradient(135deg, #6d5dfc 0%, #ff5f8f 50%, #6d5dfc 100%);
         box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
       }
 
@@ -1428,13 +1437,13 @@ function HomeStyles() {
         place-items: center;
         overflow: hidden;
         border-radius: 17px;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 52%, #6d5dfc);
+        background: linear-gradient(135deg, #6d5dfc, #ff5f8f 52%, #6d5dfc);
       }
 
       .showcase-card:nth-child(2) div { background: linear-gradient(135deg, #15201d, #4ca8ff); }
       .showcase-card:nth-child(3) div { background: linear-gradient(135deg, #f8f6ef, #9ef2c8); }
       .showcase-card:nth-child(4) div { background: linear-gradient(135deg, #21152e, #7b3fb2 46%, #ffce73); }
-      .showcase-card:nth-child(5) div { background: linear-gradient(135deg, #08090a, #f12b8f); }
+      .showcase-card:nth-child(5) div { background: linear-gradient(135deg, #08090a, #ff5f8f); }
 
       .showcase-card i {
         display: block;
@@ -1628,8 +1637,8 @@ function HomeStyles() {
         gap: 9px;
         border-radius: 15px;
         color: white;
-        background: linear-gradient(135deg, #ff6858 0%, #f12b8f 55%, #6d5dfc 100%);
-        box-shadow: 0 18px 46px rgba(241, 43, 143, 0.22);
+        background: linear-gradient(135deg, #6d5dfc 0%, #ff5f8f 55%, #6d5dfc 100%);
+        box-shadow: 0 18px 46px rgba(109, 93, 252, 0.22);
         text-decoration: none;
         font-size: 15px;
         font-weight: 900;
@@ -1707,12 +1716,12 @@ function HomeStyles() {
         --home-text: #f5f7fb;
         --home-soft: rgba(245, 247, 251, 0.72);
         --home-muted: rgba(245, 247, 251, 0.52);
-        --home-accent: linear-gradient(135deg, #9a9bff 0%, #7178ff 52%, #58d5c9 100%);
+        --home-accent: linear-gradient(135deg, #6d5dfc 0%, #8b5cf6 46%, #ff5f8f 100%);
         color: var(--home-text);
         background:
-          radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
-          radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.09), transparent 28%),
-          linear-gradient(145deg, #07080a 0%, #0b0c10 48%, #08090b 100%);
+          radial-gradient(1100px 620px at 84% -10%, rgba(109, 93, 252, 0.24), transparent 60%),
+          radial-gradient(900px 520px at 8% 10%, rgba(255, 95, 143, 0.1), transparent 58%),
+          linear-gradient(180deg, #0b0d0f 0%, #090a0c 100%);
         font-size: 15px;
         line-height: 1.55;
       }
@@ -1726,7 +1735,7 @@ function HomeStyles() {
       .trial-button,
       .plan-card a {
         background: var(--home-accent);
-        box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+        box-shadow: 0 18px 44px rgba(109, 93, 252, 0.32);
       }
 
       .home-brand span,
@@ -1785,7 +1794,7 @@ function HomeStyles() {
       }
 
       .hero-copy h1 span {
-        background: linear-gradient(100deg, #ffffff, #bfc2ff 48%, #76e4d9);
+        background: linear-gradient(100deg, #ffffff, #c9b8ff 46%, #ff9ec0);
         -webkit-background-clip: text;
         background-clip: text;
       }
@@ -1834,11 +1843,11 @@ function HomeStyles() {
       .preview-stage {
         background:
           radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.24), transparent 30%),
-          linear-gradient(135deg, #30334d 0%, #7178ff 52%, #58d5c9 100%);
+          linear-gradient(135deg, #241a3d 0%, #6d5dfc 52%, #ff5f8f 100%);
       }
 
       .showcase-card div {
-        background: linear-gradient(135deg, #30334d 0%, #7178ff 52%, #58d5c9 100%);
+        background: linear-gradient(135deg, #241a3d 0%, #6d5dfc 52%, #ff5f8f 100%);
       }
 
       .plan-card > span {

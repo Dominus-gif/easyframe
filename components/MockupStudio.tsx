@@ -36,6 +36,7 @@ import { EasyFrameMark } from "@/components/EasyFrameLogo";
 import BrandKit from "@/components/BrandKit";
 import BatchExportDialog from "@/components/BatchExportDialog";
 import QuickLooks from "@/components/QuickLooks";
+import MidnightTheme from "@/components/MidnightTheme";
 import { createZip, dataUrlToBytes } from "@/lib/zip";
 
 type TransformKey =
@@ -1161,7 +1162,7 @@ export default function MockupStudio() {
   }
 
   return (
-    <main className={`studio-app ${theme}`}>
+    <main className={`studio-app ${theme} ${theme === "dark" ? "midnight" : ""}`}>
       <header className="topbar">
         <div className="brand-area">
           <div className="brand">
@@ -1482,6 +1483,7 @@ export default function MockupStudio() {
       <BatchExportDialog open={batchOpen} onClose={() => setBatchOpen(false)} onExport={exportBatch} />
 
       <StudioStyles />
+      <MidnightTheme />
     </main>
   );
 }
