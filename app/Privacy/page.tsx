@@ -3,7 +3,10 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - EasyFrame",
-  description: "Privacy Policy for EasyFrame.app."
+  description: "Privacy Policy for EasyFrame.app.",
+  alternates: {
+    canonical: "https://www.easyframe.app/Privacy"
+  }
 };
 
 const sections = [

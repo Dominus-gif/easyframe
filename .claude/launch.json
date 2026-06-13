@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "easyframe-mock",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": ["-NoProfile", "-Command", "$env:ALLOW_LOCAL_MOCK_SESSION='true'; npx next dev -p 3943"],
+      "port": 3943
+    }
+  ]
+}

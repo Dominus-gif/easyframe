@@ -3,7 +3,10 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Terms of Service - EasyFrame",
-  description: "Terms of Service for EasyFrame.app."
+  description: "Terms of Service for EasyFrame.app.",
+  alternates: {
+    canonical: "https://www.easyframe.app/Terms"
+  }
 };
 
 const sections = [

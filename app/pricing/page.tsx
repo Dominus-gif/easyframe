@@ -1,6 +1,15 @@
+import type { Metadata } from "next";
 import { Check, Crown, Sparkles } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
 import { PricingContactButton } from "@/components/PricingContactButton";
+
+export const metadata: Metadata = {
+  title: "Pricing - EasyFrame",
+  description: "Choose EasyFrame access with a free trial, monthly plan, or lifetime plan for creating polished mockups.",
+  alternates: {
+    canonical: "https://www.easyframe.app/pricing"
+  }
+};
 
 const plans = [
   {

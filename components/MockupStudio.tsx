@@ -33,6 +33,10 @@ import { backgrounds, devices, edgeStyles, effects, shadows, templates } from "@
 import { useMockupStore } from "@/store/useMockupStore";
 import type { DevicePreset, TemplatePreset } from "@/lib/types";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import BrandKit from "@/components/BrandKit";
+import BatchExportDialog from "@/components/BatchExportDialog";
+import QuickLooks from "@/components/QuickLooks";
+import { createZip, dataUrlToBytes } from "@/lib/zip";
 
 type TransformKey =
   | "rotateX"
@@ -233,6 +237,8 @@ export default function MockupStudio() {
   const [studioReady, setStudioReady] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaAsset[]>([]);
   const [studioLayers, setStudioLayers] = useState<StudioLayer[]>([]);
+  const [brandOpen, setBrandOpen] = useState(false);
+  const [batchOpen, setBatchOpen] = useState(false);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
   const [extraMediaSlots, setExtraMediaSlots] = useState<ExtraMediaSlot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
@@ -932,6 +938,72 @@ export default function MockupStudio() {
     }
   };
 
+  const exportBatch = async (
+    ids: string[],
+    onProgress: (progress: { done: number; total: number; label: string }) => void
+  ) => {
+    if (!stageRef.current || !ids.length) return;
+    if (!(await consumeExportAccess())) return;
+    // Snapshot the current design so we can restore it after re-laying-out per format.
+    const snapshot = { ...useMockupStore.getState() };
+    const files: { name: string; bytes: Uint8Array }[] = [];
+    try {
+      for (let index = 0; index < ids.length; index += 1) {
+        const id = ids[index];
+        const template = templates.find((item) => item.id === id);
+        onProgress({ done: index, total: ids.length, label: template?.label ?? "Rendering" });
+        applyTemplate(id);
+        // Let React commit the new aspect ratio and CSS transitions settle before capture.
+        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 240));
+        const node = stageRef.current;
+        if (!node) continue;
+        const state = useMockupStore.getState();
+        const exportBackground =
+          state.backgroundMode === "transparent" || state.canvasRadius > 0
+            ? undefined
+            : state.theme === "dark"
+              ? "#111312"
+              : "#f4f1e8";
+        const sourceDataUrl = await toPng(node, {
+          pixelRatio: 2,
+          cacheBust: true,
+          backgroundColor: exportBackground,
+          filter: (filterNode) => !(filterNode instanceof HTMLElement && filterNode.dataset.exportIgnore === "true")
+        });
+        const finalUrl = await resizeExport(
+          sourceDataUrl,
+          state.exportWidth,
+          state.exportHeight,
+          "png",
+          state.exportQuality,
+          state.canvasRadius
+        );
+        const safeName = `${template?.platform ?? "easyframe"}-${template?.label ?? id}`
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        files.push({ name: `${safeName}-${state.exportWidth}x${state.exportHeight}.png`, bytes: dataUrlToBytes(finalUrl) });
+      }
+      onProgress({ done: ids.length, total: ids.length, label: "Packaging zip" });
+      const zipBlob = createZip(files);
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "easyframe-batch.zip";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Batch export failed", error);
+      alert("Batch export failed. Try selecting fewer formats, then export again.");
+    } finally {
+      // Restore the original design exactly as it was before the batch run.
+      useMockupStore.setState(snapshot);
+    }
+  };
+
   const copyExportImage = async () => {
     setIsExporting(true);
     setExportProgress(8);
@@ -1129,6 +1201,14 @@ export default function MockupStudio() {
             <RotateCcw size={16} />
             Start over
           </button>
+          <button className="ghost-button" onClick={() => setBrandOpen(true)}>
+            <Palette size={16} />
+            Brand kit
+          </button>
+          <button className="ghost-button accent-button" onClick={() => setBatchOpen(true)}>
+            <Layers3 size={16} />
+            Resize &amp; export all
+          </button>
           <button className="ghost-button theme-toggle-button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             {theme === "dark" ? "Light" : "Dark"}
@@ -1216,6 +1296,8 @@ export default function MockupStudio() {
               <button onClick={() => setTransform("canvasZoom", Math.min(150, canvasZoom + 10))}>+</button>
             </div>
           </div>
+
+          <QuickLooks />
 
           <MockupCanvas
             refEl={stageRef}
@@ -1395,6 +1477,10 @@ export default function MockupStudio() {
             .join("\n")}
         </style>
       ) : null}
+
+      <BrandKit open={brandOpen} onClose={() => setBrandOpen(false)} />
+      <BatchExportDialog open={batchOpen} onClose={() => setBatchOpen(false)} onExport={exportBatch} />
+
       <StudioStyles />
     </main>
   );
