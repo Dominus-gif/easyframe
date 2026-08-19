@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import SponsorLine from "@/components/SponsorLine";
 
 type LegalSection = {
   title: string;
@@ -54,6 +55,7 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
         <div>
           <Link href="/Privacy">Privacy Policy</Link>
           <Link href="/Terms">Terms of Service</Link>
+          <SponsorLine />
         </div>
       </footer>
 

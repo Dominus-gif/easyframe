@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Check, Crown, Sparkles } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
 import { PricingContactButton } from "@/components/PricingContactButton";
+import SponsorLine from "@/components/SponsorLine";
 
 export const metadata: Metadata = {
   title: "Pricing - EasyFrame",
@@ -95,6 +96,10 @@ export default async function PricingPage({ searchParams }: { searchParams?: { r
           </article>
         ))}
       </section>
+
+      <footer className="paywall-footer">
+        <SponsorLine />
+      </footer>
 
       <PaywallStyles />
     </main>
@@ -375,6 +380,13 @@ function PaywallStyles() {
       .paywall-card button {
         border-radius: 14px;
         font-weight: 650;
+      }
+
+      .paywall-footer {
+        width: min(100%, 1240px);
+        margin: 40px auto 8px;
+        display: flex;
+        justify-content: center;
       }
 
       @media (max-width: 900px) {

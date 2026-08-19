@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import SponsorLine from "@/components/SponsorLine";
 
 const authErrorMessages: Record<string, string> = {
   Configuration: "Google sign-in is not configured for this EasyFrame environment yet.",
@@ -110,6 +111,10 @@ function LoginContent() {
           <span>After login, active users go straight to the app.</span>
         </div>
       </section>
+
+      <footer className="auth-sponsor">
+        <SponsorLine />
+      </footer>
 
       <AuthStyles />
     </main>
@@ -351,6 +356,15 @@ function AuthStyles() {
         min-height: 50px;
         border-radius: 14px;
         font-weight: 650;
+      }
+
+      .auth-sponsor {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 20px;
+        display: flex;
+        justify-content: center;
       }
     `}</style>
   );

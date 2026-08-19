@@ -37,6 +37,7 @@ import BrandKit from "@/components/BrandKit";
 import BatchExportDialog from "@/components/BatchExportDialog";
 import QuickLooks from "@/components/QuickLooks";
 import MidnightTheme from "@/components/MidnightTheme";
+import SponsorLine from "@/components/SponsorLine";
 import { createZip, dataUrlToBytes } from "@/lib/zip";
 
 type TransformKey =
@@ -1231,6 +1232,9 @@ export default function MockupStudio() {
                   <a className="account-upgrade-button" href="/pricing">Upgrade plan</a>
                 ) : null}
                 <button onClick={() => signOut({ callbackUrl: "/" })}>Sign out</button>
+                <div style={{ marginTop: 8, paddingTop: 10, borderTop: "1px solid var(--ef-border)", display: "flex", justifyContent: "center" }}>
+                  <SponsorLine />
+                </div>
               </div>
             ) : null}
           </div>

@@ -14,6 +14,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import SponsorLine from "@/components/SponsorLine";
 
 const plans = [
   {
@@ -165,6 +166,7 @@ export default function EasyFrameHome() {
           <Link href="/Terms">Terms</Link>
           <Link href="/Privacy">Privacy Policy</Link>
           <a className="support-link" href="mailto:contact@easyframe.app">Contact support</a>
+          <SponsorLine />
           <a className="fazier-badge" href="https://fazier.com/launches/www.easyframe.app" target="_blank" rel="noopener noreferrer" aria-label="View EasyFrame on Fazier">
             <img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=launched&theme=dark" width={120} height={31} alt="Fazier badge" />
           </a>
