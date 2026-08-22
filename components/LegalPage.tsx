@@ -26,8 +26,8 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
           <strong>EasyFrame</strong>
         </Link>
         <div className="legal-links">
-          <Link href="/Privacy">Privacy</Link>
-          <Link href="/Terms">Terms</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
           <Link className="legal-cta" href="/login">Open app</Link>
         </div>
       </nav>
@@ -53,8 +53,8 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
       <footer className="legal-footer">
         <span>EasyFrame.app</span>
         <div>
-          <Link href="/Privacy">Privacy Policy</Link>
-          <Link href="/Terms">Terms of Service</Link>
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms of Service</Link>
           <SponsorLine />
         </div>
       </footer>

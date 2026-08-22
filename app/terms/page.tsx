@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Terms of Service - EasyFrame",
   description: "Terms of Service for EasyFrame.app.",
   alternates: {
-    canonical: "https://www.easyframe.app/Terms"
+    canonical: "https://www.easyframe.app/terms"
   }
 };
 

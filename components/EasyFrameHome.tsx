@@ -163,8 +163,8 @@ export default function EasyFrameHome() {
           <span>Create polished visuals for every image.</span>
         </div>
         <nav aria-label="Footer navigation">
-          <Link href="/Terms">Terms</Link>
-          <Link href="/Privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms</Link>
+          <Link href="/privacy">Privacy Policy</Link>
           <a className="support-link" href="mailto:contact@easyframe.app">Contact support</a>
           <SponsorLine />
           <a className="fazier-badge" href="https://fazier.com/launches/www.easyframe.app" target="_blank" rel="noopener noreferrer" aria-label="View EasyFrame on Fazier">

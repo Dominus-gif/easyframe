@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy - EasyFrame",
   description: "Privacy Policy for EasyFrame.app.",
   alternates: {
-    canonical: "https://www.easyframe.app/Privacy"
+    canonical: "https://www.easyframe.app/privacy"
   }
 };
 
