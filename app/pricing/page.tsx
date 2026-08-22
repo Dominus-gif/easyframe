@@ -1,399 +1,94 @@
 import type { Metadata } from "next";
-import { Check, Crown, Sparkles } from "lucide-react";
-import { EasyFrameMark } from "@/components/EasyFrameLogo";
-import { PricingContactButton } from "@/components/PricingContactButton";
-import SponsorLine from "@/components/SponsorLine";
+import Link from "next/link";
+import { ArrowRight, Check, Crown, Sparkles } from "lucide-react";
+import SiteNav from "@/components/site/SiteNav";
+import SiteFooter from "@/components/site/SiteFooter";
+import PremiumButtons from "@/components/PremiumButtons";
 
 export const metadata: Metadata = {
-  title: "Pricing - EasyFrame",
-  description: "Choose EasyFrame access with a free trial, monthly plan, or lifetime plan for creating polished mockups.",
-  alternates: {
-    canonical: "https://www.easyframe.app/pricing"
-  }
+  title: "Pricing — Free Forever & Premium | EasyFrame",
+  description:
+    "EasyFrame is free forever — unlimited mockups, no account required. Upgrade to Premium for an ad-free experience, 4K & transparent exports, custom backgrounds, batch export, and saved projects.",
+  alternates: { canonical: "https://www.easyframe.app/pricing" }
 };
 
-const plans = [
-  {
-    id: "trial",
-    badge: "Try it out",
-    name: "1-Day Free Trial",
-    price: "$0",
-    description: "Full feature access for one day.",
-    features: ["5 exports maximum", "All features included", "No credit card required"],
-    action: "/api/billing/trial",
-    cta: "Start free trial"
-  },
-  {
-    id: "monthly",
-    badge: "Most popular",
-    name: "1-Month Plan",
-    price: "$4",
-    suffix: "/month",
-    description: "Simple monthly access.",
-    features: ["Unlimited exports", "All features included", "Cancel anytime"],
-    action: "/api/billing/checkout",
-    cta: "Choose monthly"
-  },
-  {
-    id: "lifetime",
-    badge: "Best value",
-    name: "Lifetime Plan",
-    price: "$80",
-    description: "Pay once. Keep everything.",
-    features: ["Unlimited exports", "All features included", "Future updates included"],
-    action: "/api/billing/checkout",
-    cta: "Choose lifetime"
-  }
+const MONTHLY = process.env.NEXT_PUBLIC_PREMIUM_MONTHLY ?? "6";
+const LIFETIME = process.env.NEXT_PUBLIC_PREMIUM_LIFETIME ?? "99";
+
+const freeFeatures = [
+  "Unlimited mockups — no account",
+  "All device templates",
+  "Export up to 2048px",
+  "PNG, JPEG & WebP",
+  "Solid & gradient backgrounds",
+  "Ad-supported"
 ];
 
-export default async function PricingPage({ searchParams }: { searchParams?: { reason?: string; checkout?: string } }) {
-  const reason = searchParams?.reason;
+const premiumFeatures = [
+  "Everything in Free, ad-free",
+  "4K export (up to 3840px)",
+  "Transparent-background PNGs",
+  "Custom background image uploads",
+  "Batch export",
+  "Saved projects"
+];
 
+export default function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
+  const reason = searchParams?.reason;
   return (
-    <main className="paywall-shell">
-      <header className="paywall-nav">
-        <a className="paywall-brand" href="/">
-          <span><EasyFrameMark size={26} /></span>
-          <strong>EasyFrame</strong>
-        </a>
-        <div className="paywall-nav-actions">
-          <a href="/login">Account/Login</a>
-          <PricingContactButton />
+    <main className="mk">
+      <SiteNav />
+
+      <header className="mk-hero" style={{ paddingBottom: 24 }}>
+        <div className="mk-wrap">
+          <span className="mk-kicker"><Sparkles size={15} /> Free forever · Premium when you need more</span>
+          <h1 className="mk-h1">Simple, honest <em>pricing</em></h1>
+          <p className="mk-sub">The mockup tool is free and unlimited. Premium removes ads and unlocks pro export options — support the tool and get more done.</p>
+          {reason === "trial-ended" || reason === "plan-required" ? (
+            <p className="mk-sub" style={{ marginTop: 14, color: "var(--accent)" }}>Sign in to manage or upgrade your plan.</p>
+          ) : null}
         </div>
       </header>
 
-      <section className="paywall-hero">
-        <span><Sparkles size={16} /> Choose your access</span>
-        <h1>Unlock the EasyFrame studio.</h1>
-        <p>Start with a one-day trial, choose monthly access, or get lifetime access with all future updates.</p>
-        {reason === "trial-ended" ? (
-          <div className="paywall-notice">Your free trial has ended. Choose monthly or lifetime access to continue creating.</div>
-        ) : null}
-        {searchParams?.checkout === "pending" ? (
-          <div className="paywall-notice">Your payment is still being confirmed. If you completed checkout, try opening the studio again in a moment.</div>
-        ) : null}
+      <section className="mk-section" style={{ paddingTop: 8 }}>
+        <div className="mk-wrap" style={{ maxWidth: 900 }}>
+          <div className="mk-grid" style={{ gridTemplateColumns: "1fr 1fr" }}>
+            {/* Free */}
+            <div className="mk-card" style={{ padding: 30 }}>
+              <h3 style={{ fontSize: 20, margin: 0 }}>Free</h3>
+              <div style={{ fontSize: 52, fontWeight: 800, letterSpacing: "-0.04em", margin: "10px 0 2px" }}>$0</div>
+              <p style={{ color: "var(--text-muted)", margin: "0 0 20px", fontSize: 14 }}>No account required</p>
+              <ul className="mk-bullets">
+                {freeFeatures.map((f) => (<li key={f}>{f}</li>))}
+              </ul>
+              <Link href="/editor" className="mk-ghost" style={{ width: "100%", justifyContent: "center", marginTop: 24 }}>
+                Open the free editor <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            {/* Premium */}
+            <div className="mk-card" style={{ padding: 30, borderColor: "rgba(109,93,252,.5)", background: "linear-gradient(180deg, rgba(109,93,252,.1), rgba(255,95,143,.04))" }}>
+              <h3 style={{ fontSize: 20, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <Crown size={18} /> Premium
+              </h3>
+              <div style={{ fontSize: 52, fontWeight: 800, letterSpacing: "-0.04em", margin: "10px 0 2px" }}>
+                ${MONTHLY}<span style={{ fontSize: 18, fontWeight: 500, color: "var(--text-muted)" }}> /month</span>
+              </div>
+              <p style={{ color: "var(--text-muted)", margin: "0 0 20px", fontSize: 14 }}>or ${LIFETIME} once — lifetime access</p>
+              <ul className="mk-bullets">
+                {premiumFeatures.map((f) => (<li key={f}>{f}</li>))}
+              </ul>
+              <PremiumButtons monthly={MONTHLY} lifetime={LIFETIME} />
+            </div>
+          </div>
+
+          <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, marginTop: 22 }}>
+            You&apos;ll be asked to sign in at checkout. Premium one-time purchases are refundable within 14 days.
+          </p>
+        </div>
       </section>
 
-      <section className="paywall-grid">
-        {plans.map((plan) => (
-          <article key={plan.id} className={`paywall-card ${plan.id}`}>
-            <b>{plan.badge}</b>
-            <h2>{plan.name}</h2>
-            <strong>{plan.price}{plan.suffix ? <small>{plan.suffix}</small> : null}</strong>
-            <p>{plan.description}</p>
-            <ul>
-              {plan.features.map((feature) => (
-                <li key={feature}><Check size={16} /> {feature}</li>
-              ))}
-            </ul>
-            <form action={plan.action} method="post">
-              {plan.id !== "trial" ? <input type="hidden" name="plan" value={plan.id} /> : null}
-              <button type="submit">
-                {plan.id === "lifetime" ? <Crown size={17} /> : null}
-                {plan.cta}
-              </button>
-            </form>
-          </article>
-        ))}
-      </section>
-
-      <footer className="paywall-footer">
-        <SponsorLine />
-      </footer>
-
-      <PaywallStyles />
+      <SiteFooter />
     </main>
-  );
-}
-
-function PaywallStyles() {
-  return (
-    <style dangerouslySetInnerHTML={{ __html: `
-      .paywall-shell {
-        min-height: 100vh;
-        padding: 24px;
-        color: #f8f6ef;
-        background:
-          radial-gradient(circle at 14% 8%, rgba(255, 104, 88, 0.18), transparent 28%),
-          radial-gradient(circle at 86% 14%, rgba(109, 93, 252, 0.24), transparent 30%),
-          linear-gradient(145deg, #08090a 0%, #101211 52%, #171612 100%);
-        font-family: var(--font-sans);
-      }
-
-      .paywall-nav,
-      .paywall-brand {
-        display: flex;
-        align-items: center;
-      }
-
-      .paywall-nav {
-        width: min(100%, 1240px);
-        margin: 0 auto;
-        justify-content: space-between;
-        gap: 18px;
-      }
-
-      .paywall-brand,
-      .paywall-nav a {
-        color: #fffaf2;
-        text-decoration: none;
-        font-weight: 850;
-      }
-
-      .paywall-brand {
-        gap: 12px;
-      }
-
-      .paywall-nav-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .paywall-brand span {
-        width: 44px;
-        height: 44px;
-        display: grid;
-        place-items: center;
-        border-radius: 0;
-        background: transparent;
-        box-shadow: none;
-        overflow: visible;
-      }
-
-      .paywall-brand span img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
-
-      .paywall-brand strong {
-        font-size: 25px;
-        letter-spacing: -0.04em;
-      }
-
-      .paywall-contact-button {
-        min-height: 42px;
-        padding: 0 16px;
-        border: 1px solid rgba(255,255,255,.12);
-        border-radius: 14px;
-        color: #ffffff;
-        background: var(--accent-gradient);
-        box-shadow: 0 16px 38px rgba(113, 120, 255, 0.2);
-        font: inherit;
-        font-size: 14px;
-        font-weight: 850;
-        cursor: pointer;
-      }
-
-      .paywall-hero {
-        width: min(100%, 820px);
-        margin: 72px auto 34px;
-        text-align: center;
-      }
-
-      .paywall-hero span {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        min-height: 38px;
-        padding: 0 15px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.07);
-        border: 1px solid rgba(255,255,255,.1);
-        color: rgba(248,246,239,.86);
-        font-size: 13px;
-        font-weight: 850;
-      }
-
-      .paywall-hero h1 {
-        margin: 22px 0 12px;
-        color: #fffdf7;
-        font-size: clamp(44px, 6vw, 76px);
-        line-height: .98;
-        letter-spacing: -0.07em;
-      }
-
-      .paywall-hero p {
-        margin: 0 auto;
-        max-width: 640px;
-        color: rgba(248,246,239,.66);
-        font-size: 19px;
-        line-height: 1.5;
-      }
-
-      .paywall-notice {
-        width: min(100%, 620px);
-        margin: 22px auto 0;
-        padding: 13px 16px;
-        border-radius: 16px;
-        border: 1px solid rgba(104, 213, 236, 0.28);
-        color: var(--text-primary);
-        background: rgba(104, 213, 236, 0.09);
-        font-size: 14px;
-        font-weight: 750;
-      }
-
-      .paywall-grid {
-        width: min(100%, 1240px);
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 22px;
-      }
-
-      .paywall-card {
-        padding: 26px;
-        border-radius: 28px;
-        border: 1px solid rgba(255,255,255,.12);
-        background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035));
-        box-shadow: 0 30px 90px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
-      }
-
-      .paywall-card b {
-        display: inline-flex;
-        min-height: 30px;
-        align-items: center;
-        padding: 0 13px;
-        border-radius: 999px;
-        background: rgba(255,255,255,.08);
-        color: #74f0b3;
-        font-size: 12px;
-      }
-
-      .paywall-card.monthly b { color: #ff7367; }
-      .paywall-card.lifetime b { color: #6aa8ff; }
-
-      .paywall-card h2 {
-        margin: 24px 0 10px;
-        color: #fffdf7;
-        font-size: 25px;
-      }
-
-      .paywall-card > strong {
-        display: block;
-        color: #fffdf7;
-        font-size: 58px;
-        line-height: 1;
-        letter-spacing: -0.06em;
-      }
-
-      .paywall-card > strong small {
-        margin-left: 8px;
-        color: rgba(248,246,239,.58);
-        font-size: 16px;
-        letter-spacing: 0;
-      }
-
-      .paywall-card p,
-      .paywall-card li {
-        color: rgba(248,246,239,.68);
-      }
-
-      .paywall-card > p {
-        min-height: 44px;
-      }
-
-      .paywall-card ul {
-        display: grid;
-        gap: 11px;
-        padding: 0;
-        margin: 24px 0;
-        list-style: none;
-      }
-
-      .paywall-card li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .paywall-card li svg {
-        color: #74f0b3;
-      }
-
-      .paywall-card button {
-        width: 100%;
-        min-height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 9px;
-        border: 0;
-        border-radius: 15px;
-        color: white;
-        background: linear-gradient(135deg, #ff6858 0%, #f12b8f 55%, #6d5dfc 100%);
-        box-shadow: 0 18px 46px rgba(241, 43, 143, 0.24);
-        font-weight: 900;
-        cursor: pointer;
-      }
-
-      .paywall-shell {
-        color: var(--text-primary);
-        background:
-          radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
-          radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
-          linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
-      }
-
-      .paywall-card button {
-        background: var(--accent-gradient);
-        box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
-      }
-
-      .paywall-brand span {
-        background: transparent;
-        box-shadow: none;
-      }
-
-      .paywall-brand strong {
-        color: var(--text-primary);
-        font-size: 24px;
-        font-weight: 700;
-      }
-
-      .paywall-nav a,
-      .paywall-hero p,
-      .paywall-card p,
-      .paywall-card li,
-      .paywall-card > strong small {
-        color: var(--text-muted);
-      }
-
-      .paywall-hero span,
-      .paywall-card {
-        border-color: var(--stroke);
-        background:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
-          var(--panel);
-        box-shadow: var(--shadow-panel);
-      }
-
-      .paywall-hero h1,
-      .paywall-card h2,
-      .paywall-card > strong {
-        color: var(--text-primary);
-      }
-
-      .paywall-card button {
-        border-radius: 14px;
-        font-weight: 650;
-      }
-
-      .paywall-footer {
-        width: min(100%, 1240px);
-        margin: 40px auto 8px;
-        display: flex;
-        justify-content: center;
-      }
-
-      @media (max-width: 900px) {
-        .paywall-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-    ` }} />
   );
 }

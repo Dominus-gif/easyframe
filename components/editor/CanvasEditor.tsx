@@ -11,9 +11,12 @@ import {
   type EditorSettings,
   type ExportFormat
 } from "@/lib/editor/compositor";
+import { usePremium } from "@/lib/entitlement";
+import { track } from "@/lib/analytics";
 
 const SOLID_COLORS = ["#0b0d0f", "#ffffff", "#f4f1ea", "#111827", "#6d5dfc", "#ff5f8f", "#13e0c4", "#ff9f45"];
 const FREE_MAX_EDGE = 2048;
+const PREMIUM_MAX_EDGE = 3840;
 const PREVIEW_MAX_EDGE = 1400;
 
 export default function CanvasEditor({ initialDevice }: { initialDevice?: string }) {
@@ -38,6 +41,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [busy, setBusy] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const { premium } = usePremium();
 
   const flash = (message: string) => {
     setNotice(message);
@@ -106,6 +110,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     try {
       const img = await loadImageSafely(source);
       setImage(img);
+      track("image_uploaded", {});
     } catch {
       flash("Could not load that image. Try a PNG, JPEG, or WebP.");
     } finally {
@@ -184,7 +189,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const onDownload = async () => {
     setBusy(true);
     try {
-      const blob = await exportScene(imgRef.current, settings, format, quality / 100, FREE_MAX_EDGE);
+      const maxEdge = premium ? PREMIUM_MAX_EDGE : FREE_MAX_EDGE;
+      // Guard: transparent export is Premium-only; fall back to a solid bg for free users.
+      const exportSettings =
+        settings.background.type === "transparent" && !premium
+          ? { ...settings, background: { type: "solid" as const, color: "#0b0d0f" } }
+          : settings;
+      const blob = await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge);
+      track("export_completed", { device: settings.deviceSlug, format, premium });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       const ext = format === "jpeg" ? "jpg" : format;
@@ -303,6 +315,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                 onClick={() => update({ background: { type: "solid", color: c } })}
               />
             ))}
+            <button
+              className={`ed-swatch ed-swatch-alpha ${bg.type === "transparent" ? "on" : ""}`}
+              aria-label="Transparent background (Premium)"
+              title={premium ? "Transparent background" : "Transparent background — Premium"}
+              onClick={() => {
+                if (premium) update({ background: { type: "transparent" } });
+                else flash("Transparent backgrounds are a Premium feature.");
+              }}
+            >
+              {!premium ? <span className="ed-pro">PRO</span> : null}
+            </button>
           </div>
 
           <Range label="Padding" value={settings.padding} min={0} max={0.4} step={0.01} onChange={(v) => update({ padding: v })} />
@@ -325,7 +348,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           {format !== "png" ? (
             <Range label="Quality" value={quality} min={40} max={100} step={1} onChange={setQuality} />
           ) : null}
-          <p className="ed-hint">Free export up to {FREE_MAX_EDGE}px · 4K &amp; transparent background are Premium.</p>
+          <p className="ed-hint">
+            {premium
+              ? `Premium: export up to ${PREMIUM_MAX_EDGE}px (4K) with transparent backgrounds.`
+              : `Free export up to ${FREE_MAX_EDGE}px · `}
+            {!premium ? <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a> : null}
+          </p>
         </aside>
       </div>
 
@@ -389,6 +417,8 @@ function EditorStyles() {
       .ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
       .ed-swatch { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); cursor: pointer; }
       .ed-swatch.on { outline: 2px solid var(--acc); outline-offset: 1px; }
+      .ed-swatch-alpha { position: relative; background-color: #fff; background-image: linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%); background-size: 12px 12px; background-position: 0 0,0 6px,6px -6px,-6px 0; }
+      .ed-pro { position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 800; color: #111; background: rgba(255,255,255,.55); border-radius: 8px; }
       .ed-range { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
       .ed-range span { display: flex; justify-content: space-between; }
       .ed-range b { color: var(--text); }

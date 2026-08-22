@@ -12,6 +12,7 @@ export default function SiteNav() {
         <div className="mk-nav-links">
           <Link href="/editor">Editor</Link>
           <Link href="/templates">Templates</Link>
+          <Link href="/blog">Blog</Link>
           <Link href="/pricing">Pricing</Link>
           <Link href="/editor" className="mk-cta">
             Open free editor <ArrowRight size={16} />

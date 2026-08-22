@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
   if (!session?.user?.id) {
     if (localBypass) {
-      return NextResponse.redirect(new URL("/studio", request.url), 303);
+      return NextResponse.redirect(new URL("/editor", request.url), 303);
     }
 
     return NextResponse.redirect(new URL("/login?reason=session-required", request.url), 303);
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   if (process.env.NODE_ENV !== "production" || localBypass) {
     await grantPaidAccess(session.user.id, plan);
-    return NextResponse.redirect(new URL("/studio", request.url), 303);
+    return NextResponse.redirect(new URL("/editor", request.url), 303);
   }
 
   return NextResponse.redirect(new URL("/pricing?checkout=missing", request.url), 303);

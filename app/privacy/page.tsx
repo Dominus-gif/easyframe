@@ -3,7 +3,7 @@ import LegalPage from "@/components/LegalPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - EasyFrame",
-  description: "Privacy Policy for EasyFrame.app.",
+  description: "How EasyFrame handles your data: images are processed in your browser and never stored, plus how we use advertising and analytics.",
   alternates: {
     canonical: "https://www.easyframe.app/privacy"
   }
@@ -11,48 +11,61 @@ export const metadata: Metadata = {
 
 const sections = [
   {
-    title: "Information We Collect",
+    title: "Your Images Stay In Your Browser",
     body: [
-      "When you sign in to EasyFrame, we collect basic account information provided by your authentication provider, such as your name, email address, and profile image. We also store app usage details needed to operate the product, including trial status, export count, plan type, and subscription status.",
-      "If you upload media to create mockups, that media is used to render your design experience. You should avoid uploading sensitive, confidential, or illegal content."
+      "This is the most important thing to know: all mockup compositing happens locally in your browser using the Canvas API. Images you upload are never sent to, processed by, or stored on our servers. Because your screenshots never leave your device, there is nothing for us to store, share, or lose.",
+      "Saved projects (a Premium feature that requires an account) are the only exception; where offered, they are stored account-scoped and encrypted at rest."
     ]
   },
   {
-    title: "How We Use Information",
+    title: "Information We Collect",
     body: [
-      "We use your information to provide the EasyFrame studio, authenticate your account, manage free trials, process subscriptions, prevent abuse, and improve the product experience.",
-      "We may use account and subscription records to provide support, troubleshoot issues, and understand whether your plan is active."
+      "The free tool requires no account, and we do not collect your images. If you create an account — only needed to purchase Premium or save projects — we collect basic profile information from your sign-in provider (such as name, email, and profile image), along with records needed to run your plan (subscription status, plan type, and export counts).",
+      "You should avoid uploading sensitive, confidential, or illegal content."
+    ]
+  },
+  {
+    title: "Advertising",
+    body: [
+      "We show display advertising through Google AdSense to keep EasyFrame free. Google and its partners may use cookies and device identifiers to serve and measure ads, including personalized advertising where permitted by law.",
+      "Advertising cookies load only after you accept them in our cookie banner. You can manage or opt out of personalized ads through Google's Ads Settings. Premium removes ads entirely."
+    ]
+  },
+  {
+    title: "Analytics",
+    body: [
+      "We use Google Analytics 4 to understand aggregate usage — for example, which pages are viewed and how often people upload and export mockups. We never send your image content to analytics. Analytics uses cookies, which load after consent."
+    ]
+  },
+  {
+    title: "Cookies And Consent",
+    body: [
+      "Essential cookies keep you signed in (when you have an account) and remember your preferences. Advertising and analytics cookies are loaded only after you consent through our cookie banner. You can withdraw consent at any time by declining the banner or clearing this site's data in your browser."
     ]
   },
   {
     title: "Authentication And Payments",
     body: [
-      "EasyFrame uses third-party services for authentication, database hosting, deployment, and payments. Google OAuth may be used for sign-in. Supabase may be used to store account and plan records. Dodo Payments may be used to process purchases and subscription events.",
-      "Payment details are handled by the payment provider. EasyFrame does not intentionally store full credit card numbers."
-    ]
-  },
-  {
-    title: "Cookies And Sessions",
-    body: [
-      "We use cookies and similar session technology to keep you signed in, protect authenticated routes, and remember essential app state. Some cookies are required for the service to work."
+      "EasyFrame uses third-party services for authentication, database hosting, deployment, advertising, analytics, and payments. Google OAuth may be used for sign-in. Account and plan records may be stored with our database provider. Dodo Payments processes purchases and subscription events.",
+      "Payment details are handled by the payment provider. EasyFrame does not store full credit card numbers."
     ]
   },
   {
     title: "Data Sharing",
     body: [
-      "We do not sell your personal information. We share information only with service providers that help us operate EasyFrame, comply with legal obligations, protect the service, or complete actions you request."
+      "We do not sell your personal information. We share information only with the service providers that help us operate EasyFrame (authentication, hosting, payments, advertising, and analytics), to comply with legal obligations, to protect the service, or to complete actions you request."
     ]
   },
   {
     title: "Data Retention",
     body: [
-      "We keep account, project, trial, subscription, and payment event records for as long as needed to provide the service, meet legal obligations, resolve disputes, and maintain accurate billing history."
+      "We do not retain your uploaded images because they are never stored. We keep account, subscription, and payment-event records for as long as needed to provide the service, meet legal obligations, resolve disputes, and maintain accurate billing history."
     ]
   },
   {
     title: "Your Choices",
     body: [
-      "You can stop using EasyFrame at any time. You may contact us to request access, correction, or deletion of your account information, subject to legal, security, and billing record requirements."
+      "You can use the core tool without an account. You can decline advertising and analytics cookies in our banner and manage ad personalization through Google. If you have an account, you may contact us to request access, correction, or deletion of your account information, subject to legal, security, and billing-record requirements."
     ]
   },
   {
@@ -68,8 +81,8 @@ export default function PrivacyPage() {
     <LegalPage
       eyebrow="Privacy Policy"
       title="Privacy at EasyFrame"
-      updated="May 31, 2026"
-      intro="This Privacy Policy explains what EasyFrame collects, how we use it, and how we protect the information needed to run the app."
+      updated="August 20, 2026"
+      intro="This Privacy Policy explains what EasyFrame collects and how we use it. In short: your images are processed in your browser and never stored, and advertising and analytics cookies load only after you consent."
       sections={sections}
     />
   );

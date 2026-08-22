@@ -419,3 +419,17 @@ button {
 .mk-sample { aspect-ratio: 4/3; display: grid; place-items: center; border: 1px solid var(--stroke); border-radius: var(--mk-radius); }
 @media (max-width: 860px) { .mk-steps, .mk-grid { grid-template-columns: 1fr; } .mk-tpl-hero { grid-template-columns: 1fr; } .mk-tpl-hero .mk-h1 { text-align: center; } }
 
+
+/* Blog article (Phase 4) */
+.mk-article { max-width: 760px; padding: clamp(30px,5vw,56px) 0; }
+.mk-article-head { border-bottom: 1px solid var(--stroke); padding-bottom: 24px; margin-bottom: 8px; }
+.mk-article-body h2 { font-size: 24px; letter-spacing: -0.02em; margin: 34px 0 12px; }
+.mk-article-body p { color: var(--text-secondary); font-size: 17px; line-height: 1.8; margin: 0 0 18px; }
+.mk-article-body ul, .mk-article-body ol { color: var(--text-secondary); font-size: 17px; line-height: 1.8; padding-left: 22px; margin: 0 0 18px; }
+.mk-article-body li { margin: 0 0 8px; }
+
+/* Reduced-motion & focus polish (Phase 4 a11y) */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}
+.mk a:focus-visible, .mk button:focus-visible, .mk-cta:focus-visible, .mk-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }

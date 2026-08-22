@@ -7,6 +7,8 @@ import { templateCopy, silhouetteClass, SITE_URL } from "@/lib/site";
 import SiteNav from "@/components/site/SiteNav";
 import SiteFooter from "@/components/site/SiteFooter";
 import JsonLd from "@/components/site/JsonLd";
+import AdSlot from "@/components/ads/AdSlot";
+import TrackView from "@/components/site/TrackView";
 
 export function generateStaticParams() {
   return devices.map((d) => ({ slug: d.slug }));
@@ -47,6 +49,7 @@ export default function TemplatePage({ params }: { params: { slug: string } }) {
   return (
     <main className="mk">
       <SiteNav />
+      <TrackView event="template_viewed" params={{ device: device.slug }} />
 
       <section className="mk-wrap">
         <div className="mk-tpl-hero">
@@ -84,6 +87,7 @@ export default function TemplatePage({ params }: { params: { slug: string } }) {
 
       <section className="mk-section" style={{ paddingTop: 0 }}>
         <div className="mk-wrap">
+          <div style={{ marginBottom: 32 }}><AdSlot variant="incontent" /></div>
           <div className="mk-section-head" style={{ marginBottom: 24, textAlign: "left" }}>
             <span className="mk-eyebrow">Examples</span>
             <h2 className="mk-h2" style={{ margin: "8px 0 0", maxWidth: "none" }}>{device.name} mockup examples</h2>

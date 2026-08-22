@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppAnalytics } from "@/components/AppAnalytics";
+import CookieConsent from "@/components/CookieConsent";
 import Providers from "./providers";
 import "./globals.css";
 
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body>
         <Providers>{children}</Providers>
         <AppAnalytics />
+        <CookieConsent />
       </body>
     </html>
   );

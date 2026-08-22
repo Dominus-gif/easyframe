@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { EasyFrameMark } from "@/components/EasyFrameLogo";
+import { track } from "@/lib/analytics";
 
 type AccessResponse = {
   hasAccess?: boolean;
@@ -50,13 +51,15 @@ export default function BillingReturnPage() {
         if (cancelled) return;
         if (response.ok && data?.hasAccess) {
           setStatus("ready");
-          window.location.replace("/studio");
+          track("premium_purchased", { plan });
+          window.location.replace("/editor");
           return;
         }
 
         if (attempts === 1 && await confirmPayment()) {
           setStatus("ready");
-          window.location.replace("/studio");
+          track("premium_purchased", { plan });
+          window.location.replace("/editor");
           return;
         }
       } catch {
@@ -94,11 +97,11 @@ export default function BillingReturnPage() {
         <h1>{status === "pending" ? "Your access is almost ready." : "Setting up your EasyFrame access."}</h1>
         <p>
           {status === "pending"
-            ? "Dodo is still sending the final confirmation. This usually finishes in a moment, and you can retry the studio from here."
-            : `We are checking your ${plan} access and will redirect you to the studio automatically.`}
+            ? "Dodo is still sending the final confirmation. This usually finishes in a moment, and you can open the editor from here."
+            : `We are checking your ${plan} access and will redirect you to the editor automatically.`}
         </p>
         <div className="billing-return-actions">
-          <Link href="/studio">Open studio</Link>
+          <Link href="/editor">Open editor</Link>
           <Link href="/pricing">Back to pricing</Link>
         </div>
       </section>

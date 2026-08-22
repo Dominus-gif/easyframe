@@ -5,6 +5,7 @@ import { faqs, howItWorks, silhouetteClass, SITE_URL } from "@/lib/site";
 import SiteNav from "@/components/site/SiteNav";
 import SiteFooter from "@/components/site/SiteFooter";
 import JsonLd from "@/components/site/JsonLd";
+import AdSlot from "@/components/ads/AdSlot";
 
 export default function Landing() {
   const softwareLd = {
@@ -51,6 +52,8 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      <div className="mk-wrap"><AdSlot variant="header" /></div>
 
       <section className="mk-section" id="how">
         <div className="mk-wrap">

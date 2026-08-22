@@ -2,17 +2,20 @@ import Link from "next/link";
 import { devices } from "@/lib/editor/devices";
 import { categories } from "@/lib/site";
 import SponsorLine from "@/components/SponsorLine";
+import AdSlot from "@/components/ads/AdSlot";
 
 /** Shared marketing footer (server component). */
 export default function SiteFooter() {
   return (
     <footer className="mk-footer">
       <div className="mk-wrap">
+        <AdSlot variant="footer" />
         <div className="mk-footer-top">
           <div className="mk-footer-col">
             <h4>Product</h4>
             <Link href="/editor">Free editor</Link>
             <Link href="/templates">All templates</Link>
+            <Link href="/blog">Blog</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
           <div className="mk-footer-col">
