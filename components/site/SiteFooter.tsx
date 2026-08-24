@@ -9,7 +9,7 @@ export default function SiteFooter() {
   return (
     <footer className="mk-footer">
       <div className="mk-wrap">
-        <AdSlot variant="footer" />
+        <AdSlot variant="footer" frame collapse />
         <div className="mk-footer-top">
           <div className="mk-footer-col">
             <h4>Product</h4>

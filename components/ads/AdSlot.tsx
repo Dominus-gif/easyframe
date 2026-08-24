@@ -20,7 +20,19 @@ const SLOTS: Record<Variant, { h: number; label: string }> = {
 
 const CLIENT = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
 
-export default function AdSlot({ variant, adSlotId }: { variant: Variant; adSlotId?: string }) {
+export default function AdSlot({
+  variant,
+  adSlotId,
+  frame = false,
+  collapse = false
+}: {
+  variant: Variant;
+  adSlotId?: string;
+  /** Wrap a filled ad in a branded "Sponsored" card so it reads as intentional. */
+  frame?: boolean;
+  /** Render nothing (no reserved height) when there is no ad to show. */
+  collapse?: boolean;
+}) {
   const cfg = SLOTS[variant];
   const { premium, ready } = usePremium();
   const consent = useConsent();
@@ -60,24 +72,41 @@ export default function AdSlot({ variant, adSlotId }: { variant: Variant; adSlot
     }
   }, [mode, variant]);
 
+  // Nothing to show: collapse entirely (no empty box) when asked, else reserve height (no CLS).
+  if (mode !== "ad" || !CLIENT) {
+    if (collapse) return null;
+    return (
+      <div
+        className={`ad-slot ad-slot-${variant}`}
+        data-ad-variant={variant}
+        aria-hidden="true"
+        style={{ width: "100%", minHeight: cfg.h, margin: "0 auto" }}
+      />
+    );
+  }
+
+  const ins = (
+    <ins
+      className="adsbygoogle"
+      style={{ display: "block", width: "100%", height: cfg.h }}
+      data-ad-client={CLIENT}
+      data-ad-slot={adSlotId ?? ""}
+      data-full-width-responsive="true"
+    />
+  );
+
   return (
     <div
-      className={`ad-slot ad-slot-${variant}`}
+      className={`ad-slot ad-slot-${variant}${frame ? " ad-card" : ""}`}
       data-ad-variant={variant}
-      aria-hidden={mode !== "ad"}
       onMouseEnter={() => (hovered.current = true)}
       onMouseLeave={() => (hovered.current = false)}
-      style={{ width: "100%", minHeight: cfg.h, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto" }}
+      style={{ width: "100%", margin: "0 auto" }}
     >
-      {mode === "ad" && CLIENT ? (
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block", width: "100%", height: cfg.h }}
-          data-ad-client={CLIENT}
-          data-ad-slot={adSlotId ?? ""}
-          data-full-width-responsive="true"
-        />
-      ) : null}
+      {frame ? <span className="ad-card-label">Sponsored</span> : null}
+      <div className="ad-slot-inner" style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: cfg.h }}>
+        {ins}
+      </div>
     </div>
   );
 }
