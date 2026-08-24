@@ -1,26 +1,61 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Download, ImagePlus, Redo2, RotateCcw, Undo2, Upload } from "lucide-react";
-import { devices, gradientPresets } from "@/lib/editor/devices";
+import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Plus, Redo2, RotateCcw, Smartphone, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { editorDevices, gradientPresets, type DeviceKind } from "@/lib/editor/devices";
 import {
   composite,
   defaultSettings,
   exportScene,
   loadImageSafely,
   type EditorSettings,
-  type ExportFormat
+  type ExportFormat,
+  type Overlay,
+  type ImageOverlay,
+  type TextOverlay
 } from "@/lib/editor/compositor";
+import { TRENDING_FONTS, googleFontsHref, weightsFor } from "@/lib/editor/fonts";
 import { usePremium } from "@/lib/entitlement";
 import { track } from "@/lib/analytics";
 
-const SOLID_COLORS = ["#0b0d0f", "#ffffff", "#f4f1ea", "#111827", "#6d5dfc", "#ff5f8f", "#13e0c4", "#ff9f45"];
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+const SOLID_COLORS = ["#0b0d0f", "#ffffff", "#f4f1ea", "#0f172a", "#2f6bff", "#22b8e6", "#0f9d76", "#64748b"];
 const FREE_MAX_EDGE = 2048;
 const PREMIUM_MAX_EDGE = 3840;
-const PREVIEW_MAX_EDGE = 1400;
+const PREVIEW_MAX_EDGE = 2000;
+
+const DEVICE_GROUPS: { key: string; label: string }[] = [
+  { key: "blank", label: "No frame" },
+  { key: "phone", label: "Phones" },
+  { key: "tablet", label: "Tablets" },
+  { key: "laptop", label: "Laptops" },
+  { key: "desktop", label: "Desktop" },
+  { key: "browser", label: "Browser" },
+  { key: "watch", label: "Watches" }
+];
+
+const KIND_ICON: Record<DeviceKind, typeof Smartphone> = {
+  blank: ImageIcon,
+  phone: Smartphone,
+  tablet: Tablet,
+  laptop: Laptop,
+  desktop: Monitor,
+  browser: AppWindow,
+  watch: Watch
+};
+
+const ANGLE_PRESETS = [
+  { id: "front", label: "Front", x: 0, y: 0, z: 0, p: 45 },
+  { id: "left", label: "Left", x: 6, y: -24, z: 0, p: 65 },
+  { id: "right", label: "Right", x: 6, y: 24, z: 0, p: 65 },
+  { id: "up", label: "Look up", x: -20, y: 0, z: 0, p: 65 },
+  { id: "iso", label: "Isometric", x: 16, y: -22, z: -4, p: 70 },
+  { id: "tilt", label: "Tilt", x: 12, y: 14, z: 2, p: 65 }
+];
 
 export default function CanvasEditor({ initialDevice }: { initialDevice?: string }) {
-  const startSlug = devices.some((d) => d.slug === initialDevice) ? (initialDevice as string) : defaultSettings.deviceSlug;
+  const startSlug = editorDevices.some((d) => d.slug === initialDevice) ? (initialDevice as string) : defaultSettings.deviceSlug;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
@@ -41,7 +76,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [busy, setBusy] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+  const [overlays, setOverlays] = useState<Overlay[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [customBg, setCustomBg] = useState({ from: "#2f6bff", to: "#22b8e6", angle: 135 });
+  const overlayFileRef = useRef<HTMLInputElement>(null);
   const { premium } = usePremium();
+
+  const selectedOverlay = overlays.find((o) => o.id === selectedId) ?? null;
 
   const flash = (message: string) => {
     setNotice(message);
@@ -51,12 +92,67 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const recompose = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    composite(canvas, imgRef.current, settings, { maxEdge: PREVIEW_MAX_EDGE });
-  }, [settings]);
+    composite(canvas, imgRef.current, settings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
+  }, [settings, overlays]);
 
   useEffect(() => {
     recompose();
   }, [recompose, imgVersion]);
+
+  // Load trending Google Fonts once (Inter ships locally).
+  useEffect(() => {
+    if (document.getElementById("ef-google-fonts")) return;
+    const pre = document.createElement("link");
+    pre.rel = "preconnect";
+    pre.href = "https://fonts.gstatic.com";
+    pre.crossOrigin = "anonymous";
+    document.head.appendChild(pre);
+    const link = document.createElement("link");
+    link.id = "ef-google-fonts";
+    link.rel = "stylesheet";
+    link.href = googleFontsHref();
+    link.onload = () => setImgVersion((v) => v + 1);
+    document.head.appendChild(link);
+  }, []);
+
+  const ensureFont = (family: string) => {
+    if (typeof document === "undefined" || !document.fonts) return;
+    document.fonts.load(`700 40px "${family}"`).then(() => setImgVersion((v) => v + 1)).catch(() => {});
+  };
+
+  const updateOverlay = (id: string, patch: Record<string, unknown>) =>
+    setOverlays((prev) => prev.map((o) => (o.id === id ? ({ ...o, ...patch } as Overlay) : o)));
+  const removeOverlay = (id: string) => {
+    setOverlays((prev) => prev.filter((o) => o.id !== id));
+    setSelectedId((s) => (s === id ? null : s));
+  };
+  const moveOverlay = (id: string, dir: -1 | 1) =>
+    setOverlays((prev) => {
+      const i = prev.findIndex((o) => o.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
+  const addText = () => {
+    const o: TextOverlay = { id: uid(), type: "text", text: "Your text", fontFamily: "Poppins", fontWeight: 700, fontSize: 0.06, color: "#ffffff", align: "center", x: 0.5, y: 0.5, scale: 1, rotation: 0, opacity: 1 };
+    setOverlays((prev) => [...prev, o]);
+    setSelectedId(o.id);
+    ensureFont("Poppins");
+  };
+  const addImageOverlay = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      const img = await loadImageSafely(file);
+      const o: ImageOverlay = { id: uid(), type: "image", img, x: 0.5, y: 0.5, scale: 0.6, rotation: 0, opacity: 1 };
+      setOverlays((prev) => [...prev, o]);
+      setSelectedId(o.id);
+    } catch {
+      flash("Could not add that image.");
+    }
+  };
 
   // Coalesced undo/redo: snapshot the last committed settings ~500ms after changes settle.
   useEffect(() => {
@@ -98,6 +194,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   }, []);
 
   const update = (partial: Partial<EditorSettings>) => setSettings((s) => ({ ...s, ...partial }));
+
+  const applyCustomGrad = (patch: Partial<{ from: string; to: string; angle: number }>) => {
+    const next = { ...customBg, ...patch };
+    setCustomBg(next);
+    update({ background: { type: "gradient", from: next.from, to: next.to, angle: next.angle } });
+  };
 
   const setImage = (img: HTMLImageElement | null) => {
     imgRef.current = img;
@@ -169,7 +271,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   // Drag the image within the frame.
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!hasImage) return;
+    if (!hasImage && !selectedOverlay) return;
     dragRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -179,7 +281,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     const dx = (event.clientX - dragRef.current.x) / rect.width;
     const dy = (event.clientY - dragRef.current.y) / rect.height;
     dragRef.current = { x: event.clientX, y: event.clientY };
-    setSettings((s) => ({ ...s, imageOffsetX: s.imageOffsetX + dx * 1.4, imageOffsetY: s.imageOffsetY + dy * 1.4 }));
+    if (selectedId && selectedOverlay) {
+      setOverlays((prev) => prev.map((o) => (o.id === selectedId ? { ...o, x: o.x + dx, y: o.y + dy } : o)));
+    } else {
+      setSettings((s) => ({ ...s, imageOffsetX: s.imageOffsetX + dx * 1.4, imageOffsetY: s.imageOffsetY + dy * 1.4 }));
+    }
   };
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
     dragRef.current = null;
@@ -195,7 +301,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         settings.background.type === "transparent" && !premium
           ? { ...settings, background: { type: "solid" as const, color: "#0b0d0f" } }
           : settings;
-      const blob = await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge);
+      const blob = await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge, overlays);
       track("export_completed", { device: settings.deviceSlug, format, premium });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -227,11 +333,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       onDrop={(e) => { e.preventDefault(); setDropActive(false); onFiles(e.dataTransfer.files); }}
     >
       <header className="ed-top">
-        <div className="ed-brand">EasyFrame <span>Editor</span></div>
+        <a className="ed-brand" href="/">
+          <span className="ed-logo" aria-hidden="true"><i /></span>
+          <span className="ed-brand-name">EasyFrame</span>
+          <span className="ed-brand-tag">Editor</span>
+        </a>
         <div className="ed-top-actions">
-          <button className="ed-ghost" onClick={undo} disabled={!canUndo} aria-label="Undo"><Undo2 size={16} /></button>
-          <button className="ed-ghost" onClick={redo} disabled={!canRedo} aria-label="Redo"><Redo2 size={16} /></button>
-          <button className="ed-ghost" onClick={resetAll} aria-label="Reset"><RotateCcw size={16} /> Reset</button>
+          <div className="ed-btn-group">
+            <button className="ed-icon-btn" onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
+            <button className="ed-icon-btn" onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y)"><Redo2 size={16} /></button>
+          </div>
+          <button className="ed-ghost" onClick={resetAll} aria-label="Reset all"><RotateCcw size={15} /> Reset</button>
           <button className="ed-primary" onClick={onDownload} disabled={busy}>
             <Download size={16} /> {busy ? "Working…" : "Download"}
           </button>
@@ -241,29 +353,81 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       <div className="ed-body">
         {/* Left rail: devices */}
         <aside className="ed-rail ed-rail-left" aria-label="Devices">
-          <h3>Device</h3>
-          <div className="ed-devices">
-            {devices.map((d) => (
-              <button
-                key={d.slug}
-                className={`ed-device ${settings.deviceSlug === d.slug ? "on" : ""}`}
-                onClick={() => update({ deviceSlug: d.slug })}
-              >
-                {d.name}
-              </button>
-            ))}
-          </div>
+          <section className="ed-card">
+            <div className="ed-card-title">Device</div>
+            <div className="ed-device-groups">
+            {DEVICE_GROUPS.map((group) => {
+              const list = editorDevices.filter((d) => d.category === group.key);
+              if (!list.length) return null;
+              return (
+                <div className="ed-group" key={group.key}>
+                  <span className="ed-group-label">{group.label}</span>
+                  <div className="ed-device-grid">
+                    {list.map((d) => {
+                      const Icon = KIND_ICON[d.kind];
+                      return (
+                        <button
+                          key={d.slug}
+                          className={`ed-device ${settings.deviceSlug === d.slug ? "on" : ""}`}
+                          onClick={() => update({ deviceSlug: d.slug })}
+                          title={d.name}
+                        >
+                          <Icon size={17} strokeWidth={1.75} />
+                          <span>{d.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            </div>
+          </section>
 
-          <h3>Upload</h3>
-          <button className="ed-upload" onClick={() => fileRef.current?.click()}>
-            <ImagePlus size={16} /> Choose image
-          </button>
-          <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { onFiles(e.target.files); e.currentTarget.value = ""; }} />
-          <div className="ed-url">
-            <input value={urlValue} onChange={(e) => setUrlValue(e.target.value)} placeholder="Paste image URL" />
-            <button onClick={() => { if (urlValue.trim()) void ingest(urlValue.trim()); }}>Add</button>
-          </div>
-          <p className="ed-hint">or drag &amp; drop / paste from clipboard</p>
+          <section className="ed-card">
+            <div className="ed-card-title">Image</div>
+            <button className="ed-upload" onClick={() => fileRef.current?.click()}>
+              <ImagePlus size={16} /> Choose image
+            </button>
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { onFiles(e.target.files); e.currentTarget.value = ""; }} />
+            <div className="ed-url">
+              <input value={urlValue} onChange={(e) => setUrlValue(e.target.value)} placeholder="Paste image URL" />
+              <button onClick={() => { if (urlValue.trim()) void ingest(urlValue.trim()); }}>Add</button>
+            </div>
+            <p className="ed-hint">or drag &amp; drop / paste from clipboard</p>
+            {hasImage ? (
+              <button className="ed-remove" onClick={() => setImage(null)}>
+                <Trash2 size={14} /> Remove photo
+              </button>
+            ) : null}
+          </section>
+
+          <section className="ed-card">
+            <div className="ed-card-title"><Layers size={12} style={{ marginRight: -2 }} /> Layers</div>
+            <div className="ed-layer-add">
+              <button onClick={addText}><Type size={14} /> Text</button>
+              <button onClick={() => overlayFileRef.current?.click()}><ImagePlus size={14} /> Image</button>
+            </div>
+            <input ref={overlayFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { void addImageOverlay(e.target.files?.[0]); e.currentTarget.value = ""; }} />
+            <div className="ed-layers">
+              {[...overlays].reverse().map((o) => (
+                <div key={o.id} className={`ed-layer ${selectedId === o.id ? "on" : ""}`}>
+                  <button className="ed-layer-main" onClick={() => setSelectedId(o.id)}>
+                    {o.type === "text" ? <Type size={13} /> : <ImageIcon size={13} />}
+                    <span>{o.type === "text" ? (o.text.split("\n")[0] || "Text") : "Image"}</span>
+                  </button>
+                  <button className="ed-layer-ic" onClick={() => updateOverlay(o.id, { hidden: !o.hidden })} aria-label="Toggle visibility">{o.hidden ? <EyeOff size={13} /> : <Eye size={13} />}</button>
+                  <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, 1)} aria-label="Bring forward"><ChevronUp size={13} /></button>
+                  <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, -1)} aria-label="Send back"><ChevronDown size={13} /></button>
+                  <button className="ed-layer-ic danger" onClick={() => removeOverlay(o.id)} aria-label="Delete layer"><X size={13} /></button>
+                </div>
+              ))}
+              <button className={`ed-layer ed-layer-base ${selectedId === null ? "on" : ""}`} onClick={() => setSelectedId(null)}>
+                <span className="ed-layer-main"><Smartphone size={13} /> <span>Device screenshot</span></span>
+              </button>
+            </div>
+            {!overlays.length ? <p className="ed-hint">Add text or images as layers, then drag them on the canvas.</p> : null}
+          </section>
         </aside>
 
         {/* Canvas */}
@@ -295,7 +459,39 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
         {/* Right rail: adjustments */}
         <aside className="ed-rail ed-rail-right" aria-label="Adjustments">
-          <h3>Background</h3>
+          {selectedOverlay ? (
+            <section className="ed-card">
+              <div className="ed-card-title">{selectedOverlay.type === "text" ? "Text layer" : "Image layer"}</div>
+              {selectedOverlay.type === "text" ? (
+                <>
+                  <textarea className="ed-textarea" rows={2} value={selectedOverlay.text} onChange={(e) => updateOverlay(selectedOverlay.id, { text: e.target.value })} placeholder="Type your text…" />
+                  <select className="ed-select" value={selectedOverlay.fontFamily} onChange={(e) => { updateOverlay(selectedOverlay.id, { fontFamily: e.target.value }); ensureFont(e.target.value); }}>
+                    {TRENDING_FONTS.map((f) => <option key={f.family} value={f.family}>{f.label}</option>)}
+                  </select>
+                  <div className="ed-row2">
+                    <select className="ed-select" value={selectedOverlay.fontWeight} onChange={(e) => updateOverlay(selectedOverlay.id, { fontWeight: Number(e.target.value) })}>
+                      {weightsFor(selectedOverlay.fontFamily).map((w) => <option key={w} value={w}>{w === 400 ? "Regular" : w === 500 ? "Medium" : w === 600 ? "Semibold" : w === 700 ? "Bold" : "Black"}</option>)}
+                    </select>
+                    <input type="color" className="ed-color" value={selectedOverlay.color} onChange={(e) => updateOverlay(selectedOverlay.id, { color: e.target.value })} aria-label="Text color" />
+                  </div>
+                  <div className="ed-seg">
+                    {(["left", "center", "right"] as const).map((a) => (
+                      <button key={a} className={selectedOverlay.align === a ? "on" : ""} onClick={() => updateOverlay(selectedOverlay.id, { align: a })}>{a[0].toUpperCase() + a.slice(1)}</button>
+                    ))}
+                  </div>
+                  <Range label="Size" value={selectedOverlay.fontSize} min={0.02} max={0.22} step={0.005} onChange={(v) => updateOverlay(selectedOverlay.id, { fontSize: v })} />
+                </>
+              ) : (
+                <Range label="Scale" value={selectedOverlay.scale} min={0.1} max={2} step={0.02} onChange={(v) => updateOverlay(selectedOverlay.id, { scale: v })} />
+              )}
+              <Range label="Rotation" value={selectedOverlay.rotation} min={-180} max={180} step={1} onChange={(v) => updateOverlay(selectedOverlay.id, { rotation: v })} />
+              <Range label="Opacity" value={selectedOverlay.opacity} min={0} max={1} step={0.02} onChange={(v) => updateOverlay(selectedOverlay.id, { opacity: v })} />
+              <button className="ed-remove" onClick={() => removeOverlay(selectedOverlay.id)}><Trash2 size={14} /> Delete layer</button>
+            </section>
+          ) : null}
+
+          <section className="ed-card">
+          <div className="ed-card-title">Background</div>
           <div className="ed-swatches">
             {gradientPresets.map((g) => (
               <button
@@ -327,19 +523,50 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               {!premium ? <span className="ed-pro">PRO</span> : null}
             </button>
           </div>
+          <div className="ed-subhead">Custom gradient</div>
+          <div className="ed-custom-grad">
+            <div className="ed-grad-preview" style={{ background: `linear-gradient(${customBg.angle}deg, ${customBg.from}, ${customBg.to})` }} />
+            <input type="color" className="ed-color" value={customBg.from} onChange={(e) => applyCustomGrad({ from: e.target.value })} aria-label="Gradient start color" />
+            <input type="color" className="ed-color" value={customBg.to} onChange={(e) => applyCustomGrad({ to: e.target.value })} aria-label="Gradient end color" />
+          </div>
+          <Range label="Angle" value={customBg.angle} min={0} max={360} step={1} onChange={(v) => applyCustomGrad({ angle: v })} />
+          </section>
 
+          <section className="ed-card">
+          <div className="ed-card-title">Adjust</div>
           <Range label="Padding" value={settings.padding} min={0} max={0.4} step={0.01} onChange={(v) => update({ padding: v })} />
           <Range label="Image scale" value={settings.imageScale} min={0.4} max={2.5} step={0.01} onChange={(v) => update({ imageScale: v })} />
           <Range label="Rotate" value={settings.imageRotate} min={-45} max={45} step={1} onChange={(v) => update({ imageRotate: v })} />
           <Range label="Shadow" value={settings.shadow} min={0} max={1} step={0.02} onChange={(v) => update({ shadow: v })} />
           <Range label="Corner radius" value={settings.cornerRadius} min={0} max={0.3} step={0.01} onChange={(v) => update({ cornerRadius: v })} />
-
           <div className="ed-seg">
             <button className={settings.fit === "cover" ? "on" : ""} onClick={() => update({ fit: "cover" })}>Cover</button>
             <button className={settings.fit === "contain" ? "on" : ""} onClick={() => update({ fit: "contain" })}>Contain</button>
           </div>
+          </section>
 
-          <h3>Export</h3>
+          <section className="ed-card">
+          <div className="ed-card-title">3D angle</div>
+          <div className="ed-angles">
+            {ANGLE_PRESETS.map((p) => {
+              const active = settings.rotateX === p.x && settings.rotateY === p.y && settings.rotateZ === p.z;
+              return (
+                <button key={p.id} className={`ed-angle ${active ? "on" : ""}`} onClick={() => update({ rotateX: p.x, rotateY: p.y, rotateZ: p.z, perspective: p.p })}>
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="ed-hint" style={{ margin: "2px 0 4px" }}>Pick an angle, then fine-tune. Perspective adds depth to a tilted view.</p>
+          <Range label="Tilt (X)" value={settings.rotateX} min={-50} max={50} step={1} onChange={(v) => update({ rotateX: v })} />
+          <Range label="Turn (Y)" value={settings.rotateY} min={-50} max={50} step={1} onChange={(v) => update({ rotateY: v })} />
+          <Range label="Roll (Z)" value={settings.rotateZ} min={-45} max={45} step={1} onChange={(v) => update({ rotateZ: v })} />
+          <Range label="Perspective" value={settings.perspective} min={0} max={100} step={1} onChange={(v) => update({ perspective: v })} />
+          <button className="ed-reset-flat" onClick={() => update({ rotateX: 0, rotateY: 0, rotateZ: 0 })}>Reset to flat</button>
+          </section>
+
+          <section className="ed-card">
+          <div className="ed-card-title">Export</div>
           <div className="ed-seg">
             {(["png", "jpeg", "webp"] as ExportFormat[]).map((f) => (
               <button key={f} className={format === f ? "on" : ""} onClick={() => setFormat(f)}>{f.toUpperCase()}</button>
@@ -354,6 +581,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               : `Free export up to ${FREE_MAX_EDGE}px · `}
             {!premium ? <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a> : null}
           </p>
+          </section>
         </aside>
       </div>
 
@@ -363,10 +591,19 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 }
 
 function Range({ label, value, min, max, step, onChange }: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
+  const pct = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
   return (
     <label className="ed-range">
       <span>{label}<b>{Number.isInteger(value) ? value : value.toFixed(2)}</b></span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ background: `linear-gradient(90deg, var(--acc) 0 ${pct}%, rgba(255,255,255,.12) ${pct}% 100%)` }}
+      />
     </label>
   );
 }
@@ -374,64 +611,142 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
 function EditorStyles() {
   return (
     <style jsx global>{`
-      .ed { --acc: #6d5dfc; --acc2: #ff5f8f; --bg: #0b0d0f; --panel: #14171a; --line: rgba(255,255,255,.08); --text: #f4f5f7; --muted: #8a8f98;
-        position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); color: var(--text);
-        font-family: Inter, system-ui, sans-serif; }
-      .ed-top { display: flex; align-items: center; justify-content: space-between; height: 60px; padding: 0 18px; border-bottom: 1px solid var(--line); }
-      .ed-brand { font-weight: 700; letter-spacing: -.02em; }
-      .ed-brand span { background: linear-gradient(135deg, var(--acc), var(--acc2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-      .ed-top-actions { display: flex; gap: 8px; }
-      .ed-ghost, .ed-primary { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+      .ed { --acc: #2f6bff; --acc2: #22b8e6; --bg: #0b0d0f; --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --text: #f4f5f7; --muted: #8a8f98; --card: rgba(255,255,255,.022);
+        position: fixed; inset: 0; display: flex; flex-direction: column; color: var(--text);
+        background: radial-gradient(1200px 700px at 82% -20%, rgba(47,107,255,.06), transparent 60%), var(--bg);
+        font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+      .ed-top { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
+      .ed-brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
+      .ed-logo { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--acc), var(--acc2)); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(47,107,255,.4); }
+      .ed-logo i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid rgba(255,255,255,.92); }
+      .ed-brand-name { font-weight: 700; font-size: 15px; letter-spacing: -.02em; }
+      .ed-brand-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border: 1px solid var(--line-2); padding: 2px 7px; border-radius: 999px; }
+      .ed-top-actions { display: flex; align-items: center; gap: 8px; }
+      .ed-btn-group { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.03); }
+      .ed-icon-btn { width: 34px; height: 34px; display: grid; place-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; transition: background .12s, color .12s; }
+      .ed-icon-btn + .ed-icon-btn { border-left: 1px solid var(--line); }
+      .ed-icon-btn:hover:not(:disabled) { background: rgba(255,255,255,.06); color: var(--text); }
+      .ed-icon-btn:disabled { opacity: .35; cursor: default; }
+      .ed-ghost, .ed-primary { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .12s, box-shadow .12s, background .12s, border-color .12s; }
       .ed-ghost { background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text); }
-      .ed-ghost:hover:not(:disabled) { background: rgba(255,255,255,.08); }
+      .ed-ghost:hover:not(:disabled) { background: rgba(255,255,255,.08); border-color: var(--line-2); }
       .ed-ghost:disabled { opacity: .4; cursor: default; }
-      .ed-primary { background: linear-gradient(135deg, var(--acc), var(--acc2)); border: 0; color: #fff; box-shadow: 0 8px 24px rgba(109,93,252,.4); }
+      .ed-primary { background: linear-gradient(135deg, var(--acc), var(--acc2)); border: 0; color: #fff; padding: 0 18px; box-shadow: 0 6px 18px rgba(47,107,255,.35); }
+      .ed-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(47,107,255,.5); }
       .ed-primary:disabled { opacity: .6; }
-      .ed-body { flex: 1; display: grid; grid-template-columns: 232px minmax(0,1fr) 264px; min-height: 0; }
-      .ed-rail { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+
+      .ed-body { flex: 1; display: grid; grid-template-columns: 250px minmax(0,1fr) 292px; min-height: 0; }
+      .ed-rail { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
       .ed-rail-left { border-right: 1px solid var(--line); }
       .ed-rail-right { border-left: 1px solid var(--line); }
-      .ed-rail h3 { margin: 6px 0 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
-      .ed-devices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-      .ed-device { height: 42px; border-radius: 10px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; }
-      .ed-device.on { border-color: var(--acc); background: rgba(109,93,252,.16); }
-      .ed-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; border-radius: 10px; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+      .ed-rail::-webkit-scrollbar { width: 8px; }
+      .ed-rail::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 999px; }
+      .ed-rail::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
+      .ed-rail::-webkit-scrollbar-track { background: transparent; }
+
+      .ed-card { border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 13px; display: flex; flex-direction: column; gap: 11px; }
+      .ed-card-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+      .ed-card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px rgba(47,107,255,.8); }
+
+      .ed-device-groups { display: flex; flex-direction: column; gap: 13px; }
+      .ed-group { display: flex; flex-direction: column; gap: 7px; }
+      .ed-group-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; color: var(--muted); }
+      .ed-device-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .ed-device { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 58px; padding: 9px 6px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--text); font: inherit; cursor: pointer; text-align: center; transition: border-color .14s, background .14s, transform .14s; }
+      .ed-device svg { color: var(--muted); transition: color .14s; }
+      .ed-device span { font-size: 10.5px; line-height: 1.15; letter-spacing: -.01em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+      .ed-device:hover { border-color: var(--line-2); background: rgba(255,255,255,.06); transform: translateY(-1px); }
+      .ed-device.on { border-color: var(--acc) !important; background: rgba(47,107,255,.15) !important; box-shadow: 0 0 0 1px var(--acc) inset; }
+      .ed-device.on svg { color: #7db1ff !important; }
+
+      .ed-upload { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; border-radius: 10px; background: rgba(47,107,255,.1); border: 1px solid rgba(47,107,255,.3); color: #cfe0ff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .12s; }
+      .ed-upload:hover { background: rgba(47,107,255,.16); }
       .ed-url { display: flex; gap: 6px; }
-      .ed-url input { flex: 1; min-width: 0; height: 38px; padding: 0 10px; border-radius: 9px; background: rgba(0,0,0,.3); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; }
-      .ed-url button { height: 38px; padding: 0 12px; border-radius: 9px; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
-      .ed-hint { font-size: 11px; color: var(--muted); line-height: 1.5; }
-      .ed-stage { position: relative; display: grid; place-items: center; padding: 28px; overflow: hidden; background:
-        radial-gradient(900px 500px at 50% -10%, rgba(109,93,252,.12), transparent 60%); }
-      .ed-canvas-wrap { max-width: 100%; max-height: 100%; transition: transform .12s ease; }
-      .ed-canvas { max-width: 100%; max-height: calc(100vh - 140px); display: block; border-radius: 8px; touch-action: none; cursor: grab; }
+      .ed-url input { flex: 1; min-width: 0; height: 36px; padding: 0 11px; border-radius: 9px; background: rgba(0,0,0,.35); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; }
+      .ed-url input:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(47,107,255,.2); }
+      .ed-url button { height: 36px; padding: 0 13px; border-radius: 9px; background: rgba(255,255,255,.06); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+      .ed-url button:hover { background: rgba(255,255,255,.1); }
+      .ed-hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 0; }
+      .ed-hint a { color: var(--acc); }
+
+      .ed-stage { position: relative; display: grid; place-items: center; padding: 32px; overflow: hidden;
+        background:
+          radial-gradient(1000px 520px at 50% -8%, rgba(47,107,255,.1), transparent 60%),
+          radial-gradient(circle at center, rgba(255,255,255,.03) 1px, transparent 1px);
+        background-size: auto, 24px 24px; }
+      .ed-canvas-wrap { max-width: 100%; max-height: 100%; transition: transform .12s ease; filter: drop-shadow(0 28px 55px rgba(0,0,0,.5)); }
+      .ed-canvas { max-width: 100%; max-height: calc(100vh - 150px); display: block; border-radius: 6px; touch-action: none; cursor: grab; }
       .ed-canvas:active { cursor: grabbing; }
-      .ed-drop { position: absolute; inset: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-        border: 2px dashed var(--line); border-radius: 20px; background: rgba(11,13,15,.55); color: var(--text); cursor: pointer; backdrop-filter: blur(2px); }
-      .ed-drop.active { border-color: var(--acc); background: rgba(109,93,252,.1); }
-      .ed-drop strong { font-size: 17px; }
+      .ed-drop { position: absolute; inset: 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+        border: 2px dashed var(--line-2); border-radius: 22px; background: rgba(11,13,15,.6); color: var(--text); cursor: pointer; backdrop-filter: blur(2px); transition: border-color .15s, background .15s; }
+      .ed-drop:hover, .ed-drop.active { border-color: var(--acc); background: rgba(47,107,255,.09); }
+      .ed-drop svg { color: var(--acc); }
+      .ed-drop strong { font-size: 17px; font-weight: 650; }
       .ed-drop span { font-size: 12.5px; color: var(--muted); }
-      .ed-zoom { position: absolute; bottom: 16px; right: 16px; display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 999px; background: rgba(20,23,26,.8); border: 1px solid var(--line); backdrop-filter: blur(8px); }
-      .ed-zoom button { width: 24px; height: 24px; border-radius: 6px; background: rgba(255,255,255,.06); border: 0; color: var(--text); font: inherit; cursor: pointer; }
-      .ed-zoom b { font-size: 12px; min-width: 38px; text-align: center; }
-      .ed-toast { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: #1c1f24; border: 1px solid var(--line); font-size: 13px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+      .ed-zoom { position: absolute; bottom: 18px; right: 18px; display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 999px; background: rgba(18,21,26,.85); border: 1px solid var(--line); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+      .ed-zoom button { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.06); border: 0; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: grid; place-items: center; }
+      .ed-zoom button:hover { background: rgba(255,255,255,.12); }
+      .ed-zoom b { font-size: 12px; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+      .ed-toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: #1c1f24; border: 1px solid var(--line-2); font-size: 13px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+
       .ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-      .ed-swatch { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); cursor: pointer; }
-      .ed-swatch.on { outline: 2px solid var(--acc); outline-offset: 1px; }
+      .ed-swatch { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); cursor: pointer; transition: transform .12s; }
+      .ed-swatch:hover { transform: scale(1.06); }
+      .ed-swatch.on { outline: 2px solid var(--acc); outline-offset: 2px; }
       .ed-swatch-alpha { position: relative; background-color: #fff; background-image: linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%); background-size: 12px 12px; background-position: 0 0,0 6px,6px -6px,-6px 0; }
-      .ed-pro { position: absolute; inset: 0; display: grid; place-items: center; font-size: 9px; font-weight: 800; color: #111; background: rgba(255,255,255,.55); border-radius: 8px; }
-      .ed-range { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--muted); }
-      .ed-range span { display: flex; justify-content: space-between; }
-      .ed-range b { color: var(--text); }
-      .ed-range input { width: 100%; height: 4px; border-radius: 999px; -webkit-appearance: none; appearance: none; background: linear-gradient(90deg, var(--acc), var(--acc2)); }
-      .ed-range input::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(109,93,252,.3); }
-      .ed-range input::-moz-range-thumb { width: 15px; height: 15px; border: 0; border-radius: 50%; background: #fff; }
-      .ed-seg { display: flex; gap: 6px; }
-      .ed-seg button { flex: 1; height: 36px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; cursor: pointer; }
-      .ed-seg button.on { background: linear-gradient(135deg, var(--acc), var(--acc2)); border-color: transparent; color: #fff; }
+      .ed-pro { position: absolute; inset: 0; display: grid; place-items: center; font-size: 8.5px; font-weight: 800; color: #111; background: rgba(255,255,255,.6); border-radius: 8px; }
+
+      .ed-range { display: flex; flex-direction: column; gap: 7px; }
+      .ed-range span { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
+      .ed-range b { color: var(--text); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.06); padding: 1px 7px; border-radius: 6px; }
+      .ed-range input { width: 100%; height: 5px; border-radius: 999px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,.12); cursor: pointer; }
+      .ed-range input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.28), 0 1px 4px rgba(0,0,0,.4); transition: box-shadow .12s; }
+      .ed-range input::-webkit-slider-thumb:hover { box-shadow: 0 0 0 6px rgba(47,107,255,.34), 0 1px 4px rgba(0,0,0,.4); }
+      .ed-range input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.28); }
+
+      .ed-seg { display: flex; gap: 4px; padding: 3px; background: rgba(0,0,0,.25); border: 1px solid var(--line); border-radius: 10px; }
+      .ed-seg button { flex: 1; height: 30px; border-radius: 7px; background: transparent; border: 0; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .12s, color .12s; }
+      .ed-seg button:hover { color: var(--text); }
+      .ed-seg button.on { background: rgba(47,107,255,.92); color: #fff; box-shadow: 0 2px 8px rgba(47,107,255,.4); }
+
+      .ed-angles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+      .ed-angle { height: 32px; border-radius: 8px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 11px; font-weight: 500; cursor: pointer; transition: border-color .12s, background .12s; }
+      .ed-angle:hover { border-color: var(--line-2); background: rgba(255,255,255,.07); }
+      .ed-angle.on { border-color: var(--acc); background: rgba(47,107,255,.16); color: #cfe0ff; }
+      .ed-reset-flat { width: 100%; height: 34px; margin-top: 2px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+      .ed-reset-flat:hover { color: var(--text); border-color: var(--line-2); }
+
+      .ed-remove { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; border-radius: 9px; background: rgba(255,80,90,.08); border: 1px solid rgba(255,80,90,.28); color: #ff9aa2; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+      .ed-remove:hover { background: rgba(255,80,90,.14); }
+      .ed-layer-add { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+      .ed-layer-add button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; border-radius: 9px; background: rgba(47,107,255,.1); border: 1px solid rgba(47,107,255,.3); color: #cfe0ff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+      .ed-layer-add button:hover { background: rgba(47,107,255,.16); }
+      .ed-layers { display: flex; flex-direction: column; gap: 5px; }
+      .ed-layer { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 9px; border: 1px solid transparent; background: rgba(255,255,255,.03); }
+      .ed-layer.on { border-color: var(--acc); background: rgba(47,107,255,.12); }
+      .ed-layer-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 7px; background: transparent; border: 0; color: var(--text); font: inherit; font-size: 12px; cursor: pointer; padding: 5px 4px; text-align: left; }
+      .ed-layer-main svg { color: var(--muted); flex-shrink: 0; }
+      .ed-layer-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ed-layer-ic { width: 24px; height: 26px; display: grid; place-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; border-radius: 6px; }
+      .ed-layer-ic:hover { background: rgba(255,255,255,.08); color: var(--text); }
+      .ed-layer-ic.danger:hover { color: #ff9aa2; }
+      .ed-layer-base { width: 100%; cursor: pointer; }
+      .ed-textarea { width: 100%; resize: vertical; min-height: 48px; padding: 8px 10px; border-radius: 9px; background: rgba(0,0,0,.35); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; }
+      .ed-textarea:focus { outline: none; border-color: var(--acc); box-shadow: 0 0 0 3px rgba(47,107,255,.2); }
+      .ed-select { width: 100%; height: 36px; padding: 0 10px; border-radius: 9px; background: rgba(0,0,0,.35); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }
+      .ed-select:focus { outline: none; border-color: var(--acc); }
+      .ed-row2 { display: grid; grid-template-columns: 1fr 46px; gap: 6px; }
+      .ed-color { width: 46px; height: 36px; padding: 2px; border-radius: 9px; background: rgba(0,0,0,.35); border: 1px solid var(--line); cursor: pointer; }
+      .ed-subhead { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+      .ed-custom-grad { display: grid; grid-template-columns: 1fr 42px 42px; gap: 8px; align-items: center; }
+      .ed-custom-grad .ed-color { width: 100%; height: 40px; }
+      .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); }
       .ed :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       @media (max-width: 900px) {
         .ed-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr) auto; }
         .ed-rail { flex-direction: row; flex-wrap: wrap; border: 0; border-bottom: 1px solid var(--line); }
+        .ed-card { flex: 1; min-width: 240px; }
         .ed-rail-right { border-top: 1px solid var(--line); }
       }
     `}</style>

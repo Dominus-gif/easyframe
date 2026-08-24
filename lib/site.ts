@@ -76,6 +76,35 @@ export const templateCopy: Record<string, TemplateCopy> = {
   }
 };
 
+/** Copy for a device's template page — hand-written where available, generated otherwise. */
+export function getTemplateCopy(device: Device): TemplateCopy {
+  const existing = templateCopy[device.slug];
+  if (existing) return existing;
+  const kindWord =
+    device.kind === "phone" ? "mobile app or screenshot"
+      : device.kind === "tablet" ? "tablet app or layout"
+        : device.kind === "laptop" ? "website or web app"
+          : device.kind === "desktop" ? "website, dashboard, or desktop app"
+            : device.kind === "browser" ? "web page or screenshot"
+              : "screen";
+  return {
+    intro:
+      `Turn any ${kindWord} into a polished ${device.name} mockup in seconds — for free, right in your browser. ` +
+      `EasyFrame drops your image into a clean, modern ${device.name} frame with a realistic screen, then lets you set the perfect ` +
+      `background, shadow, padding, corner radius, and 3D viewing angle. Because every pixel is composited locally with the Canvas API, ` +
+      `your screenshots stay on your device and are never uploaded to a server. There is no sign-up, no watermark, and no export limit on ` +
+      `the free tier up to 2048px (4K and transparent backgrounds are available on Premium). Designers, indie makers, and marketers use the ` +
+      `${device.name} mockup generator to present work with credibility and keep a consistent look across a whole campaign. Upload a screenshot, ` +
+      `choose your background and angle, and download a crisp PNG, JPEG, or WebP in under a minute.`,
+    bullets: [
+      `Realistic ${device.name} frame`,
+      "3D viewing-angle controls (tilt, turn, roll, perspective)",
+      "Export up to 2048px free · 4K on Premium",
+      "No account, no watermark, nothing uploaded"
+    ]
+  };
+}
+
 export type Category = {
   slug: string;
   name: string;
@@ -127,7 +156,7 @@ export function silhouetteClass(device: Device): string {
     ? "phone"
     : device.kind === "laptop"
       ? "laptop"
-      : device.kind === "browser"
+      : device.kind === "browser" || device.kind === "desktop"
         ? "browser"
         : device.kind === "watch"
           ? "watch"

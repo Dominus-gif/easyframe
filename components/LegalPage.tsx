@@ -65,8 +65,8 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
           padding: 24px;
           color: var(--text-primary);
           background:
-            radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
-            radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
+            radial-gradient(circle at 78% -10%, rgba(47, 107, 255, 0.2), transparent 30%),
+            radial-gradient(circle at 12% 12%, rgba(34, 184, 230, 0.08), transparent 28%),
             linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
           font-family: var(--font-sans);
         }

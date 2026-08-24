@@ -114,8 +114,8 @@ export default function BillingReturnPage() {
           padding: 28px;
           color: var(--text-primary);
           background:
-            radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
-            radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
+            radial-gradient(circle at 78% -10%, rgba(47, 107, 255, 0.2), transparent 30%),
+            radial-gradient(circle at 12% 12%, rgba(34, 184, 230, 0.08), transparent 28%),
             linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
           font-family: var(--font-sans);
         }
@@ -135,7 +135,7 @@ export default function BillingReturnPage() {
           display: grid;
           place-items: center;
           background: var(--accent-gradient);
-          box-shadow: 0 18px 44px rgba(113, 120, 255, 0.24);
+          box-shadow: 0 18px 44px rgba(47, 107, 255, 0.24);
         }
 
         .billing-return-brand span {

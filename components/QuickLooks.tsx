@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import type { CSSProperties } from "react";
 import { Sparkles } from "lucide-react";
@@ -106,7 +106,7 @@ export default function QuickLooks() {
           cursor: pointer;
           transition: transform 0.12s ease, border-color 0.12s ease;
         }
-        .quick-look:hover { transform: translateY(-1px); border-color: #6d5dfc; }
+        .quick-look:hover { transform: translateY(-1px); border-color: #2f6bff; }
         .quick-look i {
           width: 22px;
           height: 22px;

@@ -14,6 +14,8 @@ export default function SiteNav() {
           <Link href="/templates">Templates</Link>
           <Link href="/blog">Blog</Link>
           <Link href="/pricing">Pricing</Link>
+        </div>
+        <div className="mk-nav-cta">
           <Link href="/editor" className="mk-cta">
             Open free editor <ArrowRight size={16} />
           </Link>

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { devices, deviceBySlug, gradientPresets } from "@/lib/editor/devices";
-import { templateCopy, silhouetteClass, SITE_URL } from "@/lib/site";
+import { getTemplateCopy, silhouetteClass, SITE_URL } from "@/lib/site";
 import SiteNav from "@/components/site/SiteNav";
 import SiteFooter from "@/components/site/SiteFooter";
 import JsonLd from "@/components/site/JsonLd";
@@ -32,7 +32,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
 export default function TemplatePage({ params }: { params: { slug: string } }) {
   const device = devices.find((d) => d.slug === params.slug);
   if (!device) notFound();
-  const copy = templateCopy[device.slug];
+  const copy = getTemplateCopy(device);
   const related = devices.filter((d) => d.slug !== device.slug);
 
   const ld = {

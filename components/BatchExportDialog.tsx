@@ -174,7 +174,7 @@ export default function BatchExportDialog({ open, onClose, onExport }: BatchExpo
         }
         .batch-group-head em { color: rgba(244, 244, 240, 0.4); font-style: normal; font-weight: 400; font-size: 11px; }
         .batch-check { width: 16px; height: 16px; border-radius: 5px; border: 1.5px solid rgba(255, 255, 255, 0.3); }
-        .batch-check.on { background: #6d5dfc; border-color: #6d5dfc; }
+        .batch-check.on { background: #2f6bff; border-color: #2f6bff; }
         .batch-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
         .batch-item {
           display: flex;
@@ -190,20 +190,20 @@ export default function BatchExportDialog({ open, onClose, onExport }: BatchExpo
           cursor: pointer;
           transition: border-color 0.15s, background 0.15s;
         }
-        .batch-item.on { border-color: #6d5dfc; background: rgba(109, 93, 252, 0.16); }
+        .batch-item.on { border-color: #2f6bff; background: rgba(47, 107, 255, 0.16); }
         .batch-item-name { font-size: 12.5px; }
         .batch-item-size { font-size: 11px; color: rgba(244, 244, 240, 0.45); }
         .batch-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 20px; border-top: 1px solid rgba(255, 255, 255, 0.07); }
         .batch-count { color: rgba(244, 244, 240, 0.6); font-size: 13px; }
         .batch-progress { flex: 1; display: flex; flex-direction: column; gap: 6px; }
         .batch-progress-bar { height: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
-        .batch-progress-bar i { display: block; height: 100%; background: linear-gradient(90deg, #6d5dfc, #ff5f8f); transition: width 0.2s; }
+        .batch-progress-bar i { display: block; height: 100%; background: linear-gradient(90deg, #2f6bff, #22b8e6); transition: width 0.2s; }
         .batch-progress small { color: rgba(244, 244, 240, 0.55); font-size: 11px; }
         .batch-export {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: linear-gradient(135deg, #6d5dfc, #ff5f8f);
+          background: linear-gradient(135deg, #2f6bff, #22b8e6);
           border: 0;
           color: #fff;
           border-radius: 12px;

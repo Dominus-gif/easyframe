@@ -13,10 +13,10 @@ export default function MidnightTheme() {
     <style jsx global>{`
       /* ---------- Tokens ---------- */
       .studio-app.midnight {
-        --mid-accent: #6d5dfc;
-        --mid-accent-2: #ff5f8f;
-        --mid-grad: linear-gradient(135deg, #6d5dfc 0%, #8b5cf6 46%, #ff5f8f 100%);
-        --mid-glow: 0 0 0 1px rgba(109, 93, 252, 0.35), 0 8px 30px rgba(109, 93, 252, 0.35);
+        --mid-accent: #2f6bff;
+        --mid-accent-2: #22b8e6;
+        --mid-grad: linear-gradient(135deg, #2f6bff 0%, #2f8fff 46%, #22b8e6 100%);
+        --mid-glow: 0 0 0 1px rgba(47, 107, 255, 0.35), 0 8px 30px rgba(47, 107, 255, 0.35);
 
         --ef-bg: #0b0d0f;
         --ef-bg-elevated: #14171a;
@@ -36,7 +36,7 @@ export default function MidnightTheme() {
         --ef-border: rgba(255, 255, 255, 0.08);
         --ef-border-strong: rgba(255, 255, 255, 0.14);
         --ef-border-premium: rgba(255, 255, 255, 0.08);
-        --ef-border-focus: rgba(109, 93, 252, 0.55);
+        --ef-border-focus: rgba(47, 107, 255, 0.55);
         --ef-line: rgba(255, 255, 255, 0.08);
         --ef-line-strong: rgba(255, 255, 255, 0.14);
 
@@ -47,11 +47,11 @@ export default function MidnightTheme() {
         --ef-ink: #f4f5f7;
         --ef-muted: #8a8f98;
 
-        --ef-accent: #6d5dfc;
-        --ef-accent-2: #ff5f8f;
-        --ef-accent-warm: #ff5f8f;
-        --ef-hot: #ff5f8f;
-        --ef-red-glow: rgba(109, 93, 252, 0.4);
+        --ef-accent: #2f6bff;
+        --ef-accent-2: #22b8e6;
+        --ef-accent-warm: #22b8e6;
+        --ef-hot: #22b8e6;
+        --ef-red-glow: rgba(47, 107, 255, 0.4);
         --ef-premium-gradient: var(--mid-grad);
 
         --ef-radius-sm: 12px;
@@ -69,8 +69,8 @@ export default function MidnightTheme() {
       .studio-app.midnight,
       .studio-app.dark.midnight {
         background:
-          radial-gradient(1100px 600px at 86% -12%, rgba(109, 93, 252, 0.2), transparent 60%),
-          radial-gradient(820px 460px at 8% 4%, rgba(255, 95, 143, 0.07), transparent 58%),
+          radial-gradient(1100px 600px at 86% -12%, rgba(47, 107, 255, 0.2), transparent 60%),
+          radial-gradient(820px 460px at 8% 4%, rgba(34, 184, 230, 0.07), transparent 58%),
           linear-gradient(180deg, #0b0d0f 0%, #090a0c 100%);
         color: var(--ef-text);
       }
@@ -91,15 +91,15 @@ export default function MidnightTheme() {
         letter-spacing: -0.02em;
       }
       .studio-app.midnight .brand-title-line b {
-        background: rgba(109, 93, 252, 0.14);
-        border: 1px solid rgba(109, 93, 252, 0.3);
-        color: #b9b0ff;
+        background: rgba(47, 107, 255, 0.14);
+        border: 1px solid rgba(47, 107, 255, 0.3);
+        color: #a9d4ff;
         border-radius: 999px;
         padding: 1px 8px;
         font-size: 10px;
       }
       .studio-app.midnight .brand-mark {
-        filter: drop-shadow(0 4px 14px rgba(109, 93, 252, 0.45));
+        filter: drop-shadow(0 4px 14px rgba(47, 107, 255, 0.45));
       }
 
       /* ---------- Buttons ---------- */
@@ -127,13 +127,13 @@ export default function MidnightTheme() {
         border: 0;
         color: #fff;
         font-weight: 600;
-        box-shadow: 0 8px 24px rgba(109, 93, 252, 0.4);
+        box-shadow: 0 8px 24px rgba(47, 107, 255, 0.4);
       }
       .studio-app.midnight .ghost-button.accent-button:hover,
       .studio-app.midnight .brand-share-button:hover {
         color: #fff;
         transform: translateY(-1px);
-        box-shadow: 0 12px 32px rgba(109, 93, 252, 0.55);
+        box-shadow: 0 12px 32px rgba(47, 107, 255, 0.55);
       }
 
       /* ---------- Panels & cards ---------- */
@@ -166,7 +166,7 @@ export default function MidnightTheme() {
       .studio-app.midnight input:focus {
         outline: none;
         border-color: var(--mid-accent);
-        box-shadow: 0 0 0 3px rgba(109, 93, 252, 0.22);
+        box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.22);
       }
 
       /* ---------- Segmented / pill toggles ---------- */
@@ -188,7 +188,7 @@ export default function MidnightTheme() {
         background: var(--mid-grad);
         border-color: transparent;
         color: #fff;
-        box-shadow: 0 6px 18px rgba(109, 93, 252, 0.4);
+        box-shadow: 0 6px 18px rgba(47, 107, 255, 0.4);
       }
 
       /* ---------- Sliders ---------- */
@@ -206,11 +206,11 @@ export default function MidnightTheme() {
         border-radius: 999px;
         background: #fff;
         border: 0;
-        box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.28), 0 2px 6px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 0 0 4px rgba(47, 107, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.5);
         transition: box-shadow 0.14s ease;
       }
       .studio-app.midnight .slider input::-webkit-slider-thumb:hover {
-        box-shadow: 0 0 0 6px rgba(109, 93, 252, 0.34), 0 2px 8px rgba(0, 0, 0, 0.55);
+        box-shadow: 0 0 0 6px rgba(47, 107, 255, 0.34), 0 2px 8px rgba(0, 0, 0, 0.55);
       }
       .studio-app.midnight .slider input::-moz-range-thumb {
         width: 16px;
@@ -218,7 +218,7 @@ export default function MidnightTheme() {
         border: 0;
         border-radius: 999px;
         background: #fff;
-        box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.28);
+        box-shadow: 0 0 0 4px rgba(47, 107, 255, 0.28);
       }
       .studio-app.midnight .slider-reset {
         color: var(--ef-text-faint);
@@ -235,7 +235,7 @@ export default function MidnightTheme() {
         border: 0;
         color: #fff;
         border-radius: 16px;
-        box-shadow: 0 16px 44px rgba(109, 93, 252, 0.42);
+        box-shadow: 0 16px 44px rgba(47, 107, 255, 0.42);
       }
       .studio-app.midnight .export-card small {
         color: rgba(255, 255, 255, 0.85);
@@ -252,7 +252,7 @@ export default function MidnightTheme() {
       }
       .studio-app.midnight .media-drop:hover {
         border-color: var(--mid-accent);
-        background: rgba(109, 93, 252, 0.06);
+        background: rgba(47, 107, 255, 0.06);
       }
 
       /* ---------- Canvas stage ---------- */

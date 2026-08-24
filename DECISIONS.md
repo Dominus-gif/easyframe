@@ -44,6 +44,71 @@ editor rebuild are the irreversible steps and should be confirmed before executi
 
 ---
 
+## Enhancement pass 4 — layers, text, remove photo, realistic frames (DONE)
+
+- **Remove photo** — button on the Image card clears the device screenshot.
+- **Multi-photo layers + text** — new overlay system (`Overlay`/`ImageOverlay`/`TextOverlay` in
+  `lib/editor/compositor.ts`, rendered on top of the composited scene in `drawOverlays`). Editor
+  gains a **Layers** card (add Text / add Image, per-layer select / show-hide / reorder / delete)
+  and a **selected-layer** controls card; overlays are drag-positioned on the canvas. Verified: text
+  renders (2553 white px in the center band), 14 fonts + weight/color/align/size/rotation controls.
+- **Text fonts** — `lib/editor/fonts.ts` curates 14 trending families (Inter, Poppins, Montserrat,
+  Roboto, DM Sans, Space Grotesk, Playfair Display, Oswald, Bebas Neue, Anton, Archivo Black,
+  Lobster, Pacifico, Caveat), loaded on demand from Google Fonts; export awaits `document.fonts.ready`.
+- **Realistic frames** — `renderDeviceLayer` now paints a metallic **body gradient** + inner **rim
+  light**, and the screen gets a diagonal **glass glare** + inner recess shadow. Verified visually
+  (metallic iPhone with glassy screen). NOTE: this is enhanced-procedural realism (glass/metal
+  shading), not photoreal device renders — true photorealism would need real device art or a
+  WebGL/3D pipeline (offer as a follow-up).
+
+## Enhancement pass 3 — editor UI polish + more mockups (DONE)
+
+- **6 more devices** (12 → 18): iPhone SE, Foldable Phone, E-Reader, Chromebook, Smart TV, Ultrawide
+  Monitor. Build now emits 52 pages. Editor picker shows 19 tiles (18 + Blank) across 7 groups.
+- **Editor UI polish** (`components/editor/CanvasEditor.tsx`): new app bar with a gradient logo mark +
+  brand/tag, undo/redo as a joined icon group, prominent gradient Download; right-and-left rails
+  reorganized into titled **cards** (Device / Image / Background / Adjust / 3D angle / Export) for
+  clear hierarchy; sliders now show a **filled accent track** (inline gradient by value) with a value
+  chip; iOS-style **segmented controls**; refined swatches (hover scale + accent ring), device tiles,
+  upload button, zoom pill, and a subtle **dot-grid canvas backdrop** with a soft canvas drop-shadow;
+  themed thin scrollbars and focus-visible throughout. Verified via DOM + computed styles (full-page
+  screenshots are blocked in the headless pane; canvas output was viewed separately).
+
+## Enhancement pass 2 — Blank/frameless mockup + viewing-angle fixes (DONE)
+
+- **Blank (frameless) device** — new editor-only device (`BLANK_DEVICE`/`editorDevices` in
+  `lib/editor/devices.ts`; picker group "No frame"). Renders the pasted/dropped image directly with
+  rounded corners (no device shell), then applies background, padding, shadow, and 3D angle. Sizes
+  itself to the image aspect (capped 2600px). Excluded from SEO/template pages (editor-only). The
+  compositor's `renderDeviceLayer` has a `kind === "blank"` branch; scene rounding is skipped for
+  blank (the image itself is rounded). Verified in-browser: iso-tilted Blank renders a correct 3D
+  trapezoid with the image uncropped.
+- **Viewing-angle / perspective** — the 3D warp was verified CORRECT (rendered a proper perspective
+  card; the Perspective slider measurably changes the projection — weak vs strong produced different
+  output dimensions). The real complaint was UX: **Perspective does nothing with no tilt applied**
+  (mathematically correct, but confusing). Fixes: angle presets now also set a good `perspective`
+  value (one click → great 3D), added a hint ("Pick an angle, then fine-tune. Perspective adds depth
+  to a tilted view."), a "Reset to flat" button, and slightly stronger preset angles.
+
+## Enhancement pass — more devices, 3D viewing angle, professional theme (DONE)
+
+- **More devices (6 → 12):** added Android Phone, Google Pixel, iPad mini, Surface Laptop, Desktop
+  Monitor (new `desktop` kind with stand), and Apple Watch Ultra. Each auto-generates a
+  `/templates/[slug]` SEO page (build now emits 46 pages). New devices use a generated fallback
+  in `lib/site.ts` `getTemplateCopy()` so every template page has valid copy.
+- **True 3D viewing angle:** `lib/editor/compositor.ts` rewritten with an offscreen device layer +
+  perspective projection (rotateX/rotateY/rotateZ + `perspective`), warped onto a 16×16
+  texture-mapped grid, with an auto-fitting scene and a single clean projected shadow. Flat
+  (angles = 0) keeps a crisp fast path. Editor adds a "Viewing angle" panel: 6 presets
+  (Front/Left/Right/Look up/Isometric/Tilt) + Tilt/Turn/Roll/Perspective sliders. Verified
+  in-browser: applying a tilt reflows the scene and exports a valid 2048px PNG, no console errors.
+- **Professional theme:** replaced the violet→pink palette with a **blue/cyan/slate** system
+  (`--accent #2f6bff`, gradient `#2f6bff → #22b8e6`) across marketing, editor, ads, consent, OG,
+  and legacy pages via a global token replace (0 violet/pink tokens remain). Editor swatches +
+  gradient presets recolored to Azure/Ocean/Slate/Emerald/Sunset/Steel.
+- **Trade-off:** the device layer renders at natural resolution, so 4K (Premium) exports of tilted
+  frames are marginally soft; can add supersampling later if needed.
+
 ## Phase 4 — Blog + analytics + compliance + polish (DONE)
 
 - **Blog** — `/blog` index + `/blog/[slug]` (5 posts) statically generated. Posts authored as
@@ -188,3 +253,17 @@ green; `/editor` ships **1.3 kB** initial JS (engine in a dynamic chunk).
 - **Ad placements:** header leaderboard, one in-content unit on template pages below the editor,
   footer unit. Never inside the canvas, never between upload and download. Premium renders the
   same-height empty slot (no layout shift).
+
+## Enhancement pass 5 — render sharpness + custom gradients (DONE)
+- **Root cause of "blurry text / bad-quality mockups":** the device layer was rendered at its tiny
+  natural design units (~460px for a phone) then bitmap-upscaled to fill the export — softening both
+  the vector frame and the embedded screenshot. Fix: `renderDeviceLayer(device,img,settings,renderScale)`
+  now renders at `renderScale ≈ outScale*1.15` (capped 4×) so vector frames stay razor-sharp and the
+  screenshot is sampled at output resolution. `baseDims()` computes design-unit size up front so the
+  layer is rendered once per path at the right scale; tilt path scales source coords by `layer.scale`.
+- **Preview resolution:** `PREVIEW_MAX_EDGE` 1400 → 2000 so the on-screen canvas isn't CSS-upscaled on
+  large/retina displays (measured sharpnessRatio 3.5 = no upscaling). Blank cap 2600 → 3200.
+- **Gradients:** `gradientPresets` expanded 6 → 16, plus a **custom gradient builder** in the Background
+  card (two color pickers + angle slider → writes `background:{type:"gradient",from,to,angle}`).
+- Verified: tsc + next build pass; decoded native-res crop shows crisp text; custom gradient paints the
+  canvas; no rail overflow.

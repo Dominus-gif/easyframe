@@ -67,7 +67,7 @@ export default function PricingPage({ searchParams }: { searchParams?: { reason?
             </div>
 
             {/* Premium */}
-            <div className="mk-card" style={{ padding: 30, borderColor: "rgba(109,93,252,.5)", background: "linear-gradient(180deg, rgba(109,93,252,.1), rgba(255,95,143,.04))" }}>
+            <div className="mk-card" style={{ padding: 30, borderColor: "rgba(47,107,255,.5)", background: "linear-gradient(180deg, rgba(47,107,255,.1), rgba(34,184,230,.04))" }}>
               <h3 style={{ fontSize: 20, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
                 <Crown size={18} /> Premium
               </h3>

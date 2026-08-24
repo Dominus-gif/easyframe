@@ -143,7 +143,7 @@ function AuthStyles() {
         color: #f8f6ef;
         background:
           radial-gradient(circle at 18% 12%, rgba(255, 104, 88, 0.18), transparent 28%),
-          radial-gradient(circle at 82% 18%, rgba(109, 93, 252, 0.24), transparent 30%),
+          radial-gradient(circle at 82% 18%, rgba(47, 107, 255, 0.24), transparent 30%),
           linear-gradient(145deg, #08090a 0%, #101211 52%, #171612 100%);
         font-family: var(--font-sans);
       }
@@ -254,7 +254,7 @@ function AuthStyles() {
         color: #0f172a;
         background: #ffffff;
         border-color: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 18px 44px rgba(88, 213, 201, 0.18), 0 0 0 1px rgba(88, 213, 201, 0.18);
+        box-shadow: 0 18px 44px rgba(34, 184, 230, 0.18), 0 0 0 1px rgba(34, 184, 230, 0.18);
       }
 
       .google-logo {
@@ -304,8 +304,8 @@ function AuthStyles() {
       .auth-shell {
         color: var(--text-primary);
         background:
-          radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.2), transparent 30%),
-          radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.08), transparent 28%),
+          radial-gradient(circle at 78% -10%, rgba(47, 107, 255, 0.2), transparent 30%),
+          radial-gradient(circle at 12% 12%, rgba(34, 184, 230, 0.08), transparent 28%),
           linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
       }
 

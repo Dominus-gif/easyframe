@@ -29,7 +29,7 @@ export default function SponsorLine() {
           transition: color 0.15s ease;
         }
         .sponsor-line span {
-          background: linear-gradient(135deg, #9a8bff 0%, #ff7fa6 100%);
+          background: linear-gradient(135deg, #7db1ff 0%, #4fd0ea 100%);
           -webkit-background-clip: text;
           background-clip: text;
           -webkit-text-fill-color: transparent;

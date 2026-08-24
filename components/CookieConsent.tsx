@@ -58,11 +58,11 @@ export default function CookieConsent() {
               font-family: var(--font-sans);
             }
             .cc p { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(244, 245, 247, 0.82); }
-            .cc a { color: #b9b0ff; }
+            .cc a { color: #a9d4ff; }
             .cc-actions { display: flex; gap: 10px; justify-content: flex-end; }
             .cc-btn { height: 38px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
             .cc-decline { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); color: #f4f5f7; }
-            .cc-accept { background: linear-gradient(135deg, #6d5dfc, #ff5f8f); border: 0; color: #fff; }
+            .cc-accept { background: linear-gradient(135deg, #2f6bff, #22b8e6); border: 0; color: #fff; }
             .cc-btn:focus-visible { outline: 2px solid #8b8cf6; outline-offset: 2px; }
           `}</style>
         </div>

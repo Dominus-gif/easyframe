@@ -76,8 +76,8 @@ export const shadows: ShadowPreset[] = [
   { id: "none", label: "None", shadow: "none" },
   { id: "spread", label: "Spread", shadow: "0 34px 90px rgba(17, 19, 18, 0.24)" },
   { id: "hug", label: "Hug", shadow: "0 18px 42px rgba(17, 19, 18, 0.2)" },
-  { id: "adaptive", label: "Adaptive", shadow: "0 36px 80px rgba(241, 43, 143, 0.28), 0 18px 70px rgba(109, 93, 252, 0.24)" },
-  { id: "glow", label: "Glow", shadow: "0 0 0 1px rgba(255,255,255,.25), 0 0 60px rgba(109, 93, 252, 0.38), 0 34px 90px rgba(17, 19, 18, 0.18)" }
+  { id: "adaptive", label: "Adaptive", shadow: "0 36px 80px rgba(241, 43, 143, 0.28), 0 18px 70px rgba(47, 107, 255, 0.24)" },
+  { id: "glow", label: "Glow", shadow: "0 0 0 1px rgba(255,255,255,.25), 0 0 60px rgba(47, 107, 255, 0.38), 0 34px 90px rgba(17, 19, 18, 0.18)" }
 ];
 
 export const effects: EffectPreset[] = [

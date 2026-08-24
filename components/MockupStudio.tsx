@@ -178,7 +178,7 @@ type FontOption = {
   url?: string;
 };
 
-const colorPalette = ["#ffffff", "#151713", "#f12b8f", "#6d5dfc", "#09c6f9", "#ff7b54", "#2fbf71", "#f7f4ec"];
+const colorPalette = ["#ffffff", "#151713", "#f12b8f", "#2f6bff", "#09c6f9", "#ff7b54", "#2fbf71", "#f7f4ec"];
 
 const fallbackFontOptions: FontOption[] = [
   { label: "Inter", family: "Inter" },
@@ -3064,8 +3064,8 @@ function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
           padding: 28px;
           color: #f5f7fb;
           background:
-            radial-gradient(circle at 78% -10%, rgba(139, 140, 246, 0.22), transparent 30%),
-            radial-gradient(circle at 12% 12%, rgba(88, 213, 201, 0.1), transparent 28%),
+            radial-gradient(circle at 78% -10%, rgba(47, 107, 255, 0.22), transparent 30%),
+            radial-gradient(circle at 12% 12%, rgba(34, 184, 230, 0.1), transparent 28%),
             linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
           font-family: var(--font-sans);
         }
@@ -3074,7 +3074,7 @@ function StudioLoadingScreen({ theme }: { theme: "light" | "dark" }) {
           color: #101827;
           background:
             radial-gradient(circle at 8% 8%, rgba(112, 224, 218, 0.26), transparent 32%),
-            radial-gradient(circle at 92% 0%, rgba(139, 140, 246, 0.26), transparent 34%),
+            radial-gradient(circle at 92% 0%, rgba(47, 107, 255, 0.26), transparent 34%),
             linear-gradient(145deg, #f8fbff 0%, #eef5f7 52%, #f7f2ff 100%);
         }
 
@@ -3509,7 +3509,7 @@ function StudioStyles() {
       .studio-app.dark {
         background:
           radial-gradient(circle at 12% 0%, rgba(255, 104, 88, 0.16), transparent 28%),
-          radial-gradient(circle at 88% 4%, rgba(109, 93, 252, 0.22), transparent 30%),
+          radial-gradient(circle at 88% 4%, rgba(47, 107, 255, 0.22), transparent 30%),
           linear-gradient(135deg, #08090a 0%, #101211 52%, #171612 100%);
         color: #f7f4ec;
       }
@@ -3554,7 +3554,7 @@ function StudioStyles() {
 
       .studio-app.dark .tabs .active,
       .studio-app.dark .media-drop span {
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
         color: white;
       }
 
@@ -3571,7 +3571,7 @@ function StudioStyles() {
       .studio-app.dark .device-row.active,
       .studio-app.dark .local-mockup-grid .active {
         color: #fff;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .studio-app.dark .preset-row button:hover,
@@ -3714,7 +3714,7 @@ function StudioStyles() {
       .primary-button {
         padding: 0 18px;
         color: #fff;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
         box-shadow: 0 18px 42px rgba(241, 43, 143, 0.24);
       }
 
@@ -3777,7 +3777,7 @@ function StudioStyles() {
         display: grid;
         place-items: center;
         color: white;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .profile-dropdown {
@@ -3961,7 +3961,7 @@ function StudioStyles() {
         place-items: center;
         border-radius: 999px;
         color: #fff;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
         font-size: 20px;
         font-weight: 950;
         line-height: 1;
@@ -3991,7 +3991,7 @@ function StudioStyles() {
       }
 
       .studio-app.dark .tool-section-header b {
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .studio-app.dark .tool-section-body {
@@ -4780,7 +4780,7 @@ function StudioStyles() {
 
       .effect-glow {
         background: #10120f;
-        box-shadow: 0 0 54px var(--glow-effect-color, rgba(109,93,252,.42)), 0 34px 90px rgba(17,19,18,.22);
+        box-shadow: 0 0 54px var(--glow-effect-color, rgba(47,107,255,.42)), 0 34px 90px rgba(17,19,18,.22);
       }
 
       .effect-vignette::after {
@@ -5648,7 +5648,7 @@ function StudioStyles() {
       .selected-layer-actions .danger {
         grid-column: 1 / -1;
         color: white;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
         box-shadow: 0 14px 34px rgba(241, 43, 143, 0.2);
       }
 
@@ -5672,7 +5672,7 @@ function StudioStyles() {
 
       .studio-app.dark .selected-layer-actions .danger {
         color: white;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .layer-tools {
@@ -5768,7 +5768,7 @@ function StudioStyles() {
 
       .layer-row.active {
         color: #fff;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .layer-row.active span {
@@ -5903,7 +5903,7 @@ function StudioStyles() {
 
       .remove-layer-button {
         color: #fff;
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
         box-shadow: 0 14px 34px rgba(241, 43, 143, 0.22);
       }
 
@@ -5940,7 +5940,7 @@ function StudioStyles() {
       }
 
       .studio-app.dark .remove-layer-button {
-        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #6d5dfc);
+        background: linear-gradient(135deg, #ff6858, #f12b8f 58%, #2f6bff);
       }
 
       .studio-app.dark .layer-row {
@@ -6304,7 +6304,7 @@ function StudioStyles() {
         letter-spacing: 0;
         background:
           radial-gradient(circle at 14% 0%, rgba(255, 255, 255, 0.86), transparent 28%),
-          radial-gradient(circle at 90% 6%, rgba(109, 93, 252, 0.12), transparent 26%),
+          radial-gradient(circle at 90% 6%, rgba(47, 107, 255, 0.12), transparent 26%),
           linear-gradient(135deg, #f6f2ea 0%, #ede7dd 48%, #dfd8cc 100%);
       }
 
@@ -6322,7 +6322,7 @@ function StudioStyles() {
         --ef-shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.045);
         background:
           radial-gradient(circle at 15% 0%, rgba(255, 104, 88, 0.13), transparent 27%),
-          radial-gradient(circle at 86% 3%, rgba(109, 93, 252, 0.17), transparent 28%),
+          radial-gradient(circle at 86% 3%, rgba(47, 107, 255, 0.17), transparent 28%),
           linear-gradient(135deg, #090a0a 0%, #101211 48%, #161713 100%);
       }
 
@@ -6619,7 +6619,7 @@ function StudioStyles() {
 
       .slider input::-webkit-slider-runnable-track {
         height: 5px;
-        background: linear-gradient(90deg, rgba(241, 43, 143, 0.8), rgba(109, 93, 252, 0.42));
+        background: linear-gradient(90deg, rgba(241, 43, 143, 0.8), rgba(47, 107, 255, 0.42));
         border: 0;
       }
 
@@ -6631,7 +6631,7 @@ function StudioStyles() {
       }
 
       .studio-app.dark .slider input::-webkit-slider-runnable-track {
-        background: linear-gradient(90deg, rgba(255, 104, 88, 0.88), rgba(109, 93, 252, 0.5));
+        background: linear-gradient(90deg, rgba(255, 104, 88, 0.88), rgba(47, 107, 255, 0.5));
       }
 
       .studio-app {
@@ -7434,15 +7434,15 @@ function StudioStyles() {
         --ef-surface-solid: rgba(23, 24, 30, 0.96);
         --ef-surface-hover: rgba(255, 255, 255, 0.07);
         --ef-border-premium: rgba(255, 255, 255, 0.09);
-        --ef-border-focus: rgba(139, 140, 246, 0.48);
+        --ef-border-focus: rgba(47, 107, 255, 0.48);
         --ef-text: #f5f7fb;
         --ef-text-soft: rgba(245, 247, 251, 0.72);
         --ef-text-muted: rgba(245, 247, 251, 0.52);
         --ef-text-faint: rgba(245, 247, 251, 0.34);
         --ef-accent: #8b8cf6;
-        --ef-accent-2: #58d5c9;
+        --ef-accent-2: #22b8e6;
         --ef-accent-warm: #ff765f;
-        --ef-premium-gradient: linear-gradient(135deg, #9a9bff 0%, #7178ff 48%, #58d5c9 100%);
+        --ef-premium-gradient: linear-gradient(135deg, #7db1ff 0%, #2f8fff 48%, #22b8e6 100%);
         --ef-control-height: 44px;
         --ef-radius-sm: 12px;
         --ef-radius-md: 16px;
@@ -7450,8 +7450,8 @@ function StudioStyles() {
         --ef-shadow-elevated: 0 24px 80px rgba(0, 0, 0, 0.36);
         --ef-shadow-soft-premium: 0 14px 44px rgba(0, 0, 0, 0.24);
         background:
-          radial-gradient(circle at 78% -12%, rgba(139, 140, 246, 0.22), transparent 30%),
-          radial-gradient(circle at 16% 6%, rgba(88, 213, 201, 0.08), transparent 26%),
+          radial-gradient(circle at 78% -12%, rgba(47, 107, 255, 0.22), transparent 30%),
+          radial-gradient(circle at 16% 6%, rgba(34, 184, 230, 0.08), transparent 26%),
           radial-gradient(circle at 50% 108%, rgba(255, 118, 95, 0.09), transparent 32%),
           linear-gradient(145deg, #07080a 0%, #0b0c10 50%, #090a0d 100%);
         color: var(--ef-text);
@@ -7459,8 +7459,8 @@ function StudioStyles() {
 
       .studio-app.dark {
         background:
-          radial-gradient(circle at 78% -12%, rgba(139, 140, 246, 0.22), transparent 30%),
-          radial-gradient(circle at 16% 6%, rgba(88, 213, 201, 0.08), transparent 26%),
+          radial-gradient(circle at 78% -12%, rgba(47, 107, 255, 0.22), transparent 30%),
+          radial-gradient(circle at 16% 6%, rgba(34, 184, 230, 0.08), transparent 26%),
           radial-gradient(circle at 50% 108%, rgba(255, 118, 95, 0.09), transparent 32%),
           linear-gradient(145deg, #07080a 0%, #0b0c10 50%, #090a0d 100%);
       }
@@ -7636,7 +7636,7 @@ function StudioStyles() {
         color: #ffffff;
         background: var(--ef-premium-gradient) !important;
         border-color: rgba(154, 155, 255, 0.52) !important;
-        box-shadow: 0 14px 34px rgba(113, 120, 255, 0.2);
+        box-shadow: 0 14px 34px rgba(47, 107, 255, 0.2);
       }
 
       .ghost-button:hover,
@@ -7687,7 +7687,7 @@ function StudioStyles() {
       .canvas-shell {
         border-radius: 30px;
         background:
-          radial-gradient(circle at 50% 90%, rgba(139, 140, 246, 0.12), transparent 34%),
+          radial-gradient(circle at 50% 90%, rgba(47, 107, 255, 0.12), transparent 34%),
           linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
           rgba(8, 9, 11, 0.92) !important;
       }
@@ -7707,7 +7707,7 @@ function StudioStyles() {
       .stage-light {
         background:
           radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.22), transparent 30%),
-          radial-gradient(circle at 74% 88%, rgba(139, 140, 246, 0.18), transparent 34%);
+          radial-gradient(circle at 74% 88%, rgba(47, 107, 255, 0.18), transparent 34%);
       }
 
       .media-drop,
@@ -7742,8 +7742,8 @@ function StudioStyles() {
       .device-row:hover,
       .preset-preview-card:hover {
         border-color: var(--ef-border-focus) !important;
-        background: rgba(139, 140, 246, 0.08) !important;
-        box-shadow: 0 0 0 1px rgba(139, 140, 246, 0.12);
+        background: rgba(47, 107, 255, 0.08) !important;
+        box-shadow: 0 0 0 1px rgba(47, 107, 255, 0.12);
       }
 
       .background-panel,
@@ -7777,7 +7777,7 @@ function StudioStyles() {
       .swatch.active {
         outline: 2px solid var(--ef-accent);
         outline-offset: 3px;
-        box-shadow: 0 0 0 5px rgba(139, 140, 246, 0.13);
+        box-shadow: 0 0 0 5px rgba(47, 107, 255, 0.13);
       }
 
       .background-url-row input,
@@ -7801,7 +7801,7 @@ function StudioStyles() {
       .layer-editor input:focus,
       .layer-editor select:focus {
         border-color: var(--ef-border-focus);
-        box-shadow: 0 0 0 4px rgba(139, 140, 246, 0.12);
+        box-shadow: 0 0 0 4px rgba(47, 107, 255, 0.12);
       }
 
       .slider {
@@ -8188,7 +8188,7 @@ function StudioStyles() {
       .layer-row.active {
         background: var(--ef-premium-gradient) !important;
         border-color: rgba(154, 155, 255, 0.54) !important;
-        box-shadow: 0 14px 34px rgba(113, 120, 255, 0.18) !important;
+        box-shadow: 0 14px 34px rgba(47, 107, 255, 0.18) !important;
       }
 
       @media (max-width: 1320px) {
@@ -8394,7 +8394,7 @@ function StudioStyles() {
       .effect-grid .active,
       .color-target-row .active,
       .border-mode-row .active {
-        box-shadow: 0 0 0 1px rgba(139, 140, 246, 0.22), 0 10px 28px rgba(113, 120, 255, 0.14) !important;
+        box-shadow: 0 0 0 1px rgba(47, 107, 255, 0.22), 0 10px 28px rgba(47, 107, 255, 0.14) !important;
         z-index: 1;
       }
 
@@ -8503,7 +8503,7 @@ function StudioStyles() {
       }
 
       .template-line-row:hover {
-        background: rgba(139, 140, 246, 0.08);
+        background: rgba(47, 107, 255, 0.08);
         border-color: var(--ef-border-focus) !important;
       }
 
@@ -8876,7 +8876,7 @@ function StudioStyles() {
       .left-preset-grid .preset-preview-card.active,
       .left-preset-grid .preset-preview-card:hover {
         border-color: rgba(126, 216, 255, 0.58) !important;
-        background: linear-gradient(135deg, rgba(139, 140, 246, 0.95), rgba(80, 205, 210, 0.86)) !important;
+        background: linear-gradient(135deg, rgba(47, 107, 255, 0.95), rgba(80, 205, 210, 0.86)) !important;
         color: #ffffff !important;
         box-shadow: 0 14px 34px rgba(85, 118, 255, 0.24) !important;
       }
@@ -9705,7 +9705,7 @@ function StudioStyles() {
           linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035)),
           #2b2d34 !important;
         border-color: rgba(255, 255, 255, 0.16) !important;
-        box-shadow: 0 0 0 1px rgba(139, 140, 246, 0.08) inset !important;
+        box-shadow: 0 0 0 1px rgba(47, 107, 255, 0.08) inset !important;
       }
 
       .studio-app.dark .layer-select-grid select option,

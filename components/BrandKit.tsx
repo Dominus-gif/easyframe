@@ -314,7 +314,7 @@ export default function BrandKit({ open, onClose, onApplied }: BrandKitProps) {
           align-items: center;
           justify-content: center;
           gap: 8px;
-          background: linear-gradient(135deg, #6d5dfc, #ff5f8f);
+          background: linear-gradient(135deg, #2f6bff, #22b8e6);
           border: 0;
           color: #fff;
           border-radius: 12px;

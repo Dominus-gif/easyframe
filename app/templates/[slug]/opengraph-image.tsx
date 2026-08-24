@@ -24,14 +24,14 @@ export default function OgImage({ params }: { params: { slug: string } }) {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px",
-          background: "linear-gradient(135deg, #0b0d0f 0%, #171029 55%, #2a1030 100%)",
+          background: "linear-gradient(135deg, #0b0d0f 0%, #0b1a2e 55%, #08243a 100%)",
           color: "#f4f5f7",
           fontFamily: "sans-serif"
         }}
       >
         <div style={{ display: "flex", alignItems: "center", fontSize: 34, fontWeight: 700 }}>
           EasyFrame
-          <span style={{ marginLeft: 8, color: "#ff5f8f" }}>.</span>
+          <span style={{ marginLeft: 8, color: "#22b8e6" }}>.</span>
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 72, fontWeight: 800, lineHeight: 1.05, letterSpacing: "-0.03em", maxWidth: 980 }}>
@@ -50,7 +50,7 @@ export default function OgImage({ params }: { params: { slug: string } }) {
             fontSize: 26,
             fontWeight: 700,
             color: "#fff",
-            background: "linear-gradient(135deg, #6d5dfc, #ff5f8f)"
+            background: "linear-gradient(135deg, #2f6bff, #22b8e6)"
           }}
         >
           Open the free editor →
