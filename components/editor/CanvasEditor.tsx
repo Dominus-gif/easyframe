@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Plus, Redo2, RotateCcw, Smartphone, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { editorDevices, gradientPresets, type DeviceKind } from "@/lib/editor/devices";
 import {
   composite,
@@ -79,6 +79,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customBg, setCustomBg] = useState({ from: "#2f6bff", to: "#22b8e6", angle: 135 });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("ef-editor-theme");
+      if (saved === "light" || saved === "dark") setTheme(saved);
+    } catch { /* ignore */ }
+  }, []);
+  useEffect(() => {
+    try { localStorage.setItem("ef-editor-theme", theme); } catch { /* ignore */ }
+  }, [theme]);
   const overlayFileRef = useRef<HTMLInputElement>(null);
   const { premium } = usePremium();
 
@@ -327,7 +338,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   return (
     <div
-      className="ed"
+      className={`ed ${theme === "light" ? "ed-light" : ""}`}
       onDragOver={(e) => { e.preventDefault(); setDropActive(true); }}
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => { e.preventDefault(); setDropActive(false); onFiles(e.dataTransfer.files); }}
@@ -339,6 +350,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <span className="ed-brand-tag">Editor</span>
         </a>
         <div className="ed-top-actions">
+          <button
+            className="ed-icon-btn ed-theme-toggle"
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+          >
+            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
           <div className="ed-btn-group">
             <button className="ed-icon-btn" onClick={undo} disabled={!canUndo} aria-label="Undo" title="Undo (Ctrl+Z)"><Undo2 size={16} /></button>
             <button className="ed-icon-btn" onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y)"><Redo2 size={16} /></button>
@@ -611,10 +630,40 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
 function EditorStyles() {
   return (
     <style jsx global>{`
-      .ed { --acc: #2f6bff; --acc2: #22b8e6; --bg: #0b0d0f; --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --text: #f4f5f7; --muted: #8a8f98; --card: rgba(255,255,255,.022);
+      .ed { --acc: #6E41E2; --acc2: #8B5CF6; --bg: #0b0d0f; --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --text: #f4f5f7; --muted: #8a8f98; --card: rgba(255,255,255,.022);
         position: fixed; inset: 0; display: flex; flex-direction: column; color: var(--text);
-        background: radial-gradient(1200px 700px at 82% -20%, rgba(47,107,255,.06), transparent 60%), var(--bg);
-        font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.08), transparent 60%), var(--bg);
+        font-family: "Geist", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+      /* Standalone theme toggle button gets its own border (not in a group). */
+      .ed-theme-toggle { border: 1px solid var(--line); border-radius: 10px; }
+
+      /* ---- Light theme ---- */
+      .ed.ed-light { --bg: #f4f5f7; --line: rgba(15,18,25,.10); --line-2: rgba(15,18,25,.18); --text: #16181d; --muted: #6b7280; --card: #ffffff;
+        background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.06), transparent 60%), var(--bg); }
+      .ed-light .ed-top { background: rgba(255,255,255,.82); }
+      .ed-light .ed-btn-group { background: #fff; }
+      .ed-light .ed-icon-btn:hover:not(:disabled) { background: rgba(15,18,25,.05); }
+      .ed-light .ed-ghost { background: #fff; }
+      .ed-light .ed-ghost:hover:not(:disabled) { background: rgba(15,18,25,.04); }
+      .ed-light .ed-card { background: #fff; box-shadow: 0 1px 2px rgba(15,18,25,.05); }
+      .ed-light .ed-rail-left, .ed-light .ed-rail-right { background: #fafbfc; }
+      .ed-light .ed-rail::-webkit-scrollbar-thumb { background: rgba(15,18,25,.16); }
+      .ed-light .ed-device { background: #fff; }
+      .ed-light .ed-device:hover { background: #f4f2fb; }
+      .ed-light .ed-url, .ed-light .ed-zoom, .ed-light .ed-range, .ed-light .ed-angle, .ed-light .ed-reset-flat, .ed-light .ed-layer { background: #fff; }
+      .ed-light .ed-seg { background: rgba(15,18,25,.05); }
+      .ed-light .ed-textarea, .ed-light .ed-select, .ed-light .ed-color { background: #fff; }
+      .ed-light .ed-range { border: 1px solid var(--line); }
+      .ed-light .ed-stage { background: #eceef2; }
+      .ed-light .ed-canvas-wrap { filter: drop-shadow(0 20px 45px rgba(15,18,25,.22)); }
+
+      /* Accent-consistent control fills (both themes, site purple) */
+      .ed-seg button.on { background: var(--acc); box-shadow: 0 2px 8px rgba(110,65,226,.4); }
+      .ed-layer-add button { background: rgba(110,65,226,.1); border-color: rgba(110,65,226,.3); color: var(--acc); }
+      .ed-layer-add button:hover { background: rgba(110,65,226,.16); }
+      .ed-drop:hover, .ed-drop.active { background: rgba(110,65,226,.09); }
+      .ed-light .ed-layer-add button { color: #5a2fc0; }
 
       .ed-top { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
       .ed-brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
