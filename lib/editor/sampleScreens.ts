@@ -190,6 +190,134 @@ const SCREENS: Screen[] = [
         ctx.fillText(s, 128, 590 + k * 130);
       });
     }
+  },
+  {
+    name: "Messages",
+    draw: (ctx) => {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#111318");
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 34px Inter, system-ui, sans-serif";
+      ctx.fillText("Messages", 30, 120);
+      ctx.strokeStyle = "#EEF0F4";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, 150);
+      ctx.lineTo(W, 150);
+      ctx.stroke();
+      const bubbles = [
+        { me: false, w: 260, h: 64, y: 200 },
+        { me: true, w: 300, h: 92, y: 290 },
+        { me: false, w: 210, h: 56, y: 410 },
+        { me: true, w: 250, h: 60, y: 496 },
+        { me: false, w: 290, h: 88, y: 586 },
+        { me: true, w: 180, h: 56, y: 700 }
+      ];
+      bubbles.forEach((b) => {
+        const x = b.me ? W - 30 - b.w : 30;
+        ctx.fillStyle = b.me ? "#6E41E2" : "#F1F2F5";
+        rr(ctx, x, b.y, b.w, b.h, 20);
+        ctx.fill();
+        ctx.fillStyle = b.me ? "rgba(255,255,255,.85)" : "#B9BDC7";
+        rr(ctx, x + 18, b.y + 18, b.w - 60, 10, 5);
+        ctx.fill();
+        if (b.h > 70) {
+          rr(ctx, x + 18, b.y + 40, b.w - 90, 10, 5);
+          ctx.fill();
+        }
+      });
+      ctx.fillStyle = "#F4F5F7";
+      rr(ctx, 30, H - 108, W - 60, 60, 30);
+      ctx.fill();
+      ctx.fillStyle = "#6E41E2";
+      ctx.beginPath();
+      ctx.arc(W - 62, H - 78, 22, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  },
+  {
+    name: "Player",
+    draw: (ctx) => {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#F6F2FF");
+      g.addColorStop(1, "#FFFFFF");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#111318");
+      const ag = ctx.createLinearGradient(50, 120, W - 50, 500);
+      ag.addColorStop(0, "#6E41E2");
+      ag.addColorStop(1, "#EC4899");
+      ctx.fillStyle = ag;
+      rr(ctx, 50, 120, W - 100, 370, 28);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.beginPath();
+      ctx.arc(W / 2, 305, 60, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = ag;
+      ctx.beginPath();
+      ctx.arc(W / 2, 305, 20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 36px Inter, system-ui, sans-serif";
+      ctx.fillText("Midnight Drive", 50, 570);
+      ctx.fillStyle = "#8A8F9A";
+      ctx.font = "400 24px Inter, system-ui, sans-serif";
+      ctx.fillText("The Wknd Tapes", 50, 606);
+      ctx.fillStyle = "#EAE6F2";
+      rr(ctx, 50, 660, W - 100, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = "#6E41E2";
+      rr(ctx, 50, 660, (W - 100) * 0.42, 8, 4);
+      ctx.fill();
+      ctx.fillStyle = "#0f1115";
+      [W / 2 - 120, W / 2, W / 2 + 120].forEach((cx, i) => {
+        ctx.beginPath();
+        ctx.arc(cx, 760, i === 1 ? 34 : 20, 0, Math.PI * 2);
+        ctx.fillStyle = i === 1 ? "#6E41E2" : "#C9CDD6";
+        ctx.fill();
+      });
+    }
+  },
+  {
+    name: "Schedule",
+    draw: (ctx) => {
+      ctx.fillStyle = "#F7F8FA";
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#111318");
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 40px Inter, system-ui, sans-serif";
+      ctx.fillText("Today", 30, 128);
+      ctx.fillStyle = "#8A8F9A";
+      ctx.font = "500 22px Inter, system-ui, sans-serif";
+      ctx.fillText("Wed · 12 items", 30, 162);
+      const items = [
+        { t: "09:00", c: "#6E41E2", h: 92 },
+        { t: "10:30", c: "#3B82F6", h: 128 },
+        { t: "13:00", c: "#EC4899", h: 92 },
+        { t: "15:30", c: "#10B981", h: 110 }
+      ];
+      let y = 210;
+      items.forEach((it) => {
+        ctx.fillStyle = "#B9BDC7";
+        ctx.font = "600 20px Inter, system-ui, sans-serif";
+        ctx.fillText(it.t, 30, y + 30);
+        ctx.fillStyle = "#FFFFFF";
+        rr(ctx, 120, y, W - 150, it.h, 18);
+        ctx.fill();
+        ctx.fillStyle = it.c;
+        rr(ctx, 120, y, 6, it.h, 3);
+        ctx.fill();
+        ctx.fillStyle = "#2A2F3A";
+        rr(ctx, 150, y + 24, 160, 12, 6);
+        ctx.fill();
+        ctx.fillStyle = "#C9CDD6";
+        rr(ctx, 150, y + 48, 100, 10, 5);
+        ctx.fill();
+        y += it.h + 20;
+      });
+    }
   }
 ];
 

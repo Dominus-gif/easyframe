@@ -1,8 +1,21 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 
-/** Shared marketing nav (server component). */
+const LINKS = [
+  { href: "/editor", label: "Editor" },
+  { href: "/templates", label: "Templates" },
+  { href: "/blog", label: "Blog" },
+  { href: "/pricing", label: "Pricing" }
+];
+
+/** Shared marketing nav — highlights the current page. */
 export default function SiteNav() {
+  const pathname = usePathname() || "/";
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
+
   return (
     <nav className="mk-nav" aria-label="Primary">
       <div className="mk-wrap mk-nav-inner">
@@ -10,10 +23,11 @@ export default function SiteNav() {
           EasyFrame<b>.</b>
         </Link>
         <div className="mk-nav-links">
-          <Link href="/editor">Editor</Link>
-          <Link href="/templates">Templates</Link>
-          <Link href="/blog">Blog</Link>
-          <Link href="/pricing">Pricing</Link>
+          {LINKS.map((l) => (
+            <Link key={l.href} href={l.href} aria-current={isActive(l.href) ? "page" : undefined}>
+              {l.label}
+            </Link>
+          ))}
         </div>
         <div className="mk-nav-cta">
           <Link href="/editor" className="mk-cta">

@@ -36,7 +36,7 @@ const premiumFeatures = [
 export default function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
   const reason = searchParams?.reason;
   return (
-    <main className="mk">
+    <main className="mk mk-pricing">
       <SiteNav />
 
       <header className="mk-hero" style={{ paddingBottom: 24 }}>
