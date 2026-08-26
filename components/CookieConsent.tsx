@@ -43,27 +43,26 @@ export default function CookieConsent() {
               right: 16px;
               bottom: 16px;
               z-index: 200;
-              max-width: 560px;
-              margin: 0 auto;
+              max-width: 380px;
+              margin-left: auto;
               display: flex;
               flex-direction: column;
               gap: 12px;
               padding: 18px 20px;
               border-radius: 16px;
-              background: rgba(18, 20, 24, 0.96);
-              border: 1px solid rgba(255, 255, 255, 0.12);
-              box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
-              backdrop-filter: blur(10px);
-              color: #f4f5f7;
-              font-family: var(--font-sans);
+              background: #ffffff;
+              border: 1px solid #E6E6E6;
+              box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+              color: #1b1b1b;
+              font-family: "Inter", system-ui, sans-serif;
             }
-            .cc p { margin: 0; font-size: 13.5px; line-height: 1.6; color: rgba(244, 245, 247, 0.82); }
-            .cc a { color: #a9d4ff; }
+            .cc p { margin: 0; font-size: 13.5px; line-height: 1.6; color: #4B617A; }
+            .cc a { color: #6E41E2; }
             .cc-actions { display: flex; gap: 10px; justify-content: flex-end; }
             .cc-btn { height: 38px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-            .cc-decline { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); color: #f4f5f7; }
-            .cc-accept { background: linear-gradient(135deg, #2f6bff, #22b8e6); border: 0; color: #fff; }
-            .cc-btn:focus-visible { outline: 2px solid #8b8cf6; outline-offset: 2px; }
+            .cc-decline { background: #fff; border: 1px solid #D2D2D2; color: #1b1b1b; }
+            .cc-accept { background: #000; border: 0; color: #fff; border-radius: 30px; padding: 0 22px; }
+            .cc-btn:focus-visible { outline: 2px solid #6E41E2; outline-offset: 2px; }
           `}</style>
         </div>
       ) : null}

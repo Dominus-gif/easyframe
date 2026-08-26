@@ -343,6 +343,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => { e.preventDefault(); setDropActive(false); onFiles(e.dataTransfer.files); }}
     >
+      <h1 className="ed-sr">EasyFrame Mockup Editor</h1>
       <header className="ed-top">
         <a className="ed-brand" href="/">
           <span className="ed-logo" aria-hidden="true"><i /></span>
@@ -664,6 +665,20 @@ function EditorStyles() {
       .ed-layer-add button:hover { background: rgba(110,65,226,.16); }
       .ed-drop:hover, .ed-drop.active { background: rgba(110,65,226,.09); }
       .ed-light .ed-layer-add button { color: #5a2fc0; }
+
+      /* Accessibility + mobile layout */
+      .ed-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+      @media (max-width: 820px) {
+        .ed-top { flex-wrap: wrap; height: auto; min-height: 56px; padding: 8px 12px; gap: 8px; }
+        .ed-top-actions { flex-wrap: wrap; justify-content: flex-end; }
+        .ed-body { grid-template-columns: 1fr; grid-auto-rows: min-content; overflow-y: auto; }
+        .ed-rail-left, .ed-rail-right { border-left: 0; border-right: 0; border-top: 1px solid var(--line); }
+        .ed-stage { min-height: 56vh; }
+      }
+      @media (max-width: 420px) {
+        .ed-brand-tag { display: none; }
+        .ed-ghost span, .ed-primary { font-size: 12.5px; }
+      }
 
       .ed-top { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
       .ed-brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }

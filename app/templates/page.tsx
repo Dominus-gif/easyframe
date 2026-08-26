@@ -1,9 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { devices, gradientPresets } from "@/lib/editor/devices";
-import { categories, silhouetteClass } from "@/lib/site";
+import { devices } from "@/lib/editor/devices";
+import type { BackgroundSetting } from "@/lib/editor/compositor";
+import { categories } from "@/lib/site";
 import SiteNav from "@/components/site/SiteNav";
 import SiteFooter from "@/components/site/SiteFooter";
+import MockShot from "@/components/site/MockShot";
+
+const tiles: { css: string; bg: BackgroundSetting }[] = [
+  { css: "#FFF7FC", bg: { type: "solid", color: "#FFF7FC" } },
+  { css: "#ECF2FF", bg: { type: "solid", color: "#ECF2FF" } },
+  { css: "#F6F2FF", bg: { type: "solid", color: "#F6F2FF" } },
+  { css: "#F3F6F4", bg: { type: "solid", color: "#F3F6F4" } }
+];
 
 export const metadata: Metadata = {
   title: "Free Mockup Templates — iPhone, iPad, MacBook & More | EasyFrame",
@@ -28,11 +37,11 @@ export default function TemplatesIndex() {
         <div className="mk-wrap">
           <div className="mk-grid">
             {devices.map((d, i) => {
-              const g = gradientPresets[i % gradientPresets.length];
+              const tile = tiles[i % tiles.length];
               return (
                 <Link key={d.slug} href={`/templates/${d.slug}`} className="mk-card">
-                  <div className="mk-card-visual" style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}>
-                    <span className={`mk-dev ${silhouetteClass(d)}`}><i /></span>
+                  <div className="mk-card-visual" style={{ background: tile.css }}>
+                    <MockShot device={d.slug} sample={i % 3} background={tile.bg} padding={0.12} maxEdge={520} className="mk-card-canvas" caption={`${d.name} mockup preview`} />
                   </div>
                   <div className="mk-card-body">
                     <h3>{d.name} Mockup</h3>
@@ -46,7 +55,7 @@ export default function TemplatesIndex() {
           <div className="mk-section-head" style={{ marginTop: "56px" }}>
             <span className="mk-eyebrow">Browse by category</span>
           </div>
-          <div className="mk-grid">
+          <div className="mk-grid mk-grid-auto">
             {categories.map((c) => (
               <Link key={c.slug} href={`/${c.slug}`} className="mk-card">
                 <div className="mk-card-body" style={{ padding: "22px" }}>
