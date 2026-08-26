@@ -318,6 +318,123 @@ const SCREENS: Screen[] = [
         y += it.h + 20;
       });
     }
+  },
+  {
+    name: "Shop",
+    draw: (ctx) => {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#111318");
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 34px Inter, system-ui, sans-serif";
+      ctx.fillText("Shop", 30, 120);
+      const hero = ctx.createLinearGradient(30, 150, W - 30, 470);
+      hero.addColorStop(0, "#FFE9D6");
+      hero.addColorStop(1, "#FFD1DC");
+      ctx.fillStyle = hero;
+      rr(ctx, 30, 150, W - 60, 320, 24);
+      ctx.fill();
+      ctx.fillStyle = "#C98A6A";
+      rr(ctx, 150, 210, W - 300, 200, 20);
+      ctx.fill();
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 30px Inter, system-ui, sans-serif";
+      ctx.fillText("Aran Knit Sweater", 34, 528);
+      ctx.fillStyle = "#6E41E2";
+      ctx.font = "700 34px Inter, system-ui, sans-serif";
+      ctx.fillText("$89", 34, 574);
+      ctx.fillStyle = "#F1F2F5";
+      [0, 1, 2].forEach((k) => {
+        rr(ctx, 34 + k * 78, 610, 62, 62, 14);
+        ctx.fill();
+      });
+      ctx.fillStyle = "#EFC7CF";
+      rr(ctx, 34, 610, 62, 62, 14);
+      ctx.fill();
+      ctx.fillStyle = "#0f1115";
+      rr(ctx, 30, H - 120, W - 60, 68, 34);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.textAlign = "center";
+      ctx.font = "600 24px Inter, system-ui, sans-serif";
+      ctx.fillText("Add to cart", W / 2, H - 82);
+      ctx.textAlign = "left";
+    }
+  },
+  {
+    name: "Weather",
+    draw: (ctx) => {
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, "#5B8DEF");
+      sky.addColorStop(1, "#9BC0FF");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#FFFFFF");
+      ctx.fillStyle = "#FFFFFF";
+      ctx.textAlign = "center";
+      ctx.font = "500 30px Inter, system-ui, sans-serif";
+      ctx.fillText("San Francisco", W / 2, 150);
+      ctx.font = "200 150px Inter, system-ui, sans-serif";
+      ctx.fillText("18°", W / 2, 310);
+      ctx.font = "500 26px Inter, system-ui, sans-serif";
+      ctx.fillText("Partly Cloudy", W / 2, 360);
+      ctx.globalAlpha = 0.85;
+      ctx.font = "400 22px Inter, system-ui, sans-serif";
+      ctx.fillText("H:21°   L:13°", W / 2, 398);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(255,255,255,.16)";
+      rr(ctx, 30, 470, W - 60, 200, 24);
+      ctx.fill();
+      const hrs = ["Now", "1PM", "2PM", "3PM", "4PM"];
+      hrs.forEach((hr, k) => {
+        const x = 66 + k * 78;
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        ctx.textAlign = "center";
+        ctx.font = "500 18px Inter, system-ui, sans-serif";
+        ctx.fillText(hr, x, 512);
+        ctx.fillStyle = "#FFE07A";
+        ctx.beginPath();
+        ctx.arc(x, 560, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "600 20px Inter, system-ui, sans-serif";
+        ctx.fillText(18 - k + "°", x, 630);
+      });
+      ctx.textAlign = "left";
+    }
+  },
+  {
+    name: "Notes",
+    draw: (ctx) => {
+      ctx.fillStyle = "#FBFBF7";
+      ctx.fillRect(0, 0, W, H);
+      statusBar(ctx, "#111318");
+      ctx.fillStyle = "#0f1115";
+      ctx.font = "600 40px Inter, system-ui, sans-serif";
+      ctx.fillText("Notes", 30, 128);
+      const notes = [
+        { c: "#FFF3C4", h: 150 },
+        { c: "#D7EBFF", h: 120 },
+        { c: "#FADCE6", h: 170 },
+        { c: "#DDF3E4", h: 120 }
+      ];
+      let y = 180;
+      notes.forEach((n) => {
+        ctx.fillStyle = n.c;
+        rr(ctx, 30, y, W - 60, n.h, 18);
+        ctx.fill();
+        ctx.fillStyle = "#2A2F3A";
+        rr(ctx, 52, y + 24, 200, 14, 7);
+        ctx.fill();
+        ctx.fillStyle = "rgba(42,47,58,.35)";
+        for (let ln = 0; ln < Math.floor((n.h - 60) / 26); ln++) {
+          rr(ctx, 52, y + 58 + ln * 26, W - 60 - 44 - (ln % 2 ? 60 : 0), 9, 4);
+          ctx.fill();
+        }
+        y += n.h + 16;
+      });
+    }
   }
 ];
 

@@ -42,7 +42,7 @@ export default function TemplatesIndex() {
               return (
                 <Link key={d.slug} href={`/templates/${d.slug}`} className="mk-card">
                   <div className="mk-card-visual" style={{ background: tile.css }}>
-                    <MockShot device={d.slug} sample={(d.slug.length * 3 + d.name.charCodeAt(0)) % SAMPLE_COUNT} background={tile.bg} padding={0.12} maxEdge={520} className="mk-card-canvas" caption={`${d.name} mockup preview`} />
+                    <MockShot device={d.slug} sample={i % SAMPLE_COUNT} background={tile.bg} padding={0.12} maxEdge={520} className="mk-card-canvas" caption={`${d.name} mockup preview`} />
                   </div>
                   <div className="mk-card-body">
                     <h3>{d.name} Mockup</h3>

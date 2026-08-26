@@ -1248,3 +1248,6 @@ body:has(.mk) { background: #fff; }
   content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px;
   border-radius: 2px; background: #6E41E2;
 }
+
+/* Audit round 6: stronger eyebrow/badge contrast (was #5f5f5f ~6.4:1). */
+.mk-kicker { color: #3a3a3a; }
