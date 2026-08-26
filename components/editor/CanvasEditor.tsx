@@ -462,11 +462,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             />
           </div>
           {!hasImage ? (
-            <button className={`ed-drop ${dropActive ? "active" : ""}`} onClick={() => fileRef.current?.click()}>
-              <Upload size={26} />
-              <strong>Drop a screenshot to start</strong>
-              <span>PNG, JPEG or WebP · up to 20MP · nothing is uploaded to a server</span>
+            <button className="ed-drop" onClick={() => fileRef.current?.click()}>
+              <span className="ed-drop-ic"><Upload size={20} /></span>
+              <strong>Drop a screenshot</strong>
+              <span>or <b>browse files</b> · PNG, JPEG or WebP<br />Nothing is uploaded — it stays in your browser</span>
             </button>
+          ) : null}
+          {dropActive ? (
+            <div className="ed-dragmask"><Upload size={28} /><strong>Drop to place</strong></div>
           ) : null}
           <div className="ed-zoom">
             <button onClick={() => setPreviewZoom((z) => Math.max(0.5, z - 0.1))}>−</button>
@@ -741,12 +744,23 @@ function EditorStyles() {
       .ed-canvas-wrap { max-width: 100%; max-height: 100%; transition: transform .12s ease; filter: drop-shadow(0 28px 55px rgba(0,0,0,.5)); }
       .ed-canvas { max-width: 100%; max-height: calc(100vh - 150px); display: block; border-radius: 6px; touch-action: none; cursor: grab; }
       .ed-canvas:active { cursor: grabbing; }
-      .ed-drop { position: absolute; inset: 32px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-        border: 2px dashed var(--line-2); border-radius: 22px; background: rgba(11,13,15,.6); color: var(--text); cursor: pointer; backdrop-filter: blur(2px); transition: border-color .15s, background .15s; }
-      .ed-drop:hover, .ed-drop.active { border-color: var(--acc); background: rgba(47,107,255,.09); }
+      /* Compact empty-state prompt — floats near the bottom so the device preview stays visible. */
+      .ed-drop { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 4;
+        display: flex; flex-direction: column; align-items: center; gap: 9px; width: min(340px, 80%); padding: 20px 24px;
+        border: 1px solid var(--line-2); border-radius: 18px; background: var(--card); color: var(--text); cursor: pointer;
+        box-shadow: 0 18px 44px rgba(0,0,0,.4); transition: border-color .15s, transform .15s, box-shadow .15s; }
+      .ed-drop:hover { border-color: var(--acc); transform: translateX(-50%) translateY(-2px); box-shadow: 0 22px 54px rgba(0,0,0,.5); }
+      .ed-drop-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: var(--acc); background: rgba(110,65,226,.12); }
       .ed-drop svg { color: var(--acc); }
-      .ed-drop strong { font-size: 17px; font-weight: 650; }
-      .ed-drop span { font-size: 12.5px; color: var(--muted); }
+      .ed-drop strong { font-size: 15px; font-weight: 650; }
+      .ed-drop span { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; }
+      .ed-drop span b { color: var(--acc); font-weight: 700; }
+      .ed-light .ed-drop { background: #fff; box-shadow: 0 18px 44px rgba(15,18,25,.14); }
+      /* Full-stage drop target — only while a file is being dragged over the editor. */
+      .ed-dragmask { position: absolute; inset: 14px; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+        border: 2px dashed var(--acc); border-radius: 20px; background: rgba(110,65,226,.10); backdrop-filter: blur(2px); color: var(--text); pointer-events: none; }
+      .ed-dragmask svg { color: var(--acc); }
+      .ed-dragmask strong { font-size: 16px; font-weight: 650; }
       .ed-zoom { position: absolute; bottom: 18px; right: 18px; display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 999px; background: rgba(18,21,26,.85); border: 1px solid var(--line); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
       .ed-zoom button { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.06); border: 0; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: grid; place-items: center; }
       .ed-zoom button:hover { background: rgba(255,255,255,.12); }
