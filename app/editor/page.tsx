@@ -4,7 +4,7 @@ import EditorClient from "@/components/editor/EditorClient";
 export const metadata: Metadata = {
   title: "Free Mockup Generator — EasyFrame",
   description:
-    "Create device mockups for free in your browser. Upload a screenshot, frame it in an iPhone, iPad, MacBook, tablet, browser, or watch, and download in seconds. No sign-up, no watermark.",
+    "Create device mockups free in your browser. Upload a screenshot, frame it on any device, and download in seconds — no sign-up, no watermark.",
   alternates: { canonical: "https://www.easyframe.app/editor" },
   openGraph: {
     title: "Free Mockup Generator — EasyFrame",

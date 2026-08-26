@@ -8,7 +8,7 @@ import PremiumButtons from "@/components/PremiumButtons";
 export const metadata: Metadata = {
   title: "Pricing — Free Forever & Premium | EasyFrame",
   description:
-    "EasyFrame is free forever — unlimited mockups, no account required. Upgrade to Premium for an ad-free experience, 4K & transparent exports, custom backgrounds, batch export, and saved projects.",
+    "EasyFrame is free forever — unlimited mockups, no account. Premium adds 4K & transparent exports, custom backgrounds, and batch export.",
   alternates: { canonical: "https://www.easyframe.app/pricing" }
 };
 

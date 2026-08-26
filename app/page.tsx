@@ -4,7 +4,7 @@ import StarttLanding from "@/components/site/StarttLanding";
 export const metadata: Metadata = {
   title: "EasyFrame — Free Device Mockup Generator",
   description:
-    "Free device mockup generator. Frame screenshots in iPhone, iPad, MacBook, tablet, browser, and watch mockups right in your browser — no account, no watermark, nothing uploaded.",
+    "Free device mockup generator. Frame screenshots in iPhone, iPad, MacBook, browser & watch mockups in your browser — no account, no watermark.",
   alternates: { canonical: "https://www.easyframe.app/" },
   openGraph: {
     title: "EasyFrame — Free Device Mockup Generator",

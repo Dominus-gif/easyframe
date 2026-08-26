@@ -1,6 +1,7 @@
 // Canvas-drawn sample app UIs used as *real raster screenshots* fed into the actual
 // EasyFrame compositor for the homepage live demo and device gallery. These are genuine
 // images the product engine frames — not decorative divs layered over a fake frame.
+// Light UIs so device screens read as real screenshots on the white marketing site.
 
 type Screen = { draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void; name: string };
 
@@ -25,7 +26,7 @@ function statusBar(ctx: CanvasRenderingContext2D, ink: string) {
   ctx.textAlign = "left";
   ctx.fillText("9:41", 34, 46);
   ctx.textAlign = "right";
-  ctx.globalAlpha = 0.8;
+  ctx.globalAlpha = 0.55;
   ctx.fillText("● ● ●", W - 30, 46);
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
@@ -35,56 +36,57 @@ const SCREENS: Screen[] = [
   {
     name: "Discover",
     draw: (ctx) => {
-      const g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, "#101319");
-      g.addColorStop(1, "#0a0c10");
-      ctx.fillStyle = g;
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, W, H);
-      statusBar(ctx, "#eef2f6");
+      statusBar(ctx, "#111318");
 
-      ctx.fillStyle = "#f4f6fa";
+      ctx.fillStyle = "#0f1115";
       ctx.font = "600 44px Inter, system-ui, sans-serif";
       ctx.textBaseline = "alphabetic";
       ctx.fillText("Discover", 30, 128);
-      ctx.fillStyle = "#FF5B3A";
+      ctx.fillStyle = "#6E41E2";
       ctx.beginPath();
       ctx.arc(W - 52, 112, 22, 0, Math.PI * 2);
       ctx.fill();
 
-      // hero card
       const hg = ctx.createLinearGradient(30, 160, W - 30, 420);
-      hg.addColorStop(0, "#FF5B3A");
-      hg.addColorStop(1, "#8B7CFF");
+      hg.addColorStop(0, "#6E41E2");
+      hg.addColorStop(1, "#8B5CF6");
       ctx.fillStyle = hg;
       rr(ctx, 30, 160, W - 60, 250, 26);
       ctx.fill();
-      ctx.fillStyle = "rgba(6,8,12,.82)";
-      ctx.font = "700 24px Inter, system-ui, sans-serif";
+      ctx.fillStyle = "#ffffff";
       rr(ctx, 52, 350, 150, 44, 22);
       ctx.fill();
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = "#6E41E2";
+      ctx.font = "700 24px Inter, system-ui, sans-serif";
       ctx.fillText("Featured", 74, 379);
 
-      // grid tiles
-      const tiles = ["#1a1f27", "#171b22", "#1c222b", "#161a20"];
+      const tiles = ["#F6F2FF", "#ECF2FF", "#FFF7FC", "#F3F6F4"];
+      const accents = ["#6E41E2", "#3B82F6", "#EC4899", "#10B981"];
       let i = 0;
       for (let r = 0; r < 2; r++) {
         for (let c = 0; c < 2; c++) {
-          ctx.fillStyle = tiles[i++ % tiles.length];
-          rr(ctx, 30 + c * ((W - 60) / 2 + 10), 450 + r * 200, (W - 80) / 2, 180, 20);
+          const x = 30 + c * ((W - 60) / 2 + 10);
+          const y = 450 + r * 200;
+          ctx.fillStyle = tiles[i % tiles.length];
+          rr(ctx, x, y, (W - 80) / 2, 180, 20);
           ctx.fill();
-          ctx.fillStyle = i % 2 ? "#FF5B3A" : "#8B7CFF";
-          ctx.globalAlpha = 0.9;
-          rr(ctx, 30 + c * ((W - 60) / 2 + 10) + 18, 450 + r * 200 + 18, 60, 60, 16);
+          ctx.fillStyle = accents[i % accents.length];
+          rr(ctx, x + 18, y + 18, 62, 62, 16);
           ctx.fill();
-          ctx.globalAlpha = 1;
+          ctx.fillStyle = "#C9CDD6";
+          rr(ctx, x + 18, y + 96, 120, 12, 6);
+          ctx.fill();
+          rr(ctx, x + 18, y + 120, 80, 10, 5);
+          ctx.fill();
+          i++;
         }
       }
-      // tab bar
-      ctx.fillStyle = "rgba(255,255,255,.05)";
+      ctx.fillStyle = "#F4F5F7";
       rr(ctx, 24, H - 118, W - 48, 78, 24);
       ctx.fill();
-      const cols = ["#FF5B3A", "rgba(255,255,255,.3)", "rgba(255,255,255,.3)", "rgba(255,255,255,.3)"];
+      const cols = ["#6E41E2", "#C9CDD6", "#C9CDD6", "#C9CDD6"];
       cols.forEach((col, k) => {
         ctx.fillStyle = col;
         rr(ctx, 60 + k * 92, H - 92, 26, 26, 8);
@@ -95,25 +97,24 @@ const SCREENS: Screen[] = [
   {
     name: "Balance",
     draw: (ctx) => {
-      ctx.fillStyle = "#0b0d12";
+      ctx.fillStyle = "#F7F8FA";
       ctx.fillRect(0, 0, W, H);
-      statusBar(ctx, "#eef2f6");
+      statusBar(ctx, "#111318");
 
-      ctx.fillStyle = "rgba(245,243,239,.5)";
+      ctx.fillStyle = "#8A8F9A";
       ctx.font = "600 24px Inter, system-ui, sans-serif";
       ctx.fillText("Total balance", 34, 150);
-      ctx.fillStyle = "#f5f3ef";
+      ctx.fillStyle = "#0f1115";
       ctx.font = "600 62px Inter, system-ui, sans-serif";
       ctx.fillText("$12,480", 32, 214);
-      ctx.fillStyle = "#3ddc84";
+      ctx.fillStyle = "#12A150";
       ctx.font = "600 24px Inter, system-ui, sans-serif";
       ctx.fillText("▲ 4.8%  this month", 34, 258);
 
-      // chart
+      ctx.fillStyle = "#FFFFFF";
       rr(ctx, 30, 300, W - 60, 260, 24);
-      ctx.fillStyle = "#12151c";
       ctx.fill();
-      ctx.strokeStyle = "#FF5B3A";
+      ctx.strokeStyle = "#6E41E2";
       ctx.lineWidth = 5;
       ctx.beginPath();
       const pts = [0.5, 0.42, 0.55, 0.38, 0.6, 0.3, 0.48, 0.2];
@@ -125,19 +126,18 @@ const SCREENS: Screen[] = [
       });
       ctx.stroke();
 
-      // rows
       for (let r = 0; r < 4; r++) {
-        ctx.fillStyle = "#12151c";
+        ctx.fillStyle = "#FFFFFF";
         rr(ctx, 30, 600 + r * 84, W - 60, 68, 18);
         ctx.fill();
-        ctx.fillStyle = r === 0 ? "#FF5B3A" : "rgba(255,255,255,.12)";
+        ctx.fillStyle = r === 0 ? "#6E41E2" : "#EEF0F4";
         ctx.beginPath();
         ctx.arc(64, 634 + r * 84, 18, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = "rgba(245,243,239,.7)";
+        ctx.fillStyle = "#2A2F3A";
         rr(ctx, 96, 622 + r * 84, 150, 12, 6);
         ctx.fill();
-        ctx.fillStyle = "rgba(245,243,239,.25)";
+        ctx.fillStyle = "#C9CDD6";
         rr(ctx, 96, 642 + r * 84, 96, 10, 5);
         ctx.fill();
       }
@@ -146,49 +146,46 @@ const SCREENS: Screen[] = [
   {
     name: "Move",
     draw: (ctx) => {
-      const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#161018");
-      g.addColorStop(1, "#0a0a0c");
-      ctx.fillStyle = g;
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, W, H);
-      statusBar(ctx, "#eef2f6");
+      statusBar(ctx, "#111318");
 
-      ctx.fillStyle = "#f5f3ef";
+      ctx.fillStyle = "#0f1115";
       ctx.font = "600 40px Inter, system-ui, sans-serif";
       ctx.fillText("Today", 32, 130);
 
-      // ring
       const cx = W / 2;
       const cy = 340;
       const rad = 120;
       ctx.lineWidth = 26;
-      ctx.strokeStyle = "rgba(255,255,255,.08)";
+      ctx.strokeStyle = "#EEF0F4";
       ctx.beginPath();
       ctx.arc(cx, cy, rad, 0, Math.PI * 2);
       ctx.stroke();
-      ctx.strokeStyle = "#FF5B3A";
+      ctx.strokeStyle = "#6E41E2";
       ctx.lineCap = "round";
       ctx.beginPath();
       ctx.arc(cx, cy, rad, -Math.PI / 2, -Math.PI / 2 + Math.PI * 1.5);
       ctx.stroke();
-      ctx.fillStyle = "#f5f3ef";
+      ctx.fillStyle = "#0f1115";
       ctx.textAlign = "center";
       ctx.font = "600 58px Inter, system-ui, sans-serif";
       ctx.fillText("74%", cx, cy + 6);
       ctx.font = "500 22px Inter, system-ui, sans-serif";
-      ctx.fillStyle = "rgba(245,243,239,.5)";
+      ctx.fillStyle = "#8A8F9A";
       ctx.fillText("of daily goal", cx, cy + 44);
       ctx.textAlign = "left";
 
       const stats = ["Steps", "Calories", "Distance"];
+      const accents = ["#6E41E2", "#3B82F6", "#EC4899"];
       stats.forEach((s, k) => {
-        ctx.fillStyle = "#15161b";
+        ctx.fillStyle = "#F7F8FA";
         rr(ctx, 30, 520 + k * 130, W - 60, 112, 22);
         ctx.fill();
-        ctx.fillStyle = "#8B7CFF";
+        ctx.fillStyle = accents[k];
         rr(ctx, 50, 548 + k * 130, 56, 56, 16);
         ctx.fill();
-        ctx.fillStyle = "rgba(245,243,239,.85)";
+        ctx.fillStyle = "#2A2F3A";
         ctx.font = "600 26px Inter, system-ui, sans-serif";
         ctx.fillText(s, 128, 590 + k * 130);
       });
