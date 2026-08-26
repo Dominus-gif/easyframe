@@ -24,6 +24,11 @@ const SOLID_COLORS = ["#0b0d0f", "#ffffff", "#f4f1ea", "#0f172a", "#2f6bff", "#2
 const FREE_MAX_EDGE = 2048;
 const PREMIUM_MAX_EDGE = 3840;
 const PREVIEW_MAX_EDGE = 2000;
+const RES_PRESETS: { v: number; label: string; pro?: boolean }[] = [
+  { v: 1080, label: "1080p" },
+  { v: FREE_MAX_EDGE, label: "2K" },
+  { v: PREMIUM_MAX_EDGE, label: "4K", pro: true }
+];
 
 const DEVICE_GROUPS: { key: string; label: string }[] = [
   { key: "blank", label: "No frame" },
@@ -78,7 +83,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [canRedo, setCanRedo] = useState(false);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [customBg, setCustomBg] = useState({ from: "#2f6bff", to: "#22b8e6", angle: 135 });
+  const [customBg, setCustomBg] = useState({ from: "#2f6bff", via: "#7c5cff", to: "#22b8e6", angle: 135, threeStop: false });
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
@@ -91,7 +96,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     try { localStorage.setItem("ef-editor-theme", theme); } catch { /* ignore */ }
   }, [theme]);
   const overlayFileRef = useRef<HTMLInputElement>(null);
+  const bgFileRef = useRef<HTMLInputElement>(null);
   const { premium } = usePremium();
+  const [resolution, setResolution] = useState(FREE_MAX_EDGE);
+  const [previewDims, setPreviewDims] = useState<{ width: number; height: number } | null>(null);
 
   const selectedOverlay = overlays.find((o) => o.id === selectedId) ?? null;
 
@@ -103,7 +111,8 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const recompose = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    composite(canvas, imgRef.current, settings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
+    const res = composite(canvas, imgRef.current, settings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
+    if (res.width && res.height) setPreviewDims(res);
   }, [settings, overlays]);
 
   useEffect(() => {
@@ -206,11 +215,35 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   const update = (partial: Partial<EditorSettings>) => setSettings((s) => ({ ...s, ...partial }));
 
-  const applyCustomGrad = (patch: Partial<{ from: string; to: string; angle: number }>) => {
+  const applyCustomGrad = (patch: Partial<{ from: string; via: string; to: string; angle: number; threeStop: boolean }>) => {
     const next = { ...customBg, ...patch };
     setCustomBg(next);
-    update({ background: { type: "gradient", from: next.from, to: next.to, angle: next.angle } });
+    update({
+      background: { type: "gradient", from: next.from, to: next.to, angle: next.angle, ...(next.threeStop ? { via: next.via } : {}) }
+    });
   };
+
+  // Custom background image (Premium): load a file and set it as the scene background.
+  const onBgImage = (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+    if (!premium) {
+      flash("Custom background images are a Premium feature.");
+      return;
+    }
+    const img = new Image();
+    img.onload = () => update({ background: { type: "image", img } });
+    img.src = URL.createObjectURL(file);
+  };
+
+  // Effective export resolution (free is capped at 2K) and the resulting output dimensions.
+  const effResolution = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
+  const outDims = previewDims
+    ? (() => {
+        const m = Math.max(previewDims.width, previewDims.height) || 1;
+        return { w: Math.round((previewDims.width * effResolution) / m), h: Math.round((previewDims.height * effResolution) / m) };
+      })()
+    : null;
 
   const setImage = (img: HTMLImageElement | null) => {
     imgRef.current = img;
@@ -306,10 +339,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const onDownload = async () => {
     setBusy(true);
     try {
-      const maxEdge = premium ? PREMIUM_MAX_EDGE : FREE_MAX_EDGE;
-      // Guard: transparent export is Premium-only; fall back to a solid bg for free users.
+      const maxEdge = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
+      // Guard: transparent & custom-image backgrounds are Premium-only; free users fall back to a solid bg.
       const exportSettings =
-        settings.background.type === "transparent" && !premium
+        (settings.background.type === "transparent" || settings.background.type === "image") && !premium
           ? { ...settings, background: { type: "solid" as const, color: "#0b0d0f" } }
           : settings;
       const blob = await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge, overlays);
@@ -544,11 +577,33 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             >
               {!premium ? <span className="ed-pro">PRO</span> : null}
             </button>
+            <button
+              className={`ed-swatch ed-swatch-img ${bg.type === "image" ? "on" : ""}`}
+              aria-label="Custom background image (Premium)"
+              title={premium ? "Upload a background image" : "Custom background image — Premium"}
+              onClick={() => { if (premium) bgFileRef.current?.click(); else flash("Custom background images are a Premium feature."); }}
+            >
+              <ImageIcon size={15} />
+              {!premium ? <span className="ed-pro">PRO</span> : null}
+            </button>
           </div>
-          <div className="ed-subhead">Custom gradient</div>
-          <div className="ed-custom-grad">
-            <div className="ed-grad-preview" style={{ background: `linear-gradient(${customBg.angle}deg, ${customBg.from}, ${customBg.to})` }} />
+          <input ref={bgFileRef} type="file" accept="image/*" hidden onChange={(e) => { onBgImage(e.target.files); e.currentTarget.value = ""; }} />
+          <div className="ed-subhead">
+            Custom gradient
+            <button
+              className={`ed-grad-toggle ${customBg.threeStop ? "on" : ""}`}
+              onClick={() => applyCustomGrad({ threeStop: !customBg.threeStop })}
+              title="Add a middle color for a smoother 3-stop gradient"
+            >
+              {customBg.threeStop ? "3-stop" : "2-stop"}
+            </button>
+          </div>
+          <div className="ed-grad-preview" style={{ background: `linear-gradient(${customBg.angle}deg, ${customBg.from}${customBg.threeStop ? `, ${customBg.via}` : ""}, ${customBg.to})` }} />
+          <div className="ed-grad-colors">
             <input type="color" className="ed-color" value={customBg.from} onChange={(e) => applyCustomGrad({ from: e.target.value })} aria-label="Gradient start color" />
+            {customBg.threeStop ? (
+              <input type="color" className="ed-color" value={customBg.via} onChange={(e) => applyCustomGrad({ via: e.target.value })} aria-label="Gradient middle color" />
+            ) : null}
             <input type="color" className="ed-color" value={customBg.to} onChange={(e) => applyCustomGrad({ to: e.target.value })} aria-label="Gradient end color" />
           </div>
           <Range label="Angle" value={customBg.angle} min={0} max={360} step={1} onChange={(v) => applyCustomGrad({ angle: v })} />
@@ -589,6 +644,23 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
           <section className="ed-card">
           <div className="ed-card-title">Export</div>
+          <div className="ed-subhead">Size</div>
+          <div className="ed-seg">
+            {RES_PRESETS.map((p) => (
+              <button
+                key={p.v}
+                className={`ed-res-btn ${effResolution === p.v ? "on" : ""}`}
+                onClick={() => {
+                  if (p.pro && !premium) { flash("4K export is a Premium feature."); return; }
+                  setResolution(p.v);
+                }}
+              >
+                {p.label}{p.pro && !premium ? <span className="ed-pro">PRO</span> : null}
+              </button>
+            ))}
+          </div>
+          <p className="ed-dims">{outDims ? `${outDims.w} × ${outDims.h} px` : "Add an image to see the size"}</p>
+          <div className="ed-subhead">Format</div>
           <div className="ed-seg">
             {(["png", "jpeg", "webp"] as ExportFormat[]).map((f) => (
               <button key={f} className={format === f ? "on" : ""} onClick={() => setFormat(f)}>{f.toUpperCase()}</button>
@@ -815,10 +887,19 @@ function EditorStyles() {
       .ed-select:focus { outline: none; border-color: var(--acc); }
       .ed-row2 { display: grid; grid-template-columns: 1fr 46px; gap: 6px; }
       .ed-color { width: 46px; height: 36px; padding: 2px; border-radius: 9px; background: rgba(0,0,0,.35); border: 1px solid var(--line); cursor: pointer; }
-      .ed-subhead { font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+      .ed-subhead { display: flex; align-items: center; justify-content: space-between; font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
       .ed-custom-grad { display: grid; grid-template-columns: 1fr 42px 42px; gap: 8px; align-items: center; }
       .ed-custom-grad .ed-color { width: 100%; height: 40px; }
-      .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); }
+      .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); margin-top: 8px; }
+      .ed-grad-colors { display: flex; gap: 8px; margin-top: 8px; }
+      .ed-grad-colors .ed-color { flex: 1; }
+      .ed-grad-toggle { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--muted); font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: none; letter-spacing: 0; }
+      .ed-grad-toggle.on { color: #fff; background: var(--acc); border-color: transparent; }
+      .ed-swatch-img { position: relative; display: grid; place-items: center; color: var(--muted); background: rgba(255,255,255,.04); }
+      .ed-res-btn { position: relative; }
+      .ed-res-btn .ed-pro { position: absolute; top: 2px; right: 3px; inset: auto; width: auto; height: auto; padding: 1px 4px; font-size: 7.5px; border-radius: 5px; }
+      .ed-dims { margin: 8px 0 2px; font-size: 12px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+      .ed :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       .ed :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       @media (max-width: 900px) {
         .ed-body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0,1fr) auto; }

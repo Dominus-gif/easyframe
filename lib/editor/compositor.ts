@@ -5,7 +5,8 @@ import { deviceBySlug, type Device } from "@/lib/editor/devices";
 
 export type BackgroundSetting =
   | { type: "solid"; color: string }
-  | { type: "gradient"; from: string; to: string; angle: number }
+  | { type: "gradient"; from: string; via?: string; to: string; angle: number }
+  | { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap } // Premium
   | { type: "transparent" }; // Premium
 
 export type EditorSettings = {
@@ -361,12 +362,23 @@ function paintBackground(ctx: CanvasRenderingContext2D, bg: BackgroundSetting, w
     ctx.fillRect(0, 0, w, h);
     return;
   }
+  if (bg.type === "image") {
+    const img = bg.img as HTMLImageElement & { naturalWidth?: number; naturalHeight?: number };
+    const iw = (img.naturalWidth ?? (img as unknown as { width: number }).width) || w;
+    const ih = (img.naturalHeight ?? (img as unknown as { height: number }).height) || h;
+    const scale = Math.max(w / iw, h / ih); // cover
+    const dw = iw * scale;
+    const dh = ih * scale;
+    ctx.drawImage(bg.img as CanvasImageSource, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    return;
+  }
   const a = rad(bg.angle);
   const cx = w / 2;
   const cy = h / 2;
   const half = Math.max(w, h);
   const grad = ctx.createLinearGradient(cx - Math.cos(a) * half, cy - Math.sin(a) * half, cx + Math.cos(a) * half, cy + Math.sin(a) * half);
   grad.addColorStop(0, bg.from);
+  if (bg.via) grad.addColorStop(0.5, bg.via);
   grad.addColorStop(1, bg.to);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
