@@ -14,5 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default function EditorPage({ searchParams }: { searchParams?: { device?: string } }) {
-  return <EditorClient initialDevice={searchParams?.device} />;
+  return (
+    <>
+      <h1 className="sr-only">EasyFrame Mockup Editor — frame screenshots in device mockups</h1>
+      <EditorClient initialDevice={searchParams?.device} />
+    </>
+  );
 }

@@ -12,6 +12,18 @@ export default function CookieConsent() {
   const consent = useConsent();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // While the banner is visible, reserve space at the bottom of the page so it
+  // never floats over primary content (e.g. the Premium CTA on /pricing).
+  useEffect(() => {
+    if (mounted && consent === null) {
+      document.body.style.paddingBottom = "150px";
+      return () => {
+        document.body.style.paddingBottom = "";
+      };
+    }
+  }, [mounted, consent]);
+
   if (!mounted) return null; // avoid SSR/client hydration mismatch on localStorage
 
   return (
@@ -39,26 +51,26 @@ export default function CookieConsent() {
           <style jsx>{`
             .cc {
               position: fixed;
-              left: 16px;
-              right: 16px;
-              bottom: 16px;
+              left: 0;
+              right: 0;
+              bottom: 0;
               z-index: 200;
-              max-width: 380px;
-              margin-left: auto;
               display: flex;
-              flex-direction: column;
-              gap: 12px;
-              padding: 18px 20px;
-              border-radius: 16px;
+              flex-direction: row;
+              flex-wrap: wrap;
+              align-items: center;
+              justify-content: center;
+              gap: 14px 20px;
+              padding: 12px 24px;
               background: #ffffff;
-              border: 1px solid #E6E6E6;
-              box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+              border-top: 1px solid #E6E6E6;
+              box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.07);
               color: #1b1b1b;
               font-family: "Inter", system-ui, sans-serif;
             }
-            .cc p { margin: 0; font-size: 13.5px; line-height: 1.6; color: #4B617A; }
+            .cc p { margin: 0; font-size: 13px; line-height: 1.5; color: #4B617A; max-width: 760px; }
             .cc a { color: #6E41E2; }
-            .cc-actions { display: flex; gap: 10px; justify-content: flex-end; }
+            .cc-actions { display: flex; gap: 10px; flex: none; }
             .cc-btn { height: 38px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
             .cc-decline { background: #fff; border: 1px solid #D2D2D2; color: #1b1b1b; }
             .cc-accept { background: #000; border: 0; color: #fff; border-radius: 30px; padding: 0 22px; }

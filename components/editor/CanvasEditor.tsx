@@ -343,7 +343,6 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       onDragLeave={() => setDropActive(false)}
       onDrop={(e) => { e.preventDefault(); setDropActive(false); onFiles(e.dataTransfer.files); }}
     >
-      <h1 className="ed-sr">EasyFrame Mockup Editor</h1>
       <header className="ed-top">
         <a className="ed-brand" href="/">
           <span className="ed-logo" aria-hidden="true"><i /></span>

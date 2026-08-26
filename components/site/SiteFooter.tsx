@@ -18,11 +18,13 @@ export default function SiteFooter() {
             <Link href="/blog">Blog</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
-          <div className="mk-footer-col">
+          <div className="mk-footer-col mk-footer-col--devices">
             <h4>Devices</h4>
-            {devices.map((d) => (
-              <Link key={d.slug} href={`/templates/${d.slug}`}>{d.name} mockup</Link>
-            ))}
+            <div className="mk-footer-devgrid">
+              {devices.slice(0, 8).map((d) => (
+                <Link key={d.slug} href={`/templates/${d.slug}`}>{d.name} mockup</Link>
+              ))}
+            </div>
           </div>
           <div className="mk-footer-col">
             <h4>Categories</h4>
