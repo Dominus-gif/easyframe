@@ -785,7 +785,7 @@ function EditorStyles() {
       .ed-primary:disabled { opacity: .6; }
 
       .ed-body { flex: 1; display: grid; grid-template-columns: 250px minmax(0,1fr) 292px; min-height: 0; }
-      .ed-rail { padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+      .ed-rail { padding: 14px 14px 28px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
       .ed-rail-left { border-right: 1px solid var(--line); }
       .ed-rail-right { border-left: 1px solid var(--line); }
       .ed-rail::-webkit-scrollbar { width: 8px; }
