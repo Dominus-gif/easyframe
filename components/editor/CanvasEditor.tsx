@@ -420,7 +420,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               const list = editorDevices.filter((d) => d.category === group.key);
               if (!list.length) return null;
               return (
-                <div className="ed-group" key={group.key}>
+                <div className="ed-group" key={group.key} role="group" aria-label={group.label}>
                   <span className="ed-group-label">{group.label}</span>
                   <div className="ed-device-grid">
                     {list.map((d) => {
@@ -429,6 +429,8 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                         <button
                           key={d.slug}
                           className={`ed-device ${settings.deviceSlug === d.slug ? "on" : ""}`}
+                          aria-label={`Select ${d.name} frame`}
+                          aria-pressed={settings.deviceSlug === d.slug}
                           onClick={() => update({ deviceSlug: d.slug })}
                           title={d.name}
                         >
@@ -713,7 +715,7 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
 function EditorStyles() {
   return (
     <style jsx global>{`
-      .ed { --acc: #6E41E2; --acc2: #8B5CF6; --bg: #0b0d0f; --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --text: #f4f5f7; --muted: #8a8f98; --card: rgba(255,255,255,.022);
+      .ed { --acc: #6E41E2; --acc2: #8B5CF6; --bg: #0b0d0f; --line: rgba(255,255,255,.11); --line-2: rgba(255,255,255,.20); --text: #f4f5f7; --muted: #9ca0a6; --card: rgba(255,255,255,.022);
         position: fixed; top: 0; left: 0; right: 0; bottom: var(--cc-h, 0); display: flex; flex-direction: column; color: var(--text);
         background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.08), transparent 60%), var(--bg);
         font-family: "Geist", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -797,7 +799,9 @@ function EditorStyles() {
 
       .ed-device-groups { display: flex; flex-direction: column; gap: 13px; }
       .ed-group { display: flex; flex-direction: column; gap: 7px; }
-      .ed-group-label { font-size: 9.5px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; color: var(--muted); }
+      .ed-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--muted); }
+      .ed input::placeholder { color: #8b8f96; }
+      .ed-light .ed input::placeholder { color: #8a909a; }
       .ed-device-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
       .ed-device { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 58px; padding: 9px 6px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--text); font: inherit; cursor: pointer; text-align: center; transition: border-color .14s, background .14s, transform .14s; }
       .ed-device svg { color: var(--muted); transition: color .14s; }
