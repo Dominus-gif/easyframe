@@ -257,6 +257,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       const img = await loadImageSafely(source);
       setImage(img);
       track("image_uploaded", {});
+      try {
+        if (!localStorage.getItem("ef-adjust-hint")) {
+          flash("Nice! Fine-tune padding, shadow, background & 3D angle in the panel on the right →");
+          localStorage.setItem("ef-adjust-hint", "1");
+        }
+      } catch { /* ignore */ }
     } catch {
       flash("Could not load that image. Try a PNG, JPEG, or WebP.");
     } finally {
@@ -350,14 +356,16 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       const ext = format === "jpeg" ? "jpg" : format;
+      const filename = `${settings.deviceSlug}-${maxEdge}px.${ext}`;
       link.href = url;
-      link.download = `${settings.deviceSlug}.${ext}`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      flash(`✓ Saved ${filename} to your downloads`);
     } catch {
-      flash("Export failed. Try again.");
+      flash("Export failed — the image may be too large. Try a smaller size.");
     } finally {
       setBusy(false);
     }
@@ -706,7 +714,7 @@ function EditorStyles() {
   return (
     <style jsx global>{`
       .ed { --acc: #6E41E2; --acc2: #8B5CF6; --bg: #0b0d0f; --line: rgba(255,255,255,.07); --line-2: rgba(255,255,255,.13); --text: #f4f5f7; --muted: #8a8f98; --card: rgba(255,255,255,.022);
-        position: fixed; inset: 0; display: flex; flex-direction: column; color: var(--text);
+        position: fixed; top: 0; left: 0; right: 0; bottom: var(--cc-h, 0); display: flex; flex-direction: column; color: var(--text);
         background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.08), transparent 60%), var(--bg);
         font-family: "Geist", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 

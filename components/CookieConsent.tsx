@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import { setConsent, useConsent } from "@/lib/consent";
 
@@ -13,15 +13,24 @@ export default function CookieConsent() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  // While the banner is visible, reserve space at the bottom of the page so it
-  // never floats over primary content (e.g. the Premium CTA on /pricing).
+  const ccRef = useRef<HTMLDivElement>(null);
+
+  // While the banner is visible, reserve its height at the bottom of the page so it
+  // never floats over primary content (pricing CTAs) or the fixed full-screen editor.
   useEffect(() => {
-    if (mounted && consent === null) {
-      document.body.style.paddingBottom = "150px";
-      return () => {
-        document.body.style.paddingBottom = "";
-      };
-    }
+    if (!(mounted && consent === null)) return;
+    const apply = () => {
+      const h = ccRef.current?.offsetHeight ?? 64;
+      document.documentElement.style.setProperty("--cc-h", `${h}px`);
+      document.body.style.paddingBottom = `${h}px`;
+    };
+    apply();
+    window.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      document.documentElement.style.removeProperty("--cc-h");
+      document.body.style.paddingBottom = "";
+    };
   }, [mounted, consent]);
 
   if (!mounted) return null; // avoid SSR/client hydration mismatch on localStorage
@@ -39,7 +48,7 @@ export default function CookieConsent() {
       ) : null}
 
       {consent === null ? (
-        <div className="cc" role="dialog" aria-label="Cookie consent">
+        <div className="cc" role="dialog" aria-label="Cookie consent" ref={ccRef}>
           <p>
             We use cookies for analytics and to show ads that keep EasyFrame free. Your images are always
             processed in your browser and never uploaded. See our <a href="/privacy">Privacy Policy</a>.
