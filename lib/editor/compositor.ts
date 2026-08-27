@@ -28,7 +28,7 @@ export type EditorSettings = {
 
 export const defaultSettings: EditorSettings = {
   deviceSlug: "iphone-mockup",
-  background: { type: "gradient", from: "#2f6bff", to: "#22b8e6", angle: 135 },
+  background: { type: "gradient", from: "#e9ebee", to: "#f6f7f9", angle: 135 },
   padding: 0.16,
   imageScale: 1,
   imageOffsetX: 0,
