@@ -505,11 +505,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             />
           </div>
           {!hasImage ? (
-            <button className="ed-drop" onClick={() => fileRef.current?.click()}>
-              <span className="ed-drop-ic"><Upload size={20} /></span>
-              <strong>Drop a screenshot</strong>
-              <span>or <b>browse files</b> · PNG, JPEG or WebP<br />Nothing is uploaded — it stays in your browser</span>
-            </button>
+            <>
+              <button className="ed-drop" onClick={() => fileRef.current?.click()}>
+                <span className="ed-drop-ic"><Upload size={22} /></span>
+                <strong>Drop a screenshot to start</strong>
+                <span>or <b>browse files</b> · PNG, JPEG or WebP</span>
+              </button>
+              <p className="ed-privacy-note">Nothing is uploaded — everything stays in your browser.</p>
+            </>
           ) : null}
           {dropActive ? (
             <div className="ed-dragmask"><Upload size={28} /><strong>Drop to place</strong></div>
@@ -609,12 +612,24 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </button>
           </div>
           <div className="ed-grad-preview" style={{ background: `linear-gradient(${customBg.angle}deg, ${customBg.from}${customBg.threeStop ? `, ${customBg.via}` : ""}, ${customBg.to})` }} />
-          <div className="ed-grad-colors">
-            <input type="color" className="ed-color" value={customBg.from} onChange={(e) => applyCustomGrad({ from: e.target.value })} aria-label="Gradient start color" />
+          <div className="ed-grad-stops">
+            <label className="ed-grad-stop">
+              <input type="color" value={customBg.from} onChange={(e) => applyCustomGrad({ from: e.target.value })} aria-label="Gradient start color" />
+              <span>Start</span>
+              <b>{customBg.from.toUpperCase()}</b>
+            </label>
             {customBg.threeStop ? (
-              <input type="color" className="ed-color" value={customBg.via} onChange={(e) => applyCustomGrad({ via: e.target.value })} aria-label="Gradient middle color" />
+              <label className="ed-grad-stop">
+                <input type="color" value={customBg.via} onChange={(e) => applyCustomGrad({ via: e.target.value })} aria-label="Gradient middle color" />
+                <span>Middle</span>
+                <b>{customBg.via.toUpperCase()}</b>
+              </label>
             ) : null}
-            <input type="color" className="ed-color" value={customBg.to} onChange={(e) => applyCustomGrad({ to: e.target.value })} aria-label="Gradient end color" />
+            <label className="ed-grad-stop">
+              <input type="color" value={customBg.to} onChange={(e) => applyCustomGrad({ to: e.target.value })} aria-label="Gradient end color" />
+              <span>End</span>
+              <b>{customBg.to.toUpperCase()}</b>
+            </label>
           </div>
           <Range label="Angle" value={customBg.angle} min={0} max={360} step={1} onChange={(v) => applyCustomGrad({ angle: v })} />
           </section>
@@ -793,8 +808,12 @@ function EditorStyles() {
       .ed-rail::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,.18); }
       .ed-rail::-webkit-scrollbar-track { background: transparent; }
 
-      .ed-card { border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 13px; display: flex; flex-direction: column; gap: 11px; }
-      .ed-card-title { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); display: flex; align-items: center; gap: 7px; }
+      .ed-card { border: 1px solid var(--line); border-radius: 14px; background: var(--card); padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: border-color .18s ease; }
+      .ed-card:hover { border-color: var(--line-2); }
+      .ed-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; display: flex; align-items: center; gap: 7px; }
+      .ed-light .ed-card-title { color: #565d67; }
+      .ed-device { transition: border-color .16s ease, background .16s ease, transform .16s ease; }
+      .ed-device:hover { transform: translateY(-1px); }
       .ed-card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px rgba(110,65,226,.8); }
 
       .ed-device-groups { display: flex; flex-direction: column; gap: 13px; }
@@ -831,12 +850,14 @@ function EditorStyles() {
       /* Compact empty-state prompt — floats near the bottom so the device preview stays visible. */
       .ed-drop { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 4;
         display: flex; flex-direction: column; align-items: center; gap: 9px; width: min(340px, 80%); padding: 20px 24px;
-        border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: rgba(12,16,20,0.82); backdrop-filter: blur(8px); color: #ffffff; cursor: pointer;
+        border: 1.5px dashed rgba(255,255,255,.24); border-radius: 18px; background: rgba(12,16,20,0.82); backdrop-filter: blur(8px); color: #ffffff; cursor: pointer;
         box-shadow: 0 18px 50px rgba(0,0,0,.55); transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+      .ed-privacy-note { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); margin: 0; font-size: 11px; color: rgba(255,255,255,.4); white-space: nowrap; pointer-events: none; }
+      .ed-light .ed-privacy-note { color: rgba(15,18,25,.42); }
       .ed-drop:hover { border-color: var(--acc); transform: translateX(-50%) translateY(-2px); box-shadow: 0 24px 60px rgba(0,0,0,.6); }
       .ed-drop-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: #c9b4ff; background: rgba(110,65,226,.2); }
       .ed-drop svg { color: #c9b4ff; }
-      .ed-drop strong { font-size: 15px; font-weight: 650; color: #ffffff; }
+      .ed-drop strong { font-size: 18px; font-weight: 650; color: #ffffff; letter-spacing: -.01em; }
       .ed-drop span { font-size: 12px; color: #bec3c9; text-align: center; line-height: 1.5; }
       .ed-drop span b { color: #b898ff; text-decoration: underline; font-weight: 700; }
       .ed-light .ed-drop { background: rgba(255,255,255,.94); border-color: rgba(15,18,25,.12); box-shadow: 0 18px 44px rgba(15,18,25,.14); color: #16181d; }
@@ -907,8 +928,13 @@ function EditorStyles() {
       .ed-custom-grad { display: grid; grid-template-columns: 1fr 42px 42px; gap: 8px; align-items: center; }
       .ed-custom-grad .ed-color { width: 100%; height: 40px; }
       .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); margin-top: 8px; }
-      .ed-grad-colors { display: flex; gap: 8px; margin-top: 8px; }
-      .ed-grad-colors .ed-color { flex: 1; }
+      .ed-grad-stops { display: flex; gap: 8px; margin-top: 10px; }
+      .ed-grad-stop { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px 7px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.02); cursor: pointer; transition: border-color .15s ease; }
+      .ed-grad-stop:hover { border-color: var(--line-2); }
+      .ed-grad-stop input { width: 100%; height: 26px; padding: 0; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
+      .ed-grad-stop span { font-size: 9px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+      .ed-grad-stop b { font-size: 10px; font-variant-numeric: tabular-nums; color: var(--text); font-weight: 600; }
+      .ed-light .ed-grad-stop { background: #fff; }
       .ed-grad-toggle { padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line-2); background: transparent; color: var(--muted); font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; text-transform: none; letter-spacing: 0; }
       .ed-grad-toggle.on { color: #fff; background: var(--acc); border-color: transparent; }
       .ed-swatch-img { position: relative; display: grid; place-items: center; color: var(--muted); background: rgba(255,255,255,.04); }
