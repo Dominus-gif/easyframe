@@ -17,6 +17,8 @@ export type EditorSettings = {
   imageOffsetX: number; // fraction of screen width
   imageOffsetY: number; // fraction of screen height
   imageRotate: number; // degrees (image inside screen)
+  frameOffsetX: number; // fraction of scene width — moves the whole device over the background
+  frameOffsetY: number; // fraction of scene height
   fit: "cover" | "contain";
   shadow: number; // 0..1
   cornerRadius: number; // 0..1 of scene short edge / 2
@@ -34,6 +36,8 @@ export const defaultSettings: EditorSettings = {
   imageOffsetX: 0,
   imageOffsetY: 0,
   imageRotate: 0,
+  frameOffsetX: 0,
+  frameOffsetY: 0,
   fit: "cover",
   shadow: 0.6,
   cornerRadius: 0.06,
@@ -486,7 +490,7 @@ export function composite(
       ctx.shadowBlur = settings.shadow * maxDim * 0.09 * outScale;
       ctx.shadowOffsetY = settings.shadow * dH * 0.03 * outScale;
     }
-    ctx.drawImage(layer.canvas, pad * outScale, pad * outScale, dW * outScale, dH * outScale);
+    ctx.drawImage(layer.canvas, pad * outScale + (settings.frameOffsetX || 0) * canvas.width, pad * outScale + (settings.frameOffsetY || 0) * canvas.height, dW * outScale, dH * outScale);
     ctx.restore();
     drawOverlays(ctx, overlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -565,7 +569,7 @@ export function composite(
     ctx.shadowBlur = settings.shadow * maxDim * 0.08 * outScale;
     ctx.shadowOffsetY = settings.shadow * dH * 0.035 * outScale;
   }
-  ctx.drawImage(warp, 0, 0);
+  ctx.drawImage(warp, (settings.frameOffsetX || 0) * canvas.width, (settings.frameOffsetY || 0) * canvas.height);
   ctx.restore();
   drawOverlays(ctx, overlays, sceneW, sceneH, outScale);
   ctx.setTransform(1, 0, 0, 1, 0, 0);

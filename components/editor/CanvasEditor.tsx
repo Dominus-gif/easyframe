@@ -441,7 +441,8 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         return { ...o, x: o.x + dx, y: o.y + dy };
       }));
     } else {
-      setSettings((s) => ({ ...s, imageOffsetX: s.imageOffsetX + dx * 1.4, imageOffsetY: s.imageOffsetY + dy * 1.4 }));
+      // Move the whole mockup over the (static) background.
+      setSettings((s) => ({ ...s, frameOffsetX: s.frameOffsetX + dx, frameOffsetY: s.frameOffsetY + dy }));
     }
   };
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
