@@ -26,6 +26,7 @@ export type EditorSettings = {
   rotateY: number; // degrees — turn left/right
   rotateZ: number; // degrees — in-plane roll
   perspective: number; // 0..100 — strength of the 3D perspective
+  deviceZ: number; // how many overlay layers render BELOW the device (0 = device beneath all overlays)
 };
 
 export const defaultSettings: EditorSettings = {
@@ -44,7 +45,8 @@ export const defaultSettings: EditorSettings = {
   rotateX: 0,
   rotateY: 0,
   rotateZ: 0,
-  perspective: 45
+  perspective: 45,
+  deviceZ: 0
 };
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
@@ -468,6 +470,11 @@ export function composite(
   const ctx = canvas.getContext("2d");
   if (!ctx) return { width: 0, height: 0 };
 
+  // Split overlays around the device: layers below deviceZ render under the mockup.
+  const dz = Math.max(0, Math.min(overlays?.length ?? 0, settings.deviceZ ?? 0));
+  const belowOverlays = overlays?.slice(0, dz);
+  const aboveOverlays = overlays?.slice(dz);
+
   if (!tilted) {
     // Flat fast path — crisp 1:1 device, single clean shadow.
     const sceneW = dW + pad * 2;
@@ -483,6 +490,7 @@ export function composite(
       ctx.clip();
     }
     paintBackground(ctx, settings.background, sceneW, sceneH);
+    drawOverlays(ctx, belowOverlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.save();
     if (settings.shadow > 0) {
@@ -492,7 +500,7 @@ export function composite(
     }
     ctx.drawImage(layer.canvas, pad * outScale + (settings.frameOffsetX || 0) * canvas.width, pad * outScale + (settings.frameOffsetY || 0) * canvas.height, dW * outScale, dH * outScale);
     ctx.restore();
-    drawOverlays(ctx, overlays, sceneW, sceneH, outScale);
+    drawOverlays(ctx, aboveOverlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     return { width: canvas.width, height: canvas.height };
   }
@@ -534,6 +542,7 @@ export function composite(
     ctx.clip();
   }
   paintBackground(ctx, settings.background, sceneW, sceneH);
+  drawOverlays(ctx, belowOverlays, sceneW, sceneH, outScale);
 
   // Warp device onto the projected grid (in pixel space) on an offscreen canvas.
   const warp = document.createElement("canvas");
@@ -571,7 +580,7 @@ export function composite(
   }
   ctx.drawImage(warp, (settings.frameOffsetX || 0) * canvas.width, (settings.frameOffsetY || 0) * canvas.height);
   ctx.restore();
-  drawOverlays(ctx, overlays, sceneW, sceneH, outScale);
+  drawOverlays(ctx, aboveOverlays, sceneW, sceneH, outScale);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   return { width: canvas.width, height: canvas.height };
 }

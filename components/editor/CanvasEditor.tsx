@@ -200,6 +200,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
+  // Slide the device (screenshot) layer up/down through the overlay stack.
+  const moveDevice = (dir: -1 | 1) =>
+    setSettings((s) => ({ ...s, deviceZ: Math.max(0, Math.min(overlays.length, (s.deviceZ ?? 0) + dir)) }));
 
   const addText = () => {
     const o: TextOverlay = { id: uid(), type: "text", text: "Your text", fontFamily: "Poppins", fontWeight: 700, fontSize: 0.06, color: "#ffffff", align: "center", x: 0.5, y: 0.5, scale: 1, rotation: 0, opacity: 1 };
@@ -491,8 +494,30 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const resetAll = () => {
     setSettings({ ...defaultSettings, deviceSlug: settings.deviceSlug });
   };
+  // Reset only the Adjust sliders (frame/screenshot placement) to their defaults.
+  const resetAdjust = () =>
+    update({
+      padding: defaultSettings.padding,
+      imageScale: defaultSettings.imageScale,
+      imageRotate: defaultSettings.imageRotate,
+      imageOffsetX: defaultSettings.imageOffsetX,
+      imageOffsetY: defaultSettings.imageOffsetY,
+      shadow: defaultSettings.shadow,
+      cornerRadius: defaultSettings.cornerRadius,
+      fit: defaultSettings.fit,
+      frameOffsetX: defaultSettings.frameOffsetX,
+      frameOffsetY: defaultSettings.frameOffsetY
+    });
 
   const bg = settings.background;
+  const deviceZ = Math.min(overlays.length, Math.max(0, settings.deviceZ ?? 0));
+  // Build the layer stack bottom→top with the device inserted at its z-position.
+  const layerStack: Array<{ kind: "device" } | { kind: "overlay"; o: Overlay }> = [];
+  overlays.forEach((o, i) => {
+    if (i === deviceZ) layerStack.push({ kind: "device" });
+    layerStack.push({ kind: "overlay", o });
+  });
+  if (deviceZ >= overlays.length) layerStack.push({ kind: "device" });
 
   return (
     <div
@@ -627,21 +652,33 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </div>
             <input ref={overlayFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { void addImageOverlay(e.target.files?.[0]); e.currentTarget.value = ""; }} />
             <div className="ed-layers">
-              {[...overlays].reverse().map((o) => (
-                <div key={o.id} className={`ed-layer ${selectedId === o.id ? "on" : ""}`}>
-                  <button className="ed-layer-main" onClick={() => setSelectedId(o.id)}>
-                    {o.type === "text" ? <Type size={13} /> : <ImageIcon size={13} />}
-                    <span>{o.name ? o.name : o.type === "text" ? (o.text.split("\n")[0] || "Text") : "Image"}</span>
-                  </button>
-                  <button className="ed-layer-ic" onClick={() => updateOverlay(o.id, { hidden: !o.hidden })} aria-label="Toggle visibility">{o.hidden ? <EyeOff size={13} /> : <Eye size={13} />}</button>
-                  <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, 1)} aria-label="Bring forward"><ChevronUp size={13} /></button>
-                  <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, -1)} aria-label="Send back"><ChevronDown size={13} /></button>
-                  <button className="ed-layer-ic danger" onClick={() => removeOverlay(o.id)} aria-label="Delete layer"><X size={13} /></button>
-                </div>
-              ))}
-              <button className={`ed-layer ed-layer-base ${selectedId === null ? "on" : ""}`} onClick={() => setSelectedId(null)}>
-                <span className="ed-layer-main"><Smartphone size={13} /> <span>Device screenshot</span></span>
-              </button>
+              {[...layerStack].reverse().map((item) => {
+                if (item.kind === "device") {
+                  return (
+                    <div key="__device__" className={`ed-layer ${selectedId === null ? "on" : ""}`}>
+                      <button className="ed-layer-main" onClick={() => setSelectedId(null)}>
+                        <Smartphone size={13} />
+                        <span>Device screenshot</span>
+                      </button>
+                      <button className="ed-layer-ic" onClick={() => moveDevice(1)} disabled={deviceZ >= overlays.length} aria-label="Move screenshot layer up"><ChevronUp size={13} /></button>
+                      <button className="ed-layer-ic" onClick={() => moveDevice(-1)} disabled={deviceZ <= 0} aria-label="Move screenshot layer down"><ChevronDown size={13} /></button>
+                    </div>
+                  );
+                }
+                const o = item.o;
+                return (
+                  <div key={o.id} className={`ed-layer ${selectedId === o.id ? "on" : ""}`}>
+                    <button className="ed-layer-main" onClick={() => setSelectedId(o.id)}>
+                      {o.type === "text" ? <Type size={13} /> : <ImageIcon size={13} />}
+                      <span>{o.name ? o.name : o.type === "text" ? (o.text.split("\n")[0] || "Text") : "Image"}</span>
+                    </button>
+                    <button className="ed-layer-ic" onClick={() => updateOverlay(o.id, { hidden: !o.hidden })} aria-label="Toggle visibility">{o.hidden ? <EyeOff size={13} /> : <Eye size={13} />}</button>
+                    <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, 1)} aria-label="Bring forward"><ChevronUp size={13} /></button>
+                    <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, -1)} aria-label="Send back"><ChevronDown size={13} /></button>
+                    <button className="ed-layer-ic danger" onClick={() => removeOverlay(o.id)} aria-label="Delete layer"><X size={13} /></button>
+                  </div>
+                );
+              })}
             </div>
             {!overlays.length ? <p className="ed-hint">Add text or images as layers, then drag them on the canvas.</p> : null}
           </section>
@@ -816,7 +853,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </section>
 
           <section className="ed-card">
-          <div className="ed-card-title">Adjust</div>
+          <div className="ed-card-title ed-card-title-row">
+            <span>Adjust</span>
+            <button className="ed-mini-reset" onClick={resetAdjust} title="Reset these sliders to default"><RotateCcw size={12} /> Reset</button>
+          </div>
           <Range label="Padding" value={settings.padding} min={0} max={0.4} step={0.01} onChange={(v) => update({ padding: v })} />
           <Range label="Image scale" value={settings.imageScale} min={0.4} max={2.5} step={0.01} onChange={(v) => update({ imageScale: v })} />
           <Range label="Rotate" value={settings.imageRotate} min={-45} max={45} step={1} onChange={(v) => update({ imageRotate: v })} />
@@ -858,15 +898,6 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <Range label="Perspective" value={settings.perspective} min={0} max={100} step={1} onChange={(v) => update({ perspective: v })} />
           <button className="ed-reset-flat" onClick={() => update({ rotateX: 0, rotateY: 0, rotateZ: 0 })}>Reset to flat</button>
           </>) : null}
-          </section>
-
-          <section className="ed-card">
-          <div className="ed-card-title">Export</div>
-          <button className="ed-upload" onClick={() => setExportOpen(true)}><Download size={15} /> Export options</button>
-          <p className="ed-hint">
-            Choose size, format &amp; quality in the <b>Download</b> menu (top-right).{" "}
-            {!premium ? <a href="/pricing" className="ed-prolink">4K &amp; transparent are Premium →</a> : "Premium unlocks 4K & transparent PNGs."}
-          </p>
           </section>
         </aside>
       </div>
@@ -1002,6 +1033,10 @@ function EditorStyles() {
       .ed-card:hover { border-color: var(--line-2); }
       .ed-card-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; display: flex; align-items: center; gap: 7px; }
       .ed-light .ed-card-title { color: #565d67; }
+      .ed-card-title-row > span:first-of-type { margin-right: auto; }
+      .ed-mini-reset { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 7px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: color .14s ease, border-color .14s ease; }
+      .ed-mini-reset:hover { color: var(--text); border-color: var(--line-2); }
+      .ed-light .ed-mini-reset { background: #fff; }
       .ed-device { transition: border-color .16s ease, background .16s ease, transform .16s ease; }
       .ed-device:hover { transform: translateY(-1px); }
       .ed-card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px rgba(110,65,226,.8); }
