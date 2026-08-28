@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { editorDevices, gradientPresets, type DeviceKind } from "@/lib/editor/devices";
 import {
   composite,
@@ -35,9 +35,20 @@ const DEVICE_GROUPS: { key: string; label: string }[] = [
   { key: "phone", label: "Phones" },
   { key: "tablet", label: "Tablets" },
   { key: "laptop", label: "Laptops" },
-  { key: "desktop", label: "Desktop" },
-  { key: "browser", label: "Browser" },
-  { key: "watch", label: "Watches" }
+  { key: "browser", label: "Browser" }
+];
+
+// Decorative elements added as image overlays (dark-ink annotation look).
+const EL_INK = "#1f2937";
+const ELEMENTS: { id: string; label: string; svg: string }[] = [
+  { id: "arrow", label: "Arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 56"><path d="M6 28 H86 M66 11 L88 28 L66 45" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "curve", label: "Curved arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 84"><path d="M12 72 C12 26 46 14 84 24" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round"/><path d="M64 10 L88 22 L70 42" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "circle", label: "Circle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 92"><path d="M52 8 C86 8 94 38 86 56 C78 86 26 90 12 64 C0 42 16 10 52 8" fill="none" stroke="${EL_INK}" stroke-width="6" stroke-linecap="round"/></svg>` },
+  { id: "underline", label: "Underline", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path d="M6 16 C30 6 42 24 60 13 C74 6 88 20 95 11" fill="none" stroke="${EL_INK}" stroke-width="6" stroke-linecap="round"/></svg>` },
+  { id: "star", label: "Star", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 6 L62 37 L95 38 L69 59 L78 92 L50 72 L22 92 L31 59 L5 38 L38 37 Z" fill="${EL_INK}"/></svg>` },
+  { id: "sparkle", label: "Sparkle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 8 C53 40 60 47 92 50 C60 53 53 60 50 92 C47 60 40 53 8 50 C40 47 47 40 50 8 Z" fill="${EL_INK}"/></svg>` },
+  { id: "cursor", label: "Cursor", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80"><path d="M8 6 L8 62 L22 48 L32 76 L43 71 L32 44 L52 44 Z" fill="${EL_INK}"/></svg>` },
+  { id: "box", label: "Callout box", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="5" y="5" width="90" height="60" rx="9" fill="none" stroke="${EL_INK}" stroke-width="5" stroke-dasharray="11 8"/></svg>` }
 ];
 
 const KIND_ICON: Record<DeviceKind, typeof Smartphone> = {
@@ -85,6 +96,8 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customBg, setCustomBg] = useState({ from: "#2f6bff", via: "#7c5cff", to: "#22b8e6", angle: 135, threeStop: false });
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean }>({ devices: false, elements: false });
+  const [dragRotate, setDragRotate] = useState(false);
 
   useEffect(() => {
     try {
@@ -191,6 +204,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     setSelectedId(o.id);
     ensureFont("Poppins");
   };
+  const addElement = (svg: string) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = img.naturalHeight / (img.naturalWidth || 1);
+      const o: ImageOverlay = { id: uid(), type: "image", img, x: 0.5, y: 0.5, scale: ratio > 1.4 ? 0.28 : 0.4, rotation: 0, opacity: 1 };
+      setOverlays((prev) => [...prev, o]);
+      setSelectedId(o.id);
+    };
+    img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  };
+
   const addImageOverlay = async (file: File | undefined) => {
     if (!file) return;
     try {
@@ -380,7 +404,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   // Drag the image within the frame.
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!hasImage && !selectedOverlay) return;
+    if (!hasImage && !selectedOverlay && !dragRotate) return;
     dragRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -390,6 +414,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     const dx = (event.clientX - dragRef.current.x) / rect.width;
     const dy = (event.clientY - dragRef.current.y) / rect.height;
     dragRef.current = { x: event.clientX, y: event.clientY };
+    if (dragRotate && !(selectedId && selectedOverlay)) {
+      const clamp = (v: number) => Math.max(-50, Math.min(50, v));
+      setSettings((s) => ({ ...s, rotateY: clamp(s.rotateY + dx * 90), rotateX: clamp(s.rotateX - dy * 90), perspective: s.perspective || 55 }));
+      return;
+    }
     if (selectedId && selectedOverlay) {
       setOverlays((prev) => prev.map((o) => (o.id === selectedId ? { ...o, x: o.x + dx, y: o.y + dy } : o)));
     } else {
@@ -493,7 +522,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         {/* Left rail: devices */}
         <aside className="ed-rail ed-rail-left" aria-label="Devices">
           <section className="ed-card">
-            <div className="ed-card-title">Device</div>
+            <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, devices: !c.devices }))} aria-expanded={!collapsed.devices}>
+              <span>Device</span>
+              {collapsed.devices ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </button>
+            {!collapsed.devices ? (
             <div className="ed-device-groups">
             {DEVICE_GROUPS.map((group) => {
               const list = editorDevices.filter((d) => d.category === group.key);
@@ -523,6 +556,26 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               );
             })}
             </div>
+            ) : null}
+          </section>
+
+          <section className="ed-card">
+            <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, elements: !c.elements }))} aria-expanded={!collapsed.elements}>
+              <span>Elements</span>
+              {collapsed.elements ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+            </button>
+            {!collapsed.elements ? (
+              <>
+                <div className="ed-elements">
+                  {ELEMENTS.map((el) => (
+                    <button key={el.id} type="button" className="ed-element" onClick={() => addElement(el.svg)} aria-label={`Add ${el.label}`} title={el.label}>
+                      <span className="ed-element-ic" dangerouslySetInnerHTML={{ __html: el.svg }} />
+                    </button>
+                  ))}
+                </div>
+                <p className="ed-hint">Tap to drop an arrow, doodle or shape — then drag &amp; resize it on the canvas.</p>
+              </>
+            ) : null}
           </section>
 
           <section className="ed-card">
@@ -728,6 +781,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
           <section className="ed-card">
           <div className="ed-card-title">3D angle</div>
+          <button
+            className={`ed-dragrotate ${dragRotate ? "on" : ""}`}
+            onClick={() => setDragRotate((v) => !v)}
+            aria-pressed={dragRotate}
+          >
+            <Move3d size={14} /> {dragRotate ? "Drag on canvas to rotate — on" : "Free rotate: drag the mockup in 3D"}
+          </button>
           <div className="ed-angles">
             {ANGLE_PRESETS.map((p) => {
               const active = settings.rotateX === p.x && settings.rotateY === p.y && settings.rotateZ === p.z;
@@ -893,6 +953,19 @@ function EditorStyles() {
       .ed-card-title::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--acc); box-shadow: 0 0 8px rgba(110,65,226,.8); }
 
       .ed-device-groups { display: flex; flex-direction: column; gap: 13px; }
+      .ed-collapse-head { width: 100%; justify-content: space-between; background: transparent; border: 0; padding: 0; cursor: pointer; }
+      .ed-collapse-head svg { color: var(--muted); }
+      .ed-collapse-head:hover svg { color: var(--text); }
+      .ed-elements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .ed-element { aspect-ratio: 1; display: grid; place-items: center; padding: 9px; border-radius: 10px; background: #eef0f3; border: 1px solid var(--line); cursor: pointer; transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease; }
+      .ed-element:hover { border-color: var(--acc); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+      .ed-element-ic { display: block; width: 100%; line-height: 0; }
+      .ed-element-ic svg { width: 100%; height: 22px; display: block; }
+      .ed-dragrotate { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; min-height: 34px; padding: 6px 10px; border-radius: 9px; background: rgba(255,255,255,.04); border: 1px solid var(--line); color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; transition: border-color .14s ease, color .14s ease, background .14s ease; }
+      .ed-dragrotate:hover { color: var(--text); border-color: var(--line-2); }
+      .ed-dragrotate.on { color: #fff; background: var(--acc); border-color: transparent; }
+      .ed-light .ed-dragrotate { background: #fff; }
+      .ed-light .ed-dragrotate.on { color: #fff; }
       .ed-group { display: flex; flex-direction: column; gap: 7px; }
       .ed-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--muted); }
       .ed input::placeholder { color: #8b8f96; }
