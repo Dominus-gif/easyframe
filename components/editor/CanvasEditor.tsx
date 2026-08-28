@@ -41,14 +41,14 @@ const DEVICE_GROUPS: { key: string; label: string }[] = [
 // Decorative elements added as image overlays (dark-ink annotation look).
 const EL_INK = "#1f2937";
 const ELEMENTS: { id: string; label: string; svg: string }[] = [
-  { id: "arrow", label: "Arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 56"><path d="M6 28 H86 M66 11 L88 28 L66 45" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-  { id: "curve", label: "Curved arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 84"><path d="M12 72 C12 26 46 14 84 24" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round"/><path d="M64 10 L88 22 L70 42" fill="none" stroke="${EL_INK}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
-  { id: "circle", label: "Circle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 92"><path d="M52 8 C86 8 94 38 86 56 C78 86 26 90 12 64 C0 42 16 10 52 8" fill="none" stroke="${EL_INK}" stroke-width="6" stroke-linecap="round"/></svg>` },
-  { id: "underline", label: "Underline", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path d="M6 16 C30 6 42 24 60 13 C74 6 88 20 95 11" fill="none" stroke="${EL_INK}" stroke-width="6" stroke-linecap="round"/></svg>` },
-  { id: "star", label: "Star", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 6 L62 37 L95 38 L69 59 L78 92 L50 72 L22 92 L31 59 L5 38 L38 37 Z" fill="${EL_INK}"/></svg>` },
-  { id: "sparkle", label: "Sparkle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 8 C53 40 60 47 92 50 C60 53 53 60 50 92 C47 60 40 53 8 50 C40 47 47 40 50 8 Z" fill="${EL_INK}"/></svg>` },
-  { id: "cursor", label: "Cursor", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80"><path d="M8 6 L8 62 L22 48 L32 76 L43 71 L32 44 L52 44 Z" fill="${EL_INK}"/></svg>` },
-  { id: "box", label: "Callout box", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="5" y="5" width="90" height="60" rx="9" fill="none" stroke="${EL_INK}" stroke-width="5" stroke-dasharray="11 8"/></svg>` }
+  { id: "arrow", label: "Arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 56"><path d="M6 28 H86 M66 11 L88 28 L66 45" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "curve", label: "Curved arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 84"><path d="M12 72 C12 26 46 14 84 24" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round"/><path d="M64 10 L88 22 L70 42" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "circle", label: "Circle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 92"><path d="M52 8 C86 8 94 38 86 56 C78 86 26 90 12 64 C0 42 16 10 52 8" fill="none" stroke="__C__" stroke-width="6" stroke-linecap="round"/></svg>` },
+  { id: "underline", label: "Underline", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 28"><path d="M6 16 C30 6 42 24 60 13 C74 6 88 20 95 11" fill="none" stroke="__C__" stroke-width="6" stroke-linecap="round"/></svg>` },
+  { id: "star", label: "Star", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 6 L62 37 L95 38 L69 59 L78 92 L50 72 L22 92 L31 59 L5 38 L38 37 Z" fill="__C__"/></svg>` },
+  { id: "sparkle", label: "Sparkle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 8 C53 40 60 47 92 50 C60 53 53 60 50 92 C47 60 40 53 8 50 C40 47 47 40 50 8 Z" fill="__C__"/></svg>` },
+  { id: "cursor", label: "Cursor", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80"><path d="M8 6 L8 62 L22 48 L32 76 L43 71 L32 44 L52 44 Z" fill="__C__"/></svg>` },
+  { id: "box", label: "Callout box", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="5" y="5" width="90" height="60" rx="9" fill="none" stroke="__C__" stroke-width="5" stroke-dasharray="11 8"/></svg>` }
 ];
 
 const KIND_ICON: Record<DeviceKind, typeof Smartphone> = {
@@ -96,7 +96,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customBg, setCustomBg] = useState({ from: "#2f6bff", via: "#7c5cff", to: "#22b8e6", angle: 135, threeStop: false });
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean }>({ devices: false, elements: false });
+  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: true });
   const [dragRotate, setDragRotate] = useState(false);
 
   useEffect(() => {
@@ -204,15 +204,25 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     setSelectedId(o.id);
     ensureFont("Poppins");
   };
-  const addElement = (svg: string) => {
+  const svgToImage = (svg: string, cb: (img: HTMLImageElement) => void) => {
     const img = new Image();
-    img.onload = () => {
+    img.onload = () => cb(img);
+    img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  };
+  const addElement = (template: string, name: string) => {
+    const color = EL_INK;
+    svgToImage(template.split("__C__").join(color), (img) => {
       const ratio = img.naturalHeight / (img.naturalWidth || 1);
-      const o: ImageOverlay = { id: uid(), type: "image", img, x: 0.5, y: 0.5, scale: ratio > 1.4 ? 0.28 : 0.4, rotation: 0, opacity: 1 };
+      const o: ImageOverlay = { id: uid(), type: "image", img, x: 0.5, y: 0.5, scale: ratio > 1.4 ? 0.28 : 0.4, rotation: 0, opacity: 1, name, svgTemplate: template, color };
       setOverlays((prev) => [...prev, o]);
       setSelectedId(o.id);
-    };
-    img.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    });
+  };
+  const recolorElement = (id: string, color: string) => {
+    const o = overlays.find((x) => x.id === id);
+    if (o?.type === "image" && o.svgTemplate) {
+      svgToImage(o.svgTemplate.split("__C__").join(color), (img) => updateOverlay(id, { img, color }));
+    }
   };
 
   const addImageOverlay = async (file: File | undefined) => {
@@ -420,7 +430,16 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       return;
     }
     if (selectedId && selectedOverlay) {
-      setOverlays((prev) => prev.map((o) => (o.id === selectedId ? { ...o, x: o.x + dx, y: o.y + dy } : o)));
+      const transform = event.ctrlKey || event.metaKey;
+      setOverlays((prev) => prev.map((o) => {
+        if (o.id !== selectedId) return o;
+        if (transform) {
+          const scale = Math.max(0.1, Math.min(3, o.scale - dy * 2.4));
+          const rotation = Math.max(-180, Math.min(180, o.rotation + dx * 220));
+          return { ...o, scale, rotation };
+        }
+        return { ...o, x: o.x + dx, y: o.y + dy };
+      }));
     } else {
       setSettings((s) => ({ ...s, imageOffsetX: s.imageOffsetX + dx * 1.4, imageOffsetY: s.imageOffsetY + dy * 1.4 }));
     }
@@ -568,7 +587,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               <>
                 <div className="ed-elements">
                   {ELEMENTS.map((el) => (
-                    <button key={el.id} type="button" className="ed-element" onClick={() => addElement(el.svg)} aria-label={`Add ${el.label}`} title={el.label}>
+                    <button key={el.id} type="button" className="ed-element" onClick={() => addElement(el.svg, el.label)} aria-label={`Add ${el.label}`} title={el.label}>
                       <span className="ed-element-ic" dangerouslySetInnerHTML={{ __html: el.svg }} />
                     </button>
                   ))}
@@ -608,7 +627,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                 <div key={o.id} className={`ed-layer ${selectedId === o.id ? "on" : ""}`}>
                   <button className="ed-layer-main" onClick={() => setSelectedId(o.id)}>
                     {o.type === "text" ? <Type size={13} /> : <ImageIcon size={13} />}
-                    <span>{o.type === "text" ? (o.text.split("\n")[0] || "Text") : "Image"}</span>
+                    <span>{o.name ? o.name : o.type === "text" ? (o.text.split("\n")[0] || "Text") : "Image"}</span>
                   </button>
                   <button className="ed-layer-ic" onClick={() => updateOverlay(o.id, { hidden: !o.hidden })} aria-label="Toggle visibility">{o.hidden ? <EyeOff size={13} /> : <Eye size={13} />}</button>
                   <button className="ed-layer-ic" onClick={() => moveOverlay(o.id, 1)} aria-label="Bring forward"><ChevronUp size={13} /></button>
@@ -682,10 +701,19 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                   <Range label="Size" value={selectedOverlay.fontSize} min={0.02} max={0.22} step={0.005} onChange={(v) => updateOverlay(selectedOverlay.id, { fontSize: v })} />
                 </>
               ) : (
-                <Range label="Scale" value={selectedOverlay.scale} min={0.1} max={2} step={0.02} onChange={(v) => updateOverlay(selectedOverlay.id, { scale: v })} />
+                <>
+                  {selectedOverlay.svgTemplate ? (
+                    <label className="ed-el-color">
+                      <span>Color</span>
+                      <input type="color" className="ed-color" value={selectedOverlay.color || EL_INK} onChange={(e) => recolorElement(selectedOverlay.id, e.target.value)} aria-label="Element color" />
+                    </label>
+                  ) : null}
+                  <Range label="Scale" value={selectedOverlay.scale} min={0.1} max={2} step={0.02} onChange={(v) => updateOverlay(selectedOverlay.id, { scale: v })} />
+                </>
               )}
               <Range label="Rotation" value={selectedOverlay.rotation} min={-180} max={180} step={1} onChange={(v) => updateOverlay(selectedOverlay.id, { rotation: v })} />
               <Range label="Opacity" value={selectedOverlay.opacity} min={0} max={1} step={0.02} onChange={(v) => updateOverlay(selectedOverlay.id, { opacity: v })} />
+              <p className="ed-hint">Drag to move · <b>Ctrl-drag</b> on the canvas to resize &amp; rotate.</p>
               <button className="ed-remove" onClick={() => removeOverlay(selectedOverlay.id)}><Trash2 size={14} /> Delete layer</button>
             </section>
           ) : null}
@@ -764,6 +792,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </label>
           </div>
           <Range label="Angle" value={customBg.angle} min={0} max={360} step={1} onChange={(v) => applyCustomGrad({ angle: v })} />
+          {bg.type === "image" ? (
+            <>
+              <div className="ed-subhead">Background image</div>
+              <Range label="Rotate" value={bg.angle ?? 0} min={0} max={360} step={1} onChange={(v) => update({ background: { type: "image", img: bg.img, angle: v } })} />
+            </>
+          ) : null}
           </section>
 
           <section className="ed-card">
@@ -780,7 +814,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </section>
 
           <section className="ed-card">
-          <div className="ed-card-title">3D angle</div>
+          <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, threeD: !c.threeD }))} aria-expanded={!collapsed.threeD}>
+            <span>3D angle</span>
+            {collapsed.threeD ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+          </button>
+          {!collapsed.threeD ? (<>
           <button
             className={`ed-dragrotate ${dragRotate ? "on" : ""}`}
             onClick={() => setDragRotate((v) => !v)}
@@ -804,6 +842,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <Range label="Roll (Z)" value={settings.rotateZ} min={-45} max={45} step={1} onChange={(v) => update({ rotateZ: v })} />
           <Range label="Perspective" value={settings.perspective} min={0} max={100} step={1} onChange={(v) => update({ perspective: v })} />
           <button className="ed-reset-flat" onClick={() => update({ rotateX: 0, rotateY: 0, rotateZ: 0 })}>Reset to flat</button>
+          </>) : null}
           </section>
 
           <section className="ed-card">
@@ -966,6 +1005,8 @@ function EditorStyles() {
       .ed-dragrotate.on { color: #fff; background: var(--acc); border-color: transparent; }
       .ed-light .ed-dragrotate { background: #fff; }
       .ed-light .ed-dragrotate.on { color: #fff; }
+      .ed-el-color { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--text); }
+      .ed-el-color .ed-color { width: 46px; height: 34px; }
       .ed-group { display: flex; flex-direction: column; gap: 7px; }
       .ed-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--muted); }
       .ed input::placeholder { color: #8b8f96; }

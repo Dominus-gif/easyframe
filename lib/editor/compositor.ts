@@ -6,7 +6,7 @@ import { deviceBySlug, type Device } from "@/lib/editor/devices";
 export type BackgroundSetting =
   | { type: "solid"; color: string }
   | { type: "gradient"; from: string; via?: string; to: string; angle: number }
-  | { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap } // Premium
+  | { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap; angle?: number } // Premium
   | { type: "transparent" }; // Premium
 
 export type EditorSettings = {
@@ -57,8 +57,8 @@ function shade(hex: string, amt: number): string {
 }
 
 // Overlay layers drawn on top of the composited scene (extra images + text).
-export type OverlayBase = { id: string; x: number; y: number; scale: number; rotation: number; opacity: number; hidden?: boolean };
-export type ImageOverlay = OverlayBase & { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap };
+export type OverlayBase = { id: string; x: number; y: number; scale: number; rotation: number; opacity: number; hidden?: boolean; name?: string };
+export type ImageOverlay = OverlayBase & { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap; svgTemplate?: string; color?: string };
 export type TextOverlay = OverlayBase & {
   type: "text";
   text: string;
@@ -366,10 +366,17 @@ function paintBackground(ctx: CanvasRenderingContext2D, bg: BackgroundSetting, w
     const img = bg.img as HTMLImageElement & { naturalWidth?: number; naturalHeight?: number };
     const iw = (img.naturalWidth ?? (img as unknown as { width: number }).width) || w;
     const ih = (img.naturalHeight ?? (img as unknown as { height: number }).height) || h;
-    const scale = Math.max(w / iw, h / ih); // cover
+    const ang = rad(bg.angle ?? 0);
+    // When rotated, cover the diagonal so no gaps show at any angle.
+    const target = ang ? Math.hypot(w, h) : Math.max(w, h);
+    const scale = ang ? Math.max(target / iw, target / ih) : Math.max(w / iw, h / ih);
     const dw = iw * scale;
     const dh = ih * scale;
-    ctx.drawImage(bg.img as CanvasImageSource, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    ctx.save();
+    ctx.translate(w / 2, h / 2);
+    if (ang) ctx.rotate(ang);
+    ctx.drawImage(bg.img as CanvasImageSource, -dw / 2, -dh / 2, dw, dh);
+    ctx.restore();
     return;
   }
   const a = rad(bg.angle);
