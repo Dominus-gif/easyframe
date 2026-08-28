@@ -96,7 +96,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customBg, setCustomBg] = useState({ from: "#2f6bff", via: "#7c5cff", to: "#22b8e6", angle: 135, threeStop: false });
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: true });
+  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: false });
   const [dragRotate, setDragRotate] = useState(false);
 
   useEffect(() => {
@@ -649,10 +649,21 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
         {/* Canvas */}
         <main className="ed-stage" aria-label="Preview">
+          <div className="ed-stage-tools">
+            <button
+              className={`ed-tool-toggle ${dragRotate ? "on" : ""}`}
+              onClick={() => setDragRotate((v) => !v)}
+              aria-pressed={dragRotate}
+              title="Grab the mockup and rotate it in 3D"
+            >
+              <Move3d size={15} /> {dragRotate ? "Rotating in 3D" : "Rotate 3D"}
+            </button>
+          </div>
           <div className="ed-canvas-wrap" style={{ transform: `scale(${previewZoom})` }}>
             <canvas
               ref={canvasRef}
               className="ed-canvas"
+              style={{ cursor: dragRotate ? (dragRef.current ? "grabbing" : "grab") : undefined, touchAction: "none" }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -661,7 +672,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </div>
           {!hasImage ? (
             <>
-              <button className="ed-drop" onClick={() => fileRef.current?.click()}>
+              <button className="ed-drop" style={dragRotate ? { pointerEvents: "none" } : undefined} onClick={() => fileRef.current?.click()}>
                 <span className="ed-drop-ic"><Upload size={22} /></span>
                 <strong>Drop a screenshot to start</strong>
                 <span>or <b>browse files</b> · PNG, JPEG or WebP</span>
@@ -1072,6 +1083,12 @@ function EditorStyles() {
       .ed-zoom button { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.06); border: 0; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: grid; place-items: center; }
       .ed-zoom button:hover { background: rgba(255,255,255,.12); }
       .ed-zoom b { font-size: 12px; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+      .ed-stage-tools { position: absolute; top: 18px; right: 18px; z-index: 6; display: flex; gap: 8px; }
+      .ed-tool-toggle { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 14px; border-radius: 999px; background: rgba(18,21,26,.85); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.4); transition: background .14s ease, border-color .14s ease, color .14s ease; }
+      .ed-tool-toggle:hover { border-color: var(--line-2); }
+      .ed-tool-toggle.on { background: var(--acc); border-color: transparent; color: #fff; }
+      .ed-light .ed-tool-toggle { background: rgba(255,255,255,.92); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+      .ed-light .ed-tool-toggle.on { background: var(--acc); color: #fff; }
       .ed-toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: #1c1f24; border: 1px solid var(--line-2); font-size: 13px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
 
       .ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
