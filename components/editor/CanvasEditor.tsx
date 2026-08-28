@@ -107,6 +107,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   }, []);
   useEffect(() => {
     try { localStorage.setItem("ef-editor-theme", theme); } catch { /* ignore */ }
+    // Publish the editor surface theme so global chrome (cookie bar) can match it.
+    document.documentElement.setAttribute("data-editor-theme", theme);
+    return () => { document.documentElement.removeAttribute("data-editor-theme"); };
   }, [theme]);
   const overlayFileRef = useRef<HTMLInputElement>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
@@ -851,7 +854,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <button className="ed-upload" onClick={() => setExportOpen(true)}><Download size={15} /> Export options</button>
           <p className="ed-hint">
             Choose size, format &amp; quality in the <b>Download</b> menu (top-right).{" "}
-            {!premium ? <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a> : "Premium unlocks 4K & transparent PNGs."}
+            {!premium ? <a href="/pricing" className="ed-prolink">4K &amp; transparent are Premium →</a> : "Premium unlocks 4K & transparent PNGs."}
           </p>
           </section>
         </aside>
@@ -867,7 +870,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <div className="ed-modal-body">
               {renderExportControls()}
               <p className="ed-hint">
-                {premium ? "Premium: up to 4K (3840px) + transparent backgrounds." : <>Free up to {FREE_MAX_EDGE}px · <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a></>}
+                {premium ? "Premium: up to 4K (3840px) + transparent backgrounds." : <>Free up to {FREE_MAX_EDGE}px · <a href="/pricing" className="ed-prolink">4K &amp; transparent are Premium →</a></>}
               </p>
             </div>
             <div className="ed-modal-actions">
@@ -1012,6 +1015,10 @@ function EditorStyles() {
       .ed-group-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; color: var(--muted); }
       .ed input::placeholder { color: #8b8f96; }
       .ed-light .ed input::placeholder { color: #8a909a; }
+      .ed .ed-prolink { color: #b898ff; }
+      .ed.ed-light .ed-prolink { color: #6E41E2; }
+      .ed.ed-light .ed-seg button:not(.on) { color: #606374; }
+      .ed-light .ed-privacy-note { color: rgba(15,18,25,.5); }
       .ed-device-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
       .ed-device { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 58px; padding: 9px 6px; border-radius: 10px; background: rgba(255,255,255,.03); border: 1px solid var(--line); color: var(--text); font: inherit; cursor: pointer; text-align: center; transition: border-color .14s, background .14s, transform .14s; }
       .ed-device svg { color: var(--muted); transition: color .14s; }

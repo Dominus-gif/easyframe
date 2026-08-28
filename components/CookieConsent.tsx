@@ -71,20 +71,26 @@ export default function CookieConsent() {
               justify-content: center;
               gap: 14px 20px;
               padding: 12px 24px;
-              background: #1c1c1e;
-              border-top: 1px solid #2c2c2e;
-              box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4);
-              color: #d6d6d8;
+              background: #fafafb;
+              border-top: 1px solid rgba(0, 0, 0, 0.10);
+              box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.10);
+              color: #28282c;
               font-family: "Inter", system-ui, sans-serif;
             }
-            .cc p { margin: 0; font-size: 13px; line-height: 1.5; color: #a8abb2; max-width: 760px; }
-            .cc a { color: #b3aaff; text-decoration: underline; }
+            .cc p { margin: 0; font-size: 13px; line-height: 1.5; color: #40404a; max-width: 760px; }
+            .cc a { color: #6E41E2; text-decoration: underline; }
             .cc-actions { display: flex; gap: 10px; flex: none; }
             .cc-btn { height: 38px; padding: 0 18px; border-radius: 10px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-            .cc-decline { background: transparent; border: 1px solid #3a3a3e; color: #d6d6d8; }
-            .cc-decline:hover { border-color: #54545a; }
+            .cc-decline { background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); color: #28282c; }
+            .cc-decline:hover { border-color: rgba(0, 0, 0, 0.28); }
             .cc-accept { background: #6E41E2; border: 0; color: #fff; border-radius: 30px; padding: 0 22px; }
             .cc-accept:hover { background: #7d55e8; }
+            /* Dark variant — matches the editor when its dark theme is active. */
+            :global(html[data-editor-theme="dark"]) .cc { background: #1c1c1e; border-top-color: #2c2c2e; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4); color: #d6d6d8; }
+            :global(html[data-editor-theme="dark"]) .cc p { color: #a8abb2; }
+            :global(html[data-editor-theme="dark"]) .cc a { color: #b3aaff; }
+            :global(html[data-editor-theme="dark"]) .cc-decline { background: transparent; border-color: #3a3a3e; color: #d6d6d8; }
+            :global(html[data-editor-theme="dark"]) .cc-decline:hover { border-color: #54545a; }
             .cc-btn:focus-visible { outline: 2px solid #8b8cf6; outline-offset: 2px; }
           `}</style>
         </div>

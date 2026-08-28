@@ -164,7 +164,7 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, device: Device) {
   grad.addColorStop(1, "#0f1114");
   ctx.fillStyle = grad;
   ctx.fillRect(s.x, s.y, s.w, s.h);
-  ctx.fillStyle = "rgba(255,255,255,0.34)";
+  ctx.fillStyle = "rgba(255,255,255,0.45)";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.font = `600 ${Math.round(s.w * 0.045)}px Inter, system-ui, sans-serif`;
