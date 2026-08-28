@@ -100,6 +100,35 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const { premium } = usePremium();
   const [resolution, setResolution] = useState(FREE_MAX_EDGE);
   const [previewDims, setPreviewDims] = useState<{ width: number; height: number } | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [rememberExport, setRememberExport] = useState(false);
+
+  // Restore saved export preferences (size/format/quality) on load.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ef-export-prefs");
+      if (!raw) return;
+      const p = JSON.parse(raw) as { format?: ExportFormat; quality?: number; resolution?: number };
+      if (p.format) setFormat(p.format);
+      if (typeof p.quality === "number") setQuality(p.quality);
+      if (typeof p.resolution === "number") setResolution(p.resolution);
+      setRememberExport(true);
+    } catch { /* ignore */ }
+  }, []);
+
+  // Close the export menu on outside-click; close menu + dialog on Escape.
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const onDoc = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest(".ed-dl-split")) setExportMenuOpen(false); };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [exportMenuOpen]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setExportMenuOpen(false); setExportOpen(false); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const selectedOverlay = overlays.find((o) => o.id === selectedId) ?? null;
 
@@ -245,6 +274,36 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       })()
     : null;
 
+  // Shared export controls (used in the dialog and the split-button dropdown).
+  const renderExportControls = () => (
+    <>
+      <div className="ed-subhead">Size</div>
+      <div className="ed-seg">
+        {RES_PRESETS.map((p) => (
+          <button
+            key={p.v}
+            className={`ed-res-btn ${effResolution === p.v ? "on" : ""}`}
+            onClick={() => { if (p.pro && !premium) { flash("4K export is a Premium feature."); return; } setResolution(p.v); }}
+          >
+            {p.label}{p.pro && !premium ? <span className="ed-pro">PRO</span> : null}
+          </button>
+        ))}
+      </div>
+      <p className="ed-dims">{outDims ? `${outDims.w} × ${outDims.h} px` : "Add an image to see the size"}</p>
+      <div className="ed-subhead">Format</div>
+      <div className="ed-seg">
+        {(["png", "jpeg", "webp"] as ExportFormat[]).map((f) => (
+          <button key={f} className={format === f ? "on" : ""} onClick={() => setFormat(f)}>{f.toUpperCase()}</button>
+        ))}
+      </div>
+      {format !== "png" ? <Range label="Quality" value={quality} min={40} max={100} step={1} onChange={setQuality} /> : null}
+      <label className="ed-remember">
+        <input type="checkbox" checked={rememberExport} onChange={(e) => setRememberExport(e.target.checked)} />
+        Remember these settings for next time
+      </label>
+    </>
+  );
+
   const setImage = (img: HTMLImageElement | null) => {
     imgRef.current = img;
     setHasImage(!!img);
@@ -364,6 +423,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       link.remove();
       URL.revokeObjectURL(url);
       flash(`✓ Saved ${filename} to your downloads`);
+      try {
+        if (rememberExport) localStorage.setItem("ef-export-prefs", JSON.stringify({ format, quality, resolution }));
+        else localStorage.removeItem("ef-export-prefs");
+      } catch { /* ignore */ }
+      setExportOpen(false);
+      setExportMenuOpen(false);
     } catch {
       flash("Export failed — the image may be too large. Try a smaller size.");
     } finally {
@@ -404,9 +469,23 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <button className="ed-icon-btn" onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y)"><Redo2 size={16} /></button>
           </div>
           <button className="ed-ghost" onClick={resetAll} aria-label="Reset all"><RotateCcw size={15} /> Reset</button>
-          <button className="ed-primary" onClick={onDownload} disabled={busy}>
-            <Download size={16} /> {busy ? "Working…" : "Download"}
-          </button>
+          <div className="ed-dl-split">
+            <button className="ed-primary ed-dl-main" onClick={() => setExportOpen(true)} disabled={busy}>
+              <Download size={16} /> {busy ? "Working…" : "Download"}
+            </button>
+            <button className="ed-primary ed-dl-caret" onClick={() => setExportMenuOpen((o) => !o)} disabled={busy} aria-label="Export options" aria-expanded={exportMenuOpen}>
+              <ChevronDown size={15} />
+            </button>
+            {exportMenuOpen ? (
+              <div className="ed-dl-menu" role="menu">
+                <div className="ed-dl-menu-title">Export settings</div>
+                {renderExportControls()}
+                <button className="ed-primary ed-dl-menu-go" onClick={() => onDownload()} disabled={busy}>
+                  <Download size={15} /> {busy ? "Working…" : outDims ? `Download ${outDims.w}×${outDims.h}` : "Download"}
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -669,40 +748,37 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
           <section className="ed-card">
           <div className="ed-card-title">Export</div>
-          <div className="ed-subhead">Size</div>
-          <div className="ed-seg">
-            {RES_PRESETS.map((p) => (
-              <button
-                key={p.v}
-                className={`ed-res-btn ${effResolution === p.v ? "on" : ""}`}
-                onClick={() => {
-                  if (p.pro && !premium) { flash("4K export is a Premium feature."); return; }
-                  setResolution(p.v);
-                }}
-              >
-                {p.label}{p.pro && !premium ? <span className="ed-pro">PRO</span> : null}
-              </button>
-            ))}
-          </div>
-          <p className="ed-dims">{outDims ? `${outDims.w} × ${outDims.h} px` : "Add an image to see the size"}</p>
-          <div className="ed-subhead">Format</div>
-          <div className="ed-seg">
-            {(["png", "jpeg", "webp"] as ExportFormat[]).map((f) => (
-              <button key={f} className={format === f ? "on" : ""} onClick={() => setFormat(f)}>{f.toUpperCase()}</button>
-            ))}
-          </div>
-          {format !== "png" ? (
-            <Range label="Quality" value={quality} min={40} max={100} step={1} onChange={setQuality} />
-          ) : null}
+          <button className="ed-upload" onClick={() => setExportOpen(true)}><Download size={15} /> Export options</button>
           <p className="ed-hint">
-            {premium
-              ? `Premium: export up to ${PREMIUM_MAX_EDGE}px (4K) with transparent backgrounds.`
-              : `Free export up to ${FREE_MAX_EDGE}px · `}
-            {!premium ? <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a> : null}
+            Choose size, format &amp; quality in the <b>Download</b> menu (top-right).{" "}
+            {!premium ? <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a> : "Premium unlocks 4K & transparent PNGs."}
           </p>
           </section>
         </aside>
       </div>
+
+      {exportOpen ? (
+        <div className="ed-modal-backdrop" onClick={() => setExportOpen(false)}>
+          <div className="ed-modal" role="dialog" aria-modal="true" aria-label="Export mockup" onClick={(e) => e.stopPropagation()}>
+            <div className="ed-modal-head">
+              <h2>Export mockup</h2>
+              <button className="ed-icon-btn" onClick={() => setExportOpen(false)} aria-label="Close"><X size={18} /></button>
+            </div>
+            <div className="ed-modal-body">
+              {renderExportControls()}
+              <p className="ed-hint">
+                {premium ? "Premium: up to 4K (3840px) + transparent backgrounds." : <>Free up to {FREE_MAX_EDGE}px · <a href="/pricing" style={{ color: "var(--acc)" }}>4K &amp; transparent are Premium →</a></>}
+              </p>
+            </div>
+            <div className="ed-modal-actions">
+              <button className="ed-ghost" onClick={() => setExportOpen(false)}>Cancel</button>
+              <button className="ed-primary" onClick={() => onDownload()} disabled={busy}>
+                <Download size={16} /> {busy ? "Working…" : "Download"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <EditorStyles />
     </div>
@@ -941,6 +1017,25 @@ function EditorStyles() {
       .ed-res-btn { position: relative; }
       .ed-res-btn .ed-pro { position: absolute; top: 2px; right: 3px; inset: auto; width: auto; height: auto; padding: 1px 4px; font-size: 7.5px; border-radius: 5px; }
       .ed-dims { margin: 8px 0 2px; font-size: 12px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+      /* Split Download button + dropdown */
+      .ed-dl-split { position: relative; display: inline-flex; }
+      .ed-dl-main { border-radius: 10px 0 0 10px; padding: 0 12px 0 16px; box-shadow: none; }
+      .ed-dl-caret { border-radius: 0 10px 10px 0; padding: 0 8px; border-left: 1px solid rgba(255,255,255,.28); box-shadow: none; }
+      .ed-dl-split .ed-primary:hover:not(:disabled) { transform: none; box-shadow: 0 8px 22px rgba(110,65,226,.45); }
+      .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
+      .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
+      .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      .ed-remember { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text); cursor: pointer; margin-top: 2px; line-height: 1.35; }
+      .ed-remember input { width: 16px; height: 16px; accent-color: var(--acc); cursor: pointer; flex: none; }
+      /* Export dialog */
+      .ed-modal-backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(0,0,0,.55); backdrop-filter: blur(3px); padding: 20px; }
+      .ed-modal { width: min(420px, 100%); max-height: 88vh; overflow-y: auto; border-radius: 18px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 40px 100px rgba(0,0,0,.65); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+      .ed-modal-head { display: flex; align-items: center; justify-content: space-between; }
+      .ed-modal-head h2 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+      .ed-modal-body { display: flex; flex-direction: column; gap: 12px; }
+      .ed-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
+      .ed-modal-actions .ed-primary { height: 40px; padding: 0 22px; }
+      .ed-light .ed-dl-menu, .ed-light .ed-modal { background: #fff; }
       .ed :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       .ed :focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
       @media (max-width: 900px) {
