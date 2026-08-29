@@ -8,11 +8,12 @@ import SiteFooter from "@/components/site/SiteFooter";
 import MockShot from "@/components/site/MockShot";
 import { SAMPLE_COUNT } from "@/lib/editor/sampleScreens";
 
+// Warm, cohesive dark tiles (supercut theme) with a hint of variation per card.
 const tiles: { css: string; bg: BackgroundSetting }[] = [
-  { css: "#FFF7FC", bg: { type: "solid", color: "#FFF7FC" } },
-  { css: "#ECF2FF", bg: { type: "solid", color: "#ECF2FF" } },
-  { css: "#F6F2FF", bg: { type: "solid", color: "#F6F2FF" } },
-  { css: "#F3F6F4", bg: { type: "solid", color: "#F3F6F4" } }
+  { css: "linear-gradient(135deg, #201618, #141011)", bg: { type: "gradient", from: "#201618", to: "#141011", angle: 135 } },
+  { css: "linear-gradient(135deg, #181a1d, #121315)", bg: { type: "gradient", from: "#181a1d", to: "#121315", angle: 135 } },
+  { css: "linear-gradient(135deg, #1c1a1a, #141212)", bg: { type: "gradient", from: "#1c1a1a", to: "#141212", angle: 135 } },
+  { css: "linear-gradient(135deg, #171a19, #121413)", bg: { type: "gradient", from: "#171a19", to: "#121413", angle: 135 } }
 ];
 
 export const metadata: Metadata = {

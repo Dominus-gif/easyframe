@@ -48,7 +48,18 @@ const ELEMENTS: { id: string; label: string; svg: string }[] = [
   { id: "star", label: "Star", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 6 L62 37 L95 38 L69 59 L78 92 L50 72 L22 92 L31 59 L5 38 L38 37 Z" fill="__C__"/></svg>` },
   { id: "sparkle", label: "Sparkle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 8 C53 40 60 47 92 50 C60 53 53 60 50 92 C47 60 40 53 8 50 C40 47 47 40 50 8 Z" fill="__C__"/></svg>` },
   { id: "cursor", label: "Cursor", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 80"><path d="M8 6 L8 62 L22 48 L32 76 L43 71 L32 44 L52 44 Z" fill="__C__"/></svg>` },
-  { id: "box", label: "Callout box", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="5" y="5" width="90" height="60" rx="9" fill="none" stroke="__C__" stroke-width="5" stroke-dasharray="11 8"/></svg>` }
+  { id: "box", label: "Callout box", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 70"><rect x="5" y="5" width="90" height="60" rx="9" fill="none" stroke="__C__" stroke-width="5" stroke-dasharray="11 8"/></svg>` },
+  { id: "arrow-double", label: "Double arrow", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 44"><path d="M22 8 L6 22 L22 36 M6 22 H94 M78 8 L94 22 L78 36" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "chevron", label: "Chevron", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 100"><path d="M14 12 L44 50 L14 88" fill="none" stroke="__C__" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "check", label: "Check", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 84"><path d="M10 46 L38 72 L90 12" fill="none" stroke="__C__" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "cross", label: "Cross", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M20 20 L80 80 M80 20 L20 80" fill="none" stroke="__C__" stroke-width="11" stroke-linecap="round"/></svg>` },
+  { id: "plus", label: "Plus", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 14 V86 M14 50 H86" fill="none" stroke="__C__" stroke-width="11" stroke-linecap="round"/></svg>` },
+  { id: "heart", label: "Heart", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 92"><path d="M50 86 C6 56 8 22 30 16 C44 12 50 24 50 30 C50 24 56 12 70 16 C92 22 94 56 50 86 Z" fill="__C__"/></svg>` },
+  { id: "bolt", label: "Lightning", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 100"><path d="M44 6 L12 56 L34 56 L28 94 L60 40 L38 40 Z" fill="__C__"/></svg>` },
+  { id: "bubble", label: "Speech bubble", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 88"><path d="M14 10 H86 A8 8 0 0 1 94 18 V56 A8 8 0 0 1 86 64 H44 L26 82 L28 64 H14 A8 8 0 0 1 6 56 V18 A8 8 0 0 1 14 10 Z" fill="none" stroke="__C__" stroke-width="6" stroke-linejoin="round"/></svg>` },
+  { id: "pin", label: "Location pin", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 100"><path d="M34 94 C34 94 8 60 8 36 A26 26 0 0 1 60 36 C60 60 34 94 34 94 Z" fill="__C__"/><circle cx="34" cy="34" r="9" fill="#ffffff"/></svg>` },
+  { id: "bang", label: "Exclamation", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 100"><path d="M20 10 V64" fill="none" stroke="__C__" stroke-width="12" stroke-linecap="round"/><circle cx="20" cy="88" r="8" fill="__C__"/></svg>` },
+  { id: "scribble", label: "Scribble", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><path d="M6 30 C18 6 26 6 34 24 C40 38 48 38 54 20 C60 4 70 6 76 26 C80 38 88 34 94 14" fill="none" stroke="__C__" stroke-width="6" stroke-linecap="round"/></svg>` }
 ];
 
 const KIND_ICON: Record<DeviceKind, typeof Smartphone> = {
@@ -98,6 +109,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: false });
   const [dragRotate, setDragRotate] = useState(false);
+  const [showAllBg, setShowAllBg] = useState(false);
 
   useEffect(() => {
     try {
@@ -510,6 +522,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     });
 
   const bg = settings.background;
+  // Background swatches: show the first 8, reveal the rest behind "Show more".
+  const bgSwatches: Array<{ kind: "gradient"; g: (typeof gradientPresets)[number] } | { kind: "solid"; c: string }> = [
+    ...gradientPresets.map((g) => ({ kind: "gradient" as const, g })),
+    ...SOLID_COLORS.map((c) => ({ kind: "solid" as const, c }))
+  ];
+  const shownSwatches = showAllBg ? bgSwatches : bgSwatches.slice(0, 8);
   const deviceZ = Math.min(overlays.length, Math.max(0, settings.deviceZ ?? 0));
   // Build the layer stack bottom→top with the device inserted at its z-position.
   const layerStack: Array<{ kind: "device" } | { kind: "overlay"; o: Overlay }> = [];
@@ -617,7 +635,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                 <div className="ed-elements">
                   {ELEMENTS.map((el) => (
                     <button key={el.id} type="button" className="ed-element" onClick={() => addElement(el.svg, el.label)} aria-label={`Add ${el.label}`} title={el.label}>
-                      <span className="ed-element-ic" dangerouslySetInnerHTML={{ __html: el.svg }} />
+                      <span className="ed-element-ic" dangerouslySetInnerHTML={{ __html: el.svg.split("__C__").join("currentColor") }} />
                     </button>
                   ))}
                 </div>
@@ -710,9 +728,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           {!hasImage ? (
             <>
               <button className="ed-drop" style={dragRotate ? { pointerEvents: "none" } : undefined} onClick={() => fileRef.current?.click()}>
-                <span className="ed-drop-ic"><Upload size={22} /></span>
-                <strong>Drop a screenshot to start</strong>
-                <span>or <b>browse files</b> · PNG, JPEG or WebP</span>
+                <span className="ed-drop-ic"><Upload size={16} /></span>
+                <strong>Drop a screenshot</strong>
+                <span className="ed-drop-sub">or <b>browse files</b></span>
+                <span className="ed-drop-win">
+                  <span className="ed-drop-dots" aria-hidden="true"><i /><i /><i /></span>
+                  <span className="ed-drop-formats">PNG · JPEG · WebP</span>
+                </span>
               </button>
               <p className="ed-privacy-note">Nothing is uploaded — everything stays in your browser.</p>
             </>
@@ -773,24 +795,25 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <section className="ed-card">
           <div className="ed-card-title">Background</div>
           <div className="ed-swatches">
-            {gradientPresets.map((g) => (
-              <button
-                key={g.id}
-                className={`ed-swatch ${bg.type === "gradient" && bg.from === g.from ? "on" : ""}`}
-                style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}
-                aria-label={g.label}
-                onClick={() => update({ background: { type: "gradient", from: g.from, to: g.to, angle: g.angle } })}
-              />
-            ))}
-            {SOLID_COLORS.map((c) => (
-              <button
-                key={c}
-                className={`ed-swatch ${bg.type === "solid" && bg.color === c ? "on" : ""}`}
-                style={{ background: c }}
-                aria-label={`Solid ${c}`}
-                onClick={() => update({ background: { type: "solid", color: c } })}
-              />
-            ))}
+            {shownSwatches.map((s) =>
+              s.kind === "gradient" ? (
+                <button
+                  key={`g-${s.g.id}`}
+                  className={`ed-swatch ${bg.type === "gradient" && bg.from === s.g.from ? "on" : ""}`}
+                  style={{ background: `linear-gradient(135deg, ${s.g.from}, ${s.g.to})` }}
+                  aria-label={s.g.label}
+                  onClick={() => update({ background: { type: "gradient", from: s.g.from, to: s.g.to, angle: s.g.angle } })}
+                />
+              ) : (
+                <button
+                  key={`s-${s.c}`}
+                  className={`ed-swatch ${bg.type === "solid" && bg.color === s.c ? "on" : ""}`}
+                  style={{ background: s.c }}
+                  aria-label={`Solid ${s.c}`}
+                  onClick={() => update({ background: { type: "solid", color: s.c } })}
+                />
+              )
+            )}
             <button
               className={`ed-swatch ed-swatch-alpha ${bg.type === "transparent" ? "on" : ""}`}
               aria-label="Transparent background (Premium)"
@@ -812,6 +835,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               {!premium ? <span className="ed-pro">PRO</span> : null}
             </button>
           </div>
+          {bgSwatches.length > 8 ? (
+            <button className="ed-showmore" onClick={() => setShowAllBg((v) => !v)}>
+              {showAllBg ? "Show less" : `Show more (${bgSwatches.length - 8})`}
+            </button>
+          ) : null}
           <input ref={bgFileRef} type="file" accept="image/*" hidden onChange={(e) => { onBgImage(e.target.files); e.currentTarget.value = ""; }} />
           <div className="ed-subhead">
             Custom gradient
@@ -951,17 +979,17 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
 function EditorStyles() {
   return (
     <style jsx global>{`
-      .ed { --acc: #6E41E2; --acc2: #8B5CF6; --bg: #0b0d0f; --line: rgba(255,255,255,.11); --line-2: rgba(255,255,255,.20); --text: #f4f5f7; --muted: #9ca0a6; --card: rgba(255,255,255,.022);
+      .ed { --acc: #f4f5f7; --acc2: #d7dade; --acc-ink: #14161a; --bg: #0b0d0f; --line: rgba(255,255,255,.11); --line-2: rgba(255,255,255,.20); --text: #f4f5f7; --muted: #9ca0a6; --card: rgba(255,255,255,.022);
         position: fixed; top: 0; left: 0; right: 0; bottom: var(--cc-h, 0); display: flex; flex-direction: column; color: var(--text);
-        background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.08), transparent 60%), var(--bg);
-        font-family: "Geist", Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        background: radial-gradient(1200px 700px at 82% -20%, rgba(255,255,255,.05), transparent 60%), var(--bg);
+        font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 
       /* Standalone theme toggle button gets its own border (not in a group). */
       .ed-theme-toggle { border: 1px solid var(--line); border-radius: 10px; }
 
       /* ---- Light theme ---- */
-      .ed.ed-light { --bg: #f4f5f7; --line: rgba(15,18,25,.10); --line-2: rgba(15,18,25,.18); --text: #16181d; --muted: #6b7280; --card: #ffffff;
-        background: radial-gradient(1200px 700px at 82% -20%, rgba(110,65,226,.06), transparent 60%), var(--bg); }
+      .ed.ed-light { --acc: #16181d; --acc2: #3a3d44; --acc-ink: #ffffff; --bg: #f4f5f7; --line: rgba(15,18,25,.10); --line-2: rgba(15,18,25,.18); --text: #16181d; --muted: #6b7280; --card: #ffffff;
+        background: radial-gradient(1200px 700px at 82% -20%, rgba(15,18,25,.05), transparent 60%), var(--bg); }
       .ed-light .ed-top { background: rgba(255,255,255,.82); }
       .ed-light .ed-btn-group { background: #fff; }
       .ed-light .ed-icon-btn:hover:not(:disabled) { background: rgba(15,18,25,.05); }
@@ -1046,7 +1074,7 @@ function EditorStyles() {
       .ed-collapse-head svg { color: var(--muted); }
       .ed-collapse-head:hover svg { color: var(--text); }
       .ed-elements { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-      .ed-element { aspect-ratio: 1; display: grid; place-items: center; padding: 9px; border-radius: 10px; background: #eef0f3; border: 1px solid var(--line); cursor: pointer; transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease; }
+      .ed-element { aspect-ratio: 1; display: grid; place-items: center; padding: 9px; border-radius: 10px; background: #eef0f3; border: 1px solid var(--line); color: #1f2937; cursor: pointer; transition: border-color .14s ease, transform .14s ease, box-shadow .14s ease; }
       .ed-element:hover { border-color: var(--acc); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.25); }
       .ed-element-ic { display: block; width: 100%; line-height: 0; }
       .ed-element-ic svg { width: 100%; height: 22px; display: block; }
@@ -1092,22 +1120,31 @@ function EditorStyles() {
       .ed-canvas { max-width: 100%; max-height: calc(100vh - 150px); display: block; border-radius: 6px; touch-action: none; cursor: grab; }
       .ed-canvas:active { cursor: grabbing; }
       /* Compact empty-state prompt — floats near the bottom so the device preview stays visible. */
-      .ed-drop { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 4;
-        display: flex; flex-direction: column; align-items: center; gap: 9px; width: min(340px, 80%); padding: 20px 24px;
-        border: 1.5px dashed rgba(255,255,255,.24); border-radius: 18px; background: rgba(12,16,20,0.82); backdrop-filter: blur(8px); color: #ffffff; cursor: pointer;
-        box-shadow: 0 18px 50px rgba(0,0,0,.55); transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
-      .ed-privacy-note { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); margin: 0; font-size: 11px; color: rgba(255,255,255,.4); white-space: nowrap; pointer-events: none; }
+      .ed-drop { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 4;
+        display: flex; flex-direction: column; align-items: center; gap: 5px; width: min(240px, 72%); padding: 16px 16px 0; overflow: hidden;
+        border: 1.5px dashed rgba(255,255,255,.22); border-radius: 14px; background: rgba(12,16,20,0.86); backdrop-filter: blur(8px); color: #ffffff; cursor: pointer;
+        box-shadow: 0 16px 44px rgba(0,0,0,.55); transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+      .ed-privacy-note { position: absolute; left: 50%; bottom: 5px; transform: translateX(-50%); margin: 0; font-size: 10.5px; color: rgba(255,255,255,.4); white-space: nowrap; pointer-events: none; }
       .ed-light .ed-privacy-note { color: rgba(15,18,25,.42); }
-      .ed-drop:hover { border-color: var(--acc); transform: translateX(-50%) translateY(-2px); box-shadow: 0 24px 60px rgba(0,0,0,.6); }
-      .ed-drop-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 13px; color: #c9b4ff; background: rgba(110,65,226,.2); }
-      .ed-drop svg { color: #c9b4ff; }
-      .ed-drop strong { font-size: 18px; font-weight: 650; color: #ffffff; letter-spacing: -.01em; }
-      .ed-drop span { font-size: 12px; color: #bec3c9; text-align: center; line-height: 1.5; }
-      .ed-drop span b { color: #b898ff; text-decoration: underline; font-weight: 700; }
-      .ed-light .ed-drop { background: rgba(255,255,255,.94); border-color: rgba(15,18,25,.12); box-shadow: 0 18px 44px rgba(15,18,25,.14); color: #16181d; }
+      .ed-drop:hover { border-color: var(--acc); transform: translateX(-50%) translateY(-2px); box-shadow: 0 22px 54px rgba(0,0,0,.6); }
+      .ed-drop-ic { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; }
+      .ed-drop strong { font-size: 14.5px; font-weight: 650; color: #ffffff; letter-spacing: -.01em; }
+      .ed-drop-sub { font-size: 11.5px; color: #bec3c9; text-align: center; line-height: 1.4; }
+      .ed-drop-sub b { color: #ffffff; text-decoration: underline; font-weight: 650; }
+      /* Small window bar at the bottom for an organized, app-like frame. */
+      .ed-drop-win { margin-top: 12px; width: calc(100% + 32px); margin-left: -16px; margin-right: -16px;
+        display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 13px;
+        border-top: 1px solid rgba(255,255,255,.10); background: rgba(255,255,255,.04); }
+      .ed-drop-dots { display: inline-flex; gap: 5px; }
+      .ed-drop-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.24); }
+      .ed-drop-formats { font-size: 10.5px; letter-spacing: .03em; color: rgba(255,255,255,.55); }
+      .ed-light .ed-drop { background: rgba(255,255,255,.96); border-color: rgba(15,18,25,.12); box-shadow: 0 16px 40px rgba(15,18,25,.14); color: #16181d; }
       .ed-light .ed-drop strong { color: #16181d; }
-      .ed-light .ed-drop span { color: #4B617A; }
-      .ed-light .ed-drop span b { color: #6E41E2; }
+      .ed-light .ed-drop-sub { color: #4B617A; }
+      .ed-light .ed-drop-sub b { color: #16181d; }
+      .ed-light .ed-drop-win { border-top-color: rgba(15,18,25,.10); background: rgba(15,18,25,.03); }
+      .ed-light .ed-drop-dots i { background: rgba(15,18,25,.22); }
+      .ed-light .ed-drop-formats { color: rgba(15,18,25,.5); }
       .ed-light .ed-drop-ic, .ed-light .ed-drop svg { color: #6E41E2; }
       /* Full-stage drop target — only while a file is being dragged over the editor. */
       .ed-dragmask { position: absolute; inset: 14px; z-index: 6; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
@@ -1130,6 +1167,10 @@ function EditorStyles() {
       .ed-swatch { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); cursor: pointer; transition: transform .12s; }
       .ed-swatch:hover { transform: scale(1.06); }
       .ed-swatch.on { outline: 2px solid var(--acc); outline-offset: 2px; }
+      .ed-showmore { width: 100%; height: 32px; margin-top: 9px; border-radius: 9px; background: rgba(255,255,255,.05); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: border-color .14s ease, background .14s ease; }
+      .ed-showmore:hover { border-color: var(--line-2); background: rgba(255,255,255,.08); }
+      .ed-light .ed-showmore { background: rgba(15,18,25,.04); }
+      .ed-light .ed-showmore:hover { background: rgba(15,18,25,.07); }
       .ed-swatch-alpha { position: relative; background-color: #fff; background-image: linear-gradient(45deg,#bbb 25%,transparent 25%),linear-gradient(-45deg,#bbb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#bbb 75%),linear-gradient(-45deg,transparent 75%,#bbb 75%); background-size: 12px 12px; background-position: 0 0,0 6px,6px -6px,-6px 0; }
       .ed-pro { position: absolute; inset: 0; display: grid; place-items: center; font-size: 8.5px; font-weight: 800; color: #111; background: rgba(255,255,255,.6); border-radius: 8px; }
 
@@ -1218,6 +1259,27 @@ function EditorStyles() {
         .ed-card { flex: 1; min-width: 240px; }
         .ed-rail-right { border-top: 1px solid var(--line); }
       }
+
+      /* ---- White (monochrome) accent — dark text on the light accent, neutral glows ---- */
+      .ed-primary { background: var(--acc); color: var(--acc-ink); box-shadow: none; }
+      .ed-primary:hover { filter: brightness(.94); }
+      .ed-seg button.on { color: var(--acc-ink); box-shadow: none; }
+      .ed-dragrotate.on, .ed-tool-toggle.on, .ed-grad-toggle.on { color: var(--acc-ink); }
+      .ed-logo { background: var(--acc); box-shadow: none; }
+      .ed-card-title::before { box-shadow: none; }
+      .ed-layer-add button { background: rgba(255,255,255,.06); border-color: var(--line-2); color: var(--text); }
+      .ed-light .ed-layer-add button { background: rgba(15,18,25,.05); }
+      .ed-device.on { background: rgba(255,255,255,.12) !important; box-shadow: 0 0 0 1px var(--acc) inset; }
+      .ed-light .ed-device.on { background: rgba(15,18,25,.06) !important; }
+      .ed-layer.on { background: rgba(255,255,255,.08); }
+      .ed-light .ed-layer.on { background: rgba(15,18,25,.05); }
+      .ed-angle.on { background: rgba(255,255,255,.12); color: var(--text); }
+      .ed-url input:focus, .ed-textarea:focus { box-shadow: 0 0 0 3px rgba(255,255,255,.14); }
+      .ed-light .ed-url input:focus, .ed-light .ed-textarea:focus { box-shadow: 0 0 0 3px rgba(15,18,25,.10); }
+      .ed-drop-ic { color: var(--text); background: rgba(255,255,255,.10); }
+      .ed-light .ed-drop-ic, .ed-light .ed-drop svg { color: #16181d; }
+      .ed-dragmask { background: rgba(255,255,255,.06); }
+      .ed-prolink, .ed .ed-prolink, .ed.ed-light .ed-prolink { color: var(--text) !important; text-decoration: underline; }
     `}</style>
   );
 }
