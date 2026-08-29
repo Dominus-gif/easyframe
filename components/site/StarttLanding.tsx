@@ -3,12 +3,12 @@ import Link from "next/link";
 import {
   ArrowRight, Smartphone, Tablet, Laptop, AppWindow, Watch,
   MousePointerClick, Upload, Download,
-  Frame, Sparkles, Palette, ImageDown, Gift, ShieldCheck,
   Store, Presentation, Share2, LayoutTemplate
 } from "lucide-react";
 import { SITE_URL } from "@/lib/site";
 import StarttFX from "@/components/site/StarttFX";
 import JsonLd from "@/components/site/JsonLd";
+import FeaturesCards from "@/components/ui/features-cards";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
@@ -25,15 +25,6 @@ const steps = [
   { n: "01", title: "Pick your device", body: "Choose from iPhone, Android, tablet, laptop or browser frames.", Icon: MousePointerClick },
   { n: "02", title: "Drop in your screenshot", body: "Upload a shot of your app and we fit it perfectly into the frame.", Icon: Upload },
   { n: "03", title: "Export & share", body: "Download a PNG or JPG, or copy a share link to show off your work anywhere.", Icon: Download }
-];
-
-const features = [
-  { title: "Instant device frames", body: "Every major phone, tablet and laptop frame, ready in one click.", Icon: Frame },
-  { title: "Realistic screenshots", body: "Your app looks exactly as it does on the real hardware.", Icon: Sparkles },
-  { title: "Custom branding", body: "Add your logo, colors and captions to make it yours.", Icon: Palette },
-  { title: "Export anywhere", body: "PNG, JPG or share link — perfect for App Store listings and decks.", Icon: ImageDown },
-  { title: "Free forever", body: "No paywalls, no watermarks, no account required.", Icon: Gift },
-  { title: "Private by design", body: "Everything runs in your browser — nothing is ever uploaded.", Icon: ShieldCheck }
 ];
 
 const destinations = [
@@ -130,28 +121,10 @@ export default function StarttLanding() {
         </div>
       </section>
 
-      {/* D — Feature grid */}
-      <section className="sx-section sx-bordered" id="features">
-        <div className="sx-wrap">
-          <div className="sx-head" data-reveal>
-            <h2 className="sx-display">One tool for every mockup need</h2>
-            <p className="sx-sub">Everything you need to turn a screenshot into a share-ready shot.</p>
-          </div>
-          <div className="sx-fgrid">
-            {features.map((f, i) => (
-              <article className="sx-fcard sx-icard" data-reveal style={rd(i % 3)} key={f.title}>
-                <div className="sx-icard-top">
-                  <div className="sx-fcard-ic"><f.Icon size={20} strokeWidth={1.9} /></div>
-                </div>
-                <div className="sx-fcard-copy">
-                  <h3 className="sx-card-h">{f.title}</h3>
-                  <p className="sx-card-p">{f.body}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* D — Feature grid (soft cards) */}
+      <div className="sx-bordered">
+        <FeaturesCards />
+      </div>
 
       {/* E — Stat band */}
       <section className="sx-section sx-bordered">
