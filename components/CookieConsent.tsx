@@ -85,12 +85,19 @@ export default function CookieConsent() {
             .cc-decline:hover { border-color: rgba(0, 0, 0, 0.28); }
             .cc-accept { background: #6E41E2; border: 0; color: #fff; border-radius: 30px; padding: 0 22px; }
             .cc-accept:hover { background: #7d55e8; }
-            /* Dark variant — matches the editor when its dark theme is active. */
-            :global(html[data-editor-theme="dark"]) .cc { background: #1c1c1e; border-top-color: #2c2c2e; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.4); color: #d6d6d8; }
-            :global(html[data-editor-theme="dark"]) .cc p { color: #a8abb2; }
-            :global(html[data-editor-theme="dark"]) .cc a { color: #b3aaff; }
-            :global(html[data-editor-theme="dark"]) .cc-decline { background: transparent; border-color: #3a3a3e; color: #d6d6d8; }
-            :global(html[data-editor-theme="dark"]) .cc-decline:hover { border-color: #54545a; }
+            /* Dark variant — editor dark theme, and the dark (supercut) marketing pages. */
+            :global(html[data-editor-theme="dark"]) .cc,
+            :global(body:has(.sx)) .cc, :global(body:has(.mk)) .cc { background: #181616; border-top-color: #262323; box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5); color: #FDFFF0; }
+            :global(html[data-editor-theme="dark"]) .cc p,
+            :global(body:has(.sx)) .cc p, :global(body:has(.mk)) .cc p { color: #969692; }
+            :global(html[data-editor-theme="dark"]) .cc a,
+            :global(body:has(.sx)) .cc a, :global(body:has(.mk)) .cc a { color: #FF6B9D; }
+            :global(html[data-editor-theme="dark"]) .cc-decline,
+            :global(body:has(.sx)) .cc-decline, :global(body:has(.mk)) .cc-decline { background: transparent; border-color: #2C2828; color: #FDFFF0; }
+            :global(html[data-editor-theme="dark"]) .cc-decline:hover,
+            :global(body:has(.sx)) .cc-decline:hover, :global(body:has(.mk)) .cc-decline:hover { border-color: #4A4444; }
+            :global(body:has(.sx)) .cc-accept, :global(body:has(.mk)) .cc-accept { background: #FDFFF0; color: #100E0E; }
+            :global(body:has(.sx)) .cc-accept:hover, :global(body:has(.mk)) .cc-accept:hover { background: #fff; }
             .cc-btn:focus-visible { outline: 2px solid #8b8cf6; outline-offset: 2px; }
           `}</style>
         </div>

@@ -1343,3 +1343,118 @@ body:has(.sx), body:has(.mk) { background: #FAFAFA; }
 .mk-avatars span { background: linear-gradient(135deg, #8B5CF6, #6E41E2) !important; }
 .mk-stats strong { background: linear-gradient(135deg, #8B5CF6, #6E41E2); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .mk a:focus-visible, .mk button:focus-visible, .mk-cta:focus-visible { outline-color: #8B5CF6; }
+
+/* ============================================================
+   SUPERCUT.AI RETHEME — dark & warm (wins by cascade order) — 2026-08-29
+   Bg #100E0E · cream #FDFFF0 ink · warm-gray #969692 muted ·
+   surfaces #181616 / borders #212121 · hot accent #FF0055 ·
+   Inter body + Inter Tight display (medium 500, tight tracking) ·
+   cream pill CTAs. Content unchanged.
+   ============================================================ */
+body:has(.sx), body:has(.mk) { background: #100E0E; }
+
+/* Shared clean accent word (replaces the sendr serif/handwriting) */
+.sx-accent, .mk-accent { color: #FF0055; font-style: normal; font-family: inherit; }
+.sx-eyebrow-tag {
+  display: inline-flex; align-items: center; height: 30px; padding: 0 14px; margin-bottom: 4px;
+  border-radius: 999px; border: 1px solid #262323; background: #181616;
+  color: #C9C9C2; font-family: "Inter", sans-serif; font-size: 12.5px; font-weight: 500; letter-spacing: .01em;
+}
+
+/* ============================ HOMEPAGE (.sx) ============================ */
+.sx {
+  --ink: #FDFFF0; --sub: #969692; --purple: #FF0055; --band: #161414;
+  --line: #201D1D; --line2: #262323;
+  --font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #100E0E; color: #FDFFF0;
+}
+.sx-display, .sx-word { font-family: "Inter Tight", "Inter", system-ui, sans-serif; }
+.sx-display { font-weight: 500; letter-spacing: -.028em; color: #FDFFF0; line-height: 1.04; }
+.sx-word { font-weight: 600; letter-spacing: -.02em; color: #FDFFF0; }
+.sx-sub, .sx-hero-sub { color: #969692; }
+.sx-hero, .sx-section { background: transparent; }
+.sx-band { background: #161414; }
+
+/* Nav — dark translucent */
+.sx-nav { background: rgba(16,14,14,.72); backdrop-filter: blur(12px); border-bottom: 1px solid transparent; }
+.sx-nav-links a { color: #969692; }
+.sx-nav-links a:hover { color: #FDFFF0; }
+
+/* Buttons — cream pill primary, ghost outline secondary */
+.sx .sx-pill, .sx a.sx-pill { background: #FDFFF0; color: #100E0E; }
+.sx .sx-pill:hover { opacity: .9; }
+.sx .sx-white, .sx a.sx-white { background: transparent; color: #FDFFF0; border: 1px solid #2C2828; box-shadow: none; }
+.sx .sx-white:hover { border-color: #4A4444; background: rgba(255,255,255,.02); }
+
+/* Cards — warm dark surfaces that lift off the near-black canvas */
+.tint-pink, .tint-blue, .tint-purple, .tint-gray { --tint: #181616; }
+.sx-stepblock, .sx-fcard {
+  background: #181616; border-color: #242020;
+  box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 20px 44px rgba(0,0,0,.28);
+}
+.sx-fcard:hover { border-color: #3A3333; box-shadow: 0 2px 4px rgba(0,0,0,.5), 0 26px 54px rgba(255,0,85,.10); }
+.sx-card-h { font-family: "Inter Tight","Inter",sans-serif; font-weight: 600; letter-spacing: -.02em; color: #FDFFF0; }
+.sx-card-p { color: #969692; }
+.sx-stepnum { color: #FF0055; }
+.sx-uc-item { border-color: #201D1D; }
+.sx-uc-item h4 { font-family: "Inter Tight","Inter",sans-serif; color: #FDFFF0; letter-spacing: -.01em; }
+.sx-uc-item p { color: #969692; }
+.sx-finalcard { background: radial-gradient(120% 160% at 50% -30%, rgba(255,0,85,.14), transparent 60%), #161414; border-color: #2A2424; }
+.sx-proof-av { background: #201D1D; color: #C9C9C2; border-color: #100E0E; }
+.sx-proof-text { color: #969692; }
+.sx-footer, .sx-footer-slim { background: #100E0E; border-color: #201D1D; }
+.sx-footer-links a { color: #969692; }
+.sx-footer-links a:hover { color: #FDFFF0; }
+.sx-footer-copy { color: #6E6E69; }
+.sx-bordered { border-color: #1B1818; }
+
+/* Nav active underline → accent */
+.sx-nav-links a[aria-current="page"]::after,
+.mk-nav-links a[aria-current="page"]::after { background: #FF0055; }
+.sx-nav-links a[aria-current="page"], .mk-nav-links a[aria-current="page"] { color: #FDFFF0; }
+
+/* ==================== ALL MARKETING PAGES (.mk) ==================== */
+.mk {
+  --accent: #FF0055; --accent-2: #FF3D7F; --accent-warm: #FF6B9D;
+  --accent-gradient: linear-gradient(135deg, #FF0055, #FF3D7F);
+  --accent-soft: rgba(255,0,85,.12); --accent-ring: rgba(255,0,85,.34);
+  --text-primary: #FDFFF0; --text-secondary: #B6B6AF; --text-muted: #969692; --text-dim: #6E6E69;
+  --stroke: #201D1D; --stroke-strong: #2C2828; --panel: #181616; --panel-soft: #161414; --app-bg: #100E0E;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #100E0E; color: #FDFFF0;
+}
+.mk-h1, .mk-h2, .mk-section-head h2, .mk-band h2, .mk h2, .mk h3,
+.mk-feat h3, .mk-step h3, .mk-card-body h3, .mk-stats strong {
+  font-family: "Inter Tight", "Inter", system-ui, sans-serif; letter-spacing: -.025em; color: #FDFFF0;
+}
+.mk-h1 { font-weight: 500; letter-spacing: -.03em; }
+.mk-h1 em { color: #FF0055; -webkit-text-fill-color: #FF0055; }
+.mk-eyebrow { color: #FF0055; }
+.mk-kicker { color: #C9C9C2; background: #181616; border-color: #262323; }
+.mk-sub, .mk-section-head p, .mk-card-body p, .mk-feat p, .mk-step p, .mk-footer-col a, .mk-prose p, .mk-bullets li { color: #969692; }
+
+/* Buttons */
+.mk .mk-cta, .mk-nav-links a.mk-cta, .mk-band .mk-cta { background: #FDFFF0; color: #100E0E; box-shadow: none; }
+.mk .mk-cta:hover { background: #fff; opacity: .92; }
+.mk-nav-cta .mk-cta { background: #FDFFF0; color: #100E0E; border: 0; }
+.mk-nav-cta .mk-cta:hover { background: #fff; border: 0; }
+.mk-ghost { background: transparent; color: #FDFFF0; border: 1px solid #2C2828; box-shadow: none; }
+.mk-ghost:hover { border-color: #4A4444; background: rgba(255,255,255,.02); }
+
+/* Surfaces */
+.mk-footer { background: #100E0E; border-color: #201D1D; }
+.mk-step, .mk-feat, .mk-card, .mk-faq details, .mk-sample, .mk-appwin, .mk-editor {
+  background: #181616; border-color: #242020;
+  box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 18px 40px rgba(0,0,0,.28);
+}
+.mk-card { overflow: hidden; }
+.mk-step b, .mk-feat-icon { color: #FF0055; background: rgba(255,0,85,.12); border-color: rgba(255,0,85,.26); }
+.mk-bullets li::before { color: #FF0055; }
+.mk-badge { background: #181616; color: #FDFFF0; border: 1px solid #262323; }
+.mk-badge-dot { background: #FF0055; box-shadow: 0 0 0 4px rgba(255,0,85,.22); }
+.mk-avatars span { background: linear-gradient(135deg, #FF0055, #FF3D7F) !important; }
+.mk-stats strong { background: linear-gradient(135deg, #FDFFF0, #C9C9C2); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mk-band { border-color: #2A2424; background: radial-gradient(120% 170% at 50% -50%, rgba(255,0,85,.20), transparent 60%), #161414; }
+.mk-footer-col h4 { color: #969692; }
+.mk-footer-bottom { border-color: #201D1D; color: #6E6E69; }
+.mk a:focus-visible, .mk button:focus-visible, .mk-cta:focus-visible { outline-color: #FF0055; }
