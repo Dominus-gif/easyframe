@@ -1251,3 +1251,95 @@ body:has(.mk) { background: #fff; }
 
 /* Audit round 6: stronger eyebrow/badge contrast (was #5f5f5f ~6.4:1). */
 .mk-kicker { color: #3a3a3a; }
+
+/* ============================================================
+   SENDR.AI RETHEME (wins by cascade order) — 2026-08-29
+   Off-white #FAFAFA canvas · near-black #151517 ink ·
+   Inter body + Inter Tight display (bold, tight tracking) ·
+   violet #8B5CF6 accent · Hedvig serif + Nanum handwriting accents.
+   Content unchanged; only the visual theme + certain sections shift.
+   ============================================================ */
+body:has(.sx), body:has(.mk) { background: #FAFAFA; }
+
+/* ---- Shared display / accent utilities ---- */
+.sx-accent-serif, .mk-accent-serif {
+  font-family: "Hedvig Letters Serif", Georgia, "Times New Roman", serif;
+  font-style: italic; font-weight: 400; letter-spacing: -.01em; color: #8B5CF6;
+}
+.sx-scribble {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: "Nanum Pen Script", "Segoe Script", cursive; font-weight: 400;
+  font-size: clamp(20px, 2.4vw, 27px); line-height: 1; color: #7C3AED;
+  transform: rotate(-3deg); margin-bottom: 6px;
+}
+.sx-scribble::before { content: ""; width: 26px; height: 1.5px; background: #8B5CF6; transform: rotate(8deg); border-radius: 2px; }
+
+/* ============================ HOMEPAGE (.sx) ============================ */
+.sx {
+  --ink: #151517; --sub: #5B5B66; --purple: #8B5CF6; --band: #F2F2F4;
+  --font: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #FAFAFA; color: #151517;
+}
+.sx-display, .sx-word { font-family: "Inter Tight", "Inter", system-ui, sans-serif; }
+.sx-display { font-weight: 700; letter-spacing: -.038em; color: #151517; line-height: 1.02; }
+.sx-word { font-weight: 700; letter-spacing: -.02em; color: #151517; }
+.sx-sub { color: #5B5B66; }
+.sx-hero, .sx-section { background: transparent; }
+.sx-band { background: #F2F2F4; }
+
+/* Near-black buttons (sendr) */
+.sx .sx-pill, .sx a.sx-pill { background: #151517; color: #fff; }
+.sx .sx-pill:hover { opacity: .86; }
+.sx-white { border-color: #E4E4E9; }
+
+/* Cards lift cleanly off the off-white canvas */
+.tint-pink { --tint: #FCF4FA; } .tint-blue { --tint: #F1F6FF; } .tint-purple { --tint: #F5F1FE; } .tint-gray { --tint: #FFFFFF; }
+.sx-stepblock, .sx-fcard {
+  border-color: #ECECEF;
+  box-shadow: 0 1px 2px rgba(20,20,25,.04), 0 14px 34px rgba(20,20,25,.055);
+}
+.sx-fcard:hover { box-shadow: 0 2px 4px rgba(20,20,25,.05), 0 22px 48px rgba(124,58,237,.10); }
+.sx-finalcard { background: linear-gradient(180deg, #F6F1FF, #FFFFFF); border-color: #ECE7F7; }
+.sx-uc-item h4 { font-family: "Inter Tight","Inter",sans-serif; color: #151517; letter-spacing: -.01em; }
+.sx-uc-item p { color: #5B5B66; }
+.sx-card-h { font-family: "Inter Tight","Inter",sans-serif; font-weight: 700; letter-spacing: -.02em; color: #151517; }
+.sx-card-p { color: #5B5B66; }
+.sx-stepnum { color: #8B5CF6; }
+
+/* Nav active underline → violet */
+.sx-nav-links a[aria-current="page"]::after,
+.mk-nav-links a[aria-current="page"]::after { background: #8B5CF6; }
+
+/* ==================== ALL MARKETING PAGES (.mk) ==================== */
+.mk {
+  --accent: #8B5CF6; --accent-2: #7C3AED; --accent-warm: #A78BFA;
+  --accent-gradient: linear-gradient(135deg, #8B5CF6, #6E41E2);
+  --accent-soft: rgba(139,92,246,.10); --accent-ring: rgba(139,92,246,.30);
+  --text-primary: #151517;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: #FAFAFA;
+}
+.mk-h1, .mk-h2, .mk-section-head h2, .mk-band h2, .mk h2, .mk h3,
+.mk-feat h3, .mk-step h3, .mk-card-body h3, .mk-stats strong {
+  font-family: "Inter Tight", "Inter", system-ui, sans-serif; letter-spacing: -.03em;
+}
+.mk-h1 { font-weight: 700; letter-spacing: -.038em; color: #151517; }
+.mk-h1 em { color: #8B5CF6; }
+.mk-eyebrow { color: #8B5CF6; }
+.mk-kicker { color: #3a3a3a; }
+
+/* Near-black CTAs */
+.mk .mk-cta, .mk-nav-links a.mk-cta, .mk-nav-cta .mk-cta, .mk-band .mk-cta { background: #151517; color: #fff; }
+.mk .mk-cta:hover { background: #000; }
+.mk-nav-cta .mk-cta { background: #fff; color: #151517; border: 1px solid #E4E4E9; }
+.mk-nav-cta .mk-cta:hover { background: #fff; border-color: #151517; }
+
+/* Surfaces: white cards on the off-white canvas */
+.mk-footer { background: #FAFAFA; }
+.mk-step, .mk-feat, .mk-card, .mk-faq details, .mk-sample { background: #fff; border-color: #ECECEF; box-shadow: 0 1px 2px rgba(20,20,25,.04), 0 12px 30px rgba(20,20,25,.05); }
+.mk-step b, .mk-feat-icon { color: #8B5CF6; background: rgba(139,92,246,.10); border-color: rgba(139,92,246,.22); }
+.mk-bullets li::before { color: #8B5CF6; }
+.mk-badge-dot { background: #8B5CF6; box-shadow: 0 0 0 4px rgba(139,92,246,.20); }
+.mk-avatars span { background: linear-gradient(135deg, #8B5CF6, #6E41E2) !important; }
+.mk-stats strong { background: linear-gradient(135deg, #8B5CF6, #6E41E2); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mk a:focus-visible, .mk button:focus-visible, .mk-cta:focus-visible { outline-color: #8B5CF6; }

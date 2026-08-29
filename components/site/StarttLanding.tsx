@@ -77,7 +77,8 @@ export default function StarttLanding() {
       {/* B — Hero */}
       <header className="sx-hero">
         <div className="sx-wrap sx-hero-in">
-          <h1 className="sx-display sx-hero-h1" data-reveal>Make your app look stunning — without a designer.</h1>
+          <span className="sx-scribble" data-reveal aria-hidden="true">no designer needed</span>
+          <h1 className="sx-display sx-hero-h1" data-reveal>Make your app look <em className="sx-accent-serif">stunning</em> — without a designer.</h1>
           <p className="sx-sub sx-hero-sub" data-reveal style={rd(1)}>
             Drop in a screenshot and get a realistic device mockup in seconds. Free, no sign-up required.
           </p>
