@@ -1,41 +1,53 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import type { BackgroundSetting } from "@/lib/editor/compositor";
+import {
+  ArrowRight, Smartphone, Tablet, Laptop, AppWindow, Watch,
+  MousePointerClick, Upload, Download,
+  Frame, Sparkles, Palette, ImageDown, Gift, ShieldCheck,
+  Store, Presentation, Share2, LayoutTemplate
+} from "lucide-react";
 import { SITE_URL } from "@/lib/site";
-import MockShot from "@/components/site/MockShot";
 import StarttFX from "@/components/site/StarttFX";
 import JsonLd from "@/components/site/JsonLd";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
-const lav: BackgroundSetting = { type: "gradient", from: "#ECECF4", to: "#F6F6FA", angle: 135 };
-const purpleT: BackgroundSetting = { type: "gradient", from: "#F6F2FF", to: "#EDE6FF", angle: 135 };
-const pinkT: BackgroundSetting = { type: "gradient", from: "#FFF7FC", to: "#FBEFF6", angle: 135 };
-const blueT: BackgroundSetting = { type: "gradient", from: "#ECF2FF", to: "#E3EDFF", angle: 135 };
-
-// Tint helpers cycle the four pastel blocks so no two adjacent cards match.
-const tints = ["tint-pink", "tint-blue", "tint-purple", "tint-gray"];
+const devices = [
+  { label: "iPhone", Icon: Smartphone },
+  { label: "Android", Icon: Smartphone },
+  { label: "iPad", Icon: Tablet },
+  { label: "MacBook", Icon: Laptop },
+  { label: "Browser", Icon: AppWindow },
+  { label: "Apple Watch", Icon: Watch }
+];
 
 const steps = [
-  { n: "01", title: "Pick your device", body: "Choose from iPhone, Android, tablet, laptop or desktop frames.", tint: "tint-pink", device: "iphone-mockup", sample: 0, bg: pinkT },
-  { n: "02", title: "Drop in your screenshot", body: "Upload a shot of your app and we fit it perfectly into the frame.", tint: "tint-blue", device: "browser-mockup", sample: 1, bg: blueT },
-  { n: "03", title: "Export & share", body: "Download PNG or JPG, or copy a share link to show off your work anywhere.", tint: "tint-purple", device: "macbook-pro-mockup", sample: 2, bg: purpleT }
+  { n: "01", title: "Pick your device", body: "Choose from iPhone, Android, tablet, laptop or browser frames.", Icon: MousePointerClick },
+  { n: "02", title: "Drop in your screenshot", body: "Upload a shot of your app and we fit it perfectly into the frame.", Icon: Upload },
+  { n: "03", title: "Export & share", body: "Download a PNG or JPG, or copy a share link to show off your work anywhere.", Icon: Download }
 ];
 
 const features = [
-  { title: "Instant device frames", body: "Every major phone, tablet and laptop frame, ready in one click.", device: "iphone-mockup", sample: 0 },
-  { title: "Realistic screenshots", body: "Your app looks exactly as it does on the real hardware.", device: "ipad-mockup", sample: 2 },
-  { title: "Custom branding", body: "Add your logo, colors and captions to make it yours.", device: "macbook-pro-mockup", sample: 1 },
-  { title: "Export anywhere", body: "PNG, JPG or share link — perfect for App Store listings and decks.", device: "android-phone-mockup", sample: 2 },
-  { title: "Free forever", body: "No paywalls, no watermarks, no account required.", device: "apple-watch-mockup", sample: 0 }
+  { title: "Instant device frames", body: "Every major phone, tablet and laptop frame, ready in one click.", Icon: Frame },
+  { title: "Realistic screenshots", body: "Your app looks exactly as it does on the real hardware.", Icon: Sparkles },
+  { title: "Custom branding", body: "Add your logo, colors and captions to make it yours.", Icon: Palette },
+  { title: "Export anywhere", body: "PNG, JPG or share link — perfect for App Store listings and decks.", Icon: ImageDown },
+  { title: "Free forever", body: "No paywalls, no watermarks, no account required.", Icon: Gift },
+  { title: "Private by design", body: "Everything runs in your browser — nothing is ever uploaded.", Icon: ShieldCheck }
 ];
 
-const templates = [
-  { title: "App Store ready", body: "Pre-sized frames for every store listing dimension.", device: "iphone-mockup", sample: 2 },
-  { title: "Pitch deck layouts", body: "Clean side-by-side device compositions for investor decks.", device: "macbook-pro-mockup", sample: 0 },
-  { title: "Social media kits", body: "Square and vertical crops built for Instagram and X.", device: "ipad-mockup", sample: 1 },
-  { title: "Landing page heroes", body: "Device mockups sized to drop straight into your hero section.", device: "browser-mockup", sample: 2 }
+const destinations = [
+  { title: "App Store ready", body: "Frames sized for every store listing dimension.", Icon: Store },
+  { title: "Pitch deck layouts", body: "Clean device compositions for investor decks.", Icon: Presentation },
+  { title: "Social media kits", body: "Square and vertical crops built for Instagram and X.", Icon: Share2 },
+  { title: "Landing page heroes", body: "Mockups sized to drop straight into your hero section.", Icon: LayoutTemplate }
+];
+
+const stats = [
+  { b: "6", s: "Device families" },
+  { b: "9", s: "Sample UIs built in" },
+  { b: "100%", s: "In your browser" },
+  { b: "$0", s: "Free, forever" }
 ];
 
 const useCases = [
@@ -70,7 +82,7 @@ export default function StarttLanding() {
             <Link href="/templates">Templates</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
-          <Link href="/editor" className="sx-white sx-nav-cta">Open EasyFrame</Link>
+          <Link href="/editor" className="sx-pill sx-nav-cta">Open EasyFrame</Link>
         </div>
       </nav>
 
@@ -86,16 +98,10 @@ export default function StarttLanding() {
             <Link href="/editor" className="sx-pill sx-pill-lg">Generate a mockup <ArrowRight size={17} /></Link>
             <Link href="/templates" className="sx-white sx-white-lg">See templates</Link>
           </div>
-          <div className="sx-proof" data-reveal style={rd(3)}>
-            <div className="sx-proof-avatars" aria-hidden="true">
-              {["AR", "MK", "JS", "TP"].map((t, i) => (
-                <span className="sx-proof-av" key={i}>{t}</span>
-              ))}
-            </div>
-            <span className="sx-proof-text">Free forever · no sign-up required</span>
-          </div>
-          <div className="sx-hero-shot" data-reveal style={rd(2)}>
-            <MockShot device="macbook-pro-mockup" sample={1} background={lav} padding={0.11} maxEdge={1400} className="sx-hero-canvas" />
+          <div className="sx-devstrip" data-reveal style={rd(3)} aria-label="Supported devices">
+            {devices.map(({ label, Icon }) => (
+              <span className="sx-devchip" key={label}><Icon size={16} strokeWidth={1.75} /> {label}</span>
+            ))}
           </div>
         </div>
       </header>
@@ -107,14 +113,14 @@ export default function StarttLanding() {
             <h2 className="sx-display">How it works</h2>
             <p className="sx-sub">Three steps to a mockup you'll be proud to share.</p>
           </div>
-          <div className="sx-steps2">
-            {steps.map((s) => (
-              <article className={`sx-stepblock ${s.tint}`} data-reveal key={s.n}>
-                <div className="sx-stepblock-shot">
-                  <MockShot device={s.device} sample={s.sample} background={s.bg} padding={0.12} maxEdge={1100} className="sx-stepblock-canvas" />
-                </div>
-                <div className="sx-stepblock-copy">
+          <div className="sx-fgrid">
+            {steps.map((s, i) => (
+              <article className="sx-fcard sx-icard" data-reveal style={rd(i)} key={s.n}>
+                <div className="sx-icard-top">
+                  <div className="sx-fcard-ic"><s.Icon size={20} strokeWidth={1.9} /></div>
                   <span className="sx-stepnum">{s.n}</span>
+                </div>
+                <div className="sx-fcard-copy">
                   <h3 className="sx-card-h">{s.title}</h3>
                   <p className="sx-card-p">{s.body}</p>
                 </div>
@@ -133,9 +139,9 @@ export default function StarttLanding() {
           </div>
           <div className="sx-fgrid">
             {features.map((f, i) => (
-              <article className={`sx-fcard ${tints[i % tints.length]}`} data-reveal style={rd(i % 3)} key={f.title}>
-                <div className="sx-fcard-shot">
-                  <MockShot device={f.device} sample={f.sample} background={lav} padding={0.1} maxEdge={560} className="sx-fcard-canvas" />
+              <article className="sx-fcard sx-icard" data-reveal style={rd(i % 3)} key={f.title}>
+                <div className="sx-icard-top">
+                  <div className="sx-fcard-ic"><f.Icon size={20} strokeWidth={1.9} /></div>
                 </div>
                 <div className="sx-fcard-copy">
                   <h3 className="sx-card-h">{f.title}</h3>
@@ -147,18 +153,32 @@ export default function StarttLanding() {
         </div>
       </section>
 
-      {/* E — Templates */}
+      {/* E — Stat band */}
+      <section className="sx-section sx-bordered">
+        <div className="sx-wrap">
+          <div className="sx-statband" data-reveal>
+            {stats.map((st) => (
+              <div className="sx-stat" key={st.s}>
+                <b className="sx-display">{st.b}</b>
+                <span>{st.s}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* F — Where your work goes (was Templates) */}
       <section className="sx-section sx-bordered" id="templates">
         <div className="sx-wrap">
           <div className="sx-head" data-reveal>
-            <h2 className="sx-display">Pick a template, make it yours.</h2>
-            <p className="sx-sub">Starting points sized for exactly where your mockup is going.</p>
+            <h2 className="sx-display">Made for where your work goes.</h2>
+            <p className="sx-sub">Starting points sized for exactly where your mockup is headed.</p>
           </div>
           <div className="sx-fgrid sx-fgrid-4">
-            {templates.map((t, i) => (
-              <article className={`sx-fcard ${tints[(i + 1) % tints.length]}`} data-reveal style={rd(i % 2)} key={t.title}>
-                <div className="sx-fcard-shot">
-                  <MockShot device={t.device} sample={t.sample} background={lav} padding={0.1} maxEdge={560} className="sx-fcard-canvas" />
+            {destinations.map((t, i) => (
+              <article className="sx-fcard sx-icard" data-reveal style={rd(i % 2)} key={t.title}>
+                <div className="sx-icard-top">
+                  <div className="sx-fcard-ic"><t.Icon size={20} strokeWidth={1.9} /></div>
                 </div>
                 <div className="sx-fcard-copy">
                   <h3 className="sx-card-h">{t.title}</h3>
@@ -171,7 +191,7 @@ export default function StarttLanding() {
         </div>
       </section>
 
-      {/* F — Use cases */}
+      {/* G — Use cases */}
       <section className="sx-section sx-bordered" id="use-cases">
         <div className="sx-wrap">
           <div className="sx-head" data-reveal>
@@ -188,7 +208,7 @@ export default function StarttLanding() {
         </div>
       </section>
 
-      {/* G — Final CTA */}
+      {/* H — Final CTA */}
       <section className="sx-section">
         <div className="sx-wrap">
           <div className="sx-finalcard" data-reveal>
@@ -199,7 +219,7 @@ export default function StarttLanding() {
         </div>
       </section>
 
-      {/* H — Footer */}
+      {/* I — Footer */}
       <footer className="sx-footer sx-footer-slim">
         <div className="sx-wrap sx-footer-slim-in">
           <span className="sx-word">EasyFrame</span>
