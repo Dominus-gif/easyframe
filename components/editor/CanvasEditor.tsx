@@ -970,7 +970,7 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ background: `linear-gradient(90deg, var(--acc) 0 ${pct}%, rgba(255,255,255,.12) ${pct}% 100%)` }}
+        style={{ background: `linear-gradient(90deg, var(--acc) 0 ${pct}%, var(--track) ${pct}% 100%)` }}
       />
     </label>
   );
@@ -979,7 +979,7 @@ function Range({ label, value, min, max, step, onChange }: { label: string; valu
 function EditorStyles() {
   return (
     <style jsx global>{`
-      .ed { --acc: #f4f5f7; --acc2: #d7dade; --acc-ink: #14161a; --bg: #0b0d0f; --line: rgba(255,255,255,.11); --line-2: rgba(255,255,255,.20); --text: #f4f5f7; --muted: #9ca0a6; --card: rgba(255,255,255,.022);
+      .ed { --acc: #f4f5f7; --acc2: #d7dade; --acc-ink: #14161a; --bg: #0b0d0f; --line: rgba(255,255,255,.11); --line-2: rgba(255,255,255,.20); --text: #f4f5f7; --muted: #9ca0a6; --card: rgba(255,255,255,.022); --track: rgba(255,255,255,.14);
         position: fixed; top: 0; left: 0; right: 0; bottom: var(--cc-h, 0); display: flex; flex-direction: column; color: var(--text);
         background: radial-gradient(1200px 700px at 82% -20%, rgba(255,255,255,.05), transparent 60%), var(--bg);
         font-family: "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
@@ -988,7 +988,7 @@ function EditorStyles() {
       .ed-theme-toggle { border: 1px solid var(--line); border-radius: 10px; }
 
       /* ---- Light theme ---- */
-      .ed.ed-light { --acc: #16181d; --acc2: #3a3d44; --acc-ink: #ffffff; --bg: #f4f5f7; --line: rgba(15,18,25,.10); --line-2: rgba(15,18,25,.18); --text: #16181d; --muted: #6b7280; --card: #ffffff;
+      .ed.ed-light { --acc: #16181d; --acc2: #3a3d44; --acc-ink: #ffffff; --bg: #f4f5f7; --line: rgba(15,18,25,.10); --line-2: rgba(15,18,25,.18); --text: #16181d; --muted: #6b7280; --card: #ffffff; --track: rgba(15,18,25,.14);
         background: radial-gradient(1200px 700px at 82% -20%, rgba(15,18,25,.05), transparent 60%), var(--bg); }
       .ed-light .ed-top { background: rgba(255,255,255,.82); }
       .ed-light .ed-btn-group { background: #fff; }
@@ -1000,10 +1000,9 @@ function EditorStyles() {
       .ed-light .ed-rail::-webkit-scrollbar-thumb { background: rgba(15,18,25,.16); }
       .ed-light .ed-device { background: #fff; }
       .ed-light .ed-device:hover { background: #f4f2fb; }
-      .ed-light .ed-url, .ed-light .ed-zoom, .ed-light .ed-range, .ed-light .ed-angle, .ed-light .ed-reset-flat, .ed-light .ed-layer { background: #fff; }
+      .ed-light .ed-url, .ed-light .ed-zoom, .ed-light .ed-angle, .ed-light .ed-reset-flat, .ed-light .ed-layer { background: #fff; }
       .ed-light .ed-seg { background: rgba(15,18,25,.05); }
       .ed-light .ed-textarea, .ed-light .ed-select, .ed-light .ed-color { background: #fff; }
-      .ed-light .ed-range { border: 1px solid var(--line); }
       .ed-light .ed-stage { background: #eceef2; }
       .ed-light .ed-canvas-wrap { filter: drop-shadow(0 20px 45px rgba(15,18,25,.22)); }
 
@@ -1177,7 +1176,7 @@ function EditorStyles() {
       .ed-range { display: flex; flex-direction: column; gap: 7px; }
       .ed-range span { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--muted); }
       .ed-range b { color: var(--text); font-variant-numeric: tabular-nums; font-size: 11px; font-weight: 600; background: rgba(255,255,255,.06); padding: 1px 7px; border-radius: 6px; }
-      .ed-range input { width: 100%; height: 5px; border-radius: 999px; -webkit-appearance: none; appearance: none; background: rgba(255,255,255,.12); cursor: pointer; }
+      .ed-range input { width: 100%; height: 5px; border-radius: 999px; -webkit-appearance: none; appearance: none; background: var(--track); cursor: pointer; }
       .ed-range input::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.28), 0 1px 4px rgba(0,0,0,.4); transition: box-shadow .12s; }
       .ed-range input::-webkit-slider-thumb:hover { box-shadow: 0 0 0 6px rgba(255,255,255,.34), 0 1px 4px rgba(0,0,0,.4); }
       .ed-range input::-moz-range-thumb { width: 16px; height: 16px; border: 0; border-radius: 50%; background: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.28); }
