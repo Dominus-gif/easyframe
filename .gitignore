@@ -9,3 +9,7 @@ dist
 .env.local
 dev.db
 dev.db-journal
+
+# Cloudflare / OpenNext
+.open-next
+.dev.vars

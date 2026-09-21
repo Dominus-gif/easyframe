@@ -24,7 +24,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title, description, url, type: "website" },
+    openGraph: { title, description, url, type: "website", images: ["/og/templates.png"] },
     twitter: { card: "summary_large_image", title, description }
   };
 }

@@ -21,7 +21,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     title: `${post.title} | EasyFrame Blog`,
     description: post.description,
     alternates: { canonical: url },
-    openGraph: { title: post.title, description: post.description, url, type: "article", publishedTime: post.date },
+    openGraph: { title: post.title, description: post.description, url, type: "article", publishedTime: post.date, images: ["/og/blog.png"] },
     twitter: { card: "summary_large_image", title: post.title, description: post.description }
   };
 }

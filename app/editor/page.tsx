@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Free Mockup Generator — EasyFrame",
     description: "Frame any screenshot in a device mockup and download for free. No account needed.",
-    url: "https://www.easyframe.app/editor"
+    url: "https://www.easyframe.app/editor",
+    images: ["/og/editor.png"]
   }
 };
 

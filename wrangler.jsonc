@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "easyframe",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  // nodejs_compat is required: Prisma, NextAuth and `pg` all use Node APIs.
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Static output (prerendered pages, /_next/static, /public) served straight
+  // from Cloudflare's edge; only dynamic routes reach the Worker.
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true
+  },
+
+  // Pooled connection to the existing production Postgres.
+  // Create it once with your own connection string (see MIGRATION-CLOUDFLARE.md):
+  //   npx wrangler hyperdrive create easyframe-db --connection-string="postgres://..."
+  // then paste the returned id below.
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      "id": "REPLACE_WITH_HYPERDRIVE_ID"
+    }
+  ]
+}

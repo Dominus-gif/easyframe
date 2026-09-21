@@ -10,7 +10,8 @@ export const metadata: Metadata = {
     title: "EasyFrame — Free Device Mockup Generator",
     description: "Frame any screenshot in a device mockup and download for free. No account needed.",
     url: "https://www.easyframe.app/",
-    type: "website"
+    type: "website",
+    images: ["/og/default.png"]
   }
 };
 
