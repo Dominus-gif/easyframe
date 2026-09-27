@@ -3,6 +3,14 @@ const nextConfig = {
   reactStrictMode: true,
   async redirects() {
     return [
+      // Root gets its own rule: on Cloudflare (OpenNext) an empty `:path*` isn't
+      // substituted, so "/" would redirect to the literal ".../:path*".
+      {
+        source: "/",
+        has: [{ type: "host", value: "^easyframe\\.app$" }],
+        destination: "https://www.easyframe.app/",
+        permanent: true
+      },
       {
         source: "/:path*",
         has: [
