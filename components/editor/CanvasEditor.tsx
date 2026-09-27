@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ChevronDown, ChevronUp, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
-import { editorDevices, gradientPresets, type DeviceKind } from "@/lib/editor/devices";
+import { AppWindow, ArrowLeftRight, ArrowUp, ChevronDown, ChevronUp, CircleDot, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
+import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import {
   composite,
   defaultSettings,
   exportScene,
   loadImageSafely,
+  type BackgroundSetting,
   type EditorSettings,
   type ExportFormat,
   type Overlay,
@@ -105,7 +107,6 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [canRedo, setCanRedo] = useState(false);
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [customBg, setCustomBg] = useState({ from: "#2f6bff", via: "#7c5cff", to: "#22b8e6", angle: 135, threeStop: false });
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: false });
   const [dragRotate, setDragRotate] = useState(false);
@@ -296,13 +297,74 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   const update = (partial: Partial<EditorSettings>) => setSettings((s) => ({ ...s, ...partial }));
 
-  const applyCustomGrad = (patch: Partial<{ from: string; via: string; to: string; angle: number; threeStop: boolean }>) => {
-    const next = { ...customBg, ...patch };
-    setCustomBg(next);
-    update({
-      background: { type: "gradient", from: next.from, to: next.to, angle: next.angle, ...(next.threeStop ? { via: next.via } : {}) }
+  // ---- Gradient editing: always acts on the live background ----
+  type GradientBg = Extract<BackgroundSetting, { type: "gradient" } | { type: "mesh" }>;
+  const DEFAULT_GRADIENT: GradientBg = { type: "gradient", kind: "linear", from: "#2f6bff", to: "#22b8e6", angle: 135 };
+  const liveBg = settings.background;
+  // What the gradient controls edit: the current gradient/mesh, or a default
+  // (so touching a control while a solid/image is active starts a gradient).
+  const gradBg: GradientBg = liveBg.type === "gradient" || liveBg.type === "mesh" ? liveBg : DEFAULT_GRADIENT;
+  const gradKind: "linear" | "radial" | "mesh" = gradBg.type === "mesh" ? "mesh" : gradBg.kind ?? "linear";
+  const setBackground = (next: BackgroundSetting) => update({ background: next });
+
+  const setGradKind = (kind: "linear" | "radial" | "mesh") => {
+    if (kind === gradKind && gradBg === liveBg) return;
+    const colors = paletteOf(gradBg);
+    const grain = gradBg.grain ?? 0;
+    if (kind === "mesh") {
+      setBackground(meshFromColors(colors, grain, gradBg.type === "mesh" ? gradBg.angle ?? 0 : 0));
+      return;
+    }
+    // A mesh's first color is its base; its blobs read better as the stops.
+    const stops = gradBg.type === "mesh" && colors.length > 2 ? colors.slice(1) : colors;
+    const from = stops[0];
+    const to = stops[stops.length - 1] ?? from;
+    const via = stops.length > 2 ? stops[Math.floor(stops.length / 2)] : undefined;
+    setBackground({
+      type: "gradient",
+      kind,
+      from,
+      to,
+      ...(via ? { via } : {}),
+      angle: gradBg.type === "gradient" ? gradBg.angle : 135,
+      cx: gradBg.type === "gradient" ? gradBg.cx ?? 0.5 : 0.5,
+      cy: gradBg.type === "gradient" ? gradBg.cy ?? 0.5 : 0.5,
+      grain
     });
   };
+
+  const patchGrad = (patch: Partial<Extract<BackgroundSetting, { type: "gradient" }>> & Partial<Extract<BackgroundSetting, { type: "mesh" }>>) =>
+    setBackground({ ...gradBg, ...patch } as BackgroundSetting);
+
+  /** 3x3 direction pad: (dx, dy) in -1..1. Meaning depends on the gradient type. */
+  const padAngle = (dx: number, dy: number) => ((Math.round((Math.atan2(dx, -dy) * 180) / Math.PI) % 360) + 360) % 360;
+  const onPad = (dx: number, dy: number) => {
+    if (gradKind === "radial") {
+      patchGrad({ cx: (dx + 1) / 2, cy: (dy + 1) / 2 });
+    } else if (dx === 0 && dy === 0) {
+      if (gradBg.type === "gradient") patchGrad({ from: gradBg.to, to: gradBg.from }); // swap colors
+      else patchGrad({ angle: 0 }); // reset mesh rotation
+    } else {
+      patchGrad({ angle: padAngle(dx, dy) });
+    }
+  };
+  const padActive = (dx: number, dy: number) => {
+    if (gradKind === "radial" && gradBg.type === "gradient") {
+      return Math.abs((gradBg.cx ?? 0.5) - (dx + 1) / 2) < 0.01 && Math.abs((gradBg.cy ?? 0.5) - (dy + 1) / 2) < 0.01;
+    }
+    if (dx === 0 && dy === 0) return false;
+    return (gradBg.angle ?? 0) === padAngle(dx, dy);
+  };
+
+  /** Stable identity for highlighting the matching preset swatch. */
+  const bgKey = (b: BackgroundSetting) =>
+    b.type === "mesh"
+      ? `m:${b.base}:${b.blobs.map((x) => x.color).join(",")}`
+      : b.type === "gradient"
+        ? `g:${b.kind ?? "linear"}:${b.from}:${b.via ?? ""}:${b.to}`
+        : b.type === "solid"
+          ? `s:${b.color}`
+          : b.type;
 
   // Custom background image (Premium): load a file and set it as the scene background.
   const onBgImage = (files: FileList | null) => {
@@ -523,9 +585,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   const bg = settings.background;
   // Background swatches: show the first 8, reveal the rest behind "Show more".
-  const bgSwatches: Array<{ kind: "gradient"; g: (typeof gradientPresets)[number] } | { kind: "solid"; c: string }> = [
-    ...gradientPresets.map((g) => ({ kind: "gradient" as const, g })),
-    ...SOLID_COLORS.map((c) => ({ kind: "solid" as const, c }))
+  const bgSwatches: Array<{ id: string; label: string; bg: BackgroundSetting }> = [
+    ...BACKGROUND_PRESETS,
+    ...SOLID_COLORS.map((c) => ({ id: `solid-${c}`, label: `Solid ${c}`, bg: { type: "solid" as const, color: c } }))
   ];
   const shownSwatches = showAllBg ? bgSwatches : bgSwatches.slice(0, 8);
   const deviceZ = Math.min(overlays.length, Math.max(0, settings.deviceZ ?? 0));
@@ -795,25 +857,16 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <section className="ed-card">
           <div className="ed-card-title">Background</div>
           <div className="ed-swatches">
-            {shownSwatches.map((s) =>
-              s.kind === "gradient" ? (
-                <button
-                  key={`g-${s.g.id}`}
-                  className={`ed-swatch ${bg.type === "gradient" && bg.from === s.g.from ? "on" : ""}`}
-                  style={{ background: `linear-gradient(135deg, ${s.g.from}, ${s.g.to})` }}
-                  aria-label={s.g.label}
-                  onClick={() => update({ background: { type: "gradient", from: s.g.from, to: s.g.to, angle: s.g.angle } })}
-                />
-              ) : (
-                <button
-                  key={`s-${s.c}`}
-                  className={`ed-swatch ${bg.type === "solid" && bg.color === s.c ? "on" : ""}`}
-                  style={{ background: s.c }}
-                  aria-label={`Solid ${s.c}`}
-                  onClick={() => update({ background: { type: "solid", color: s.c } })}
-                />
-              )
-            )}
+            {shownSwatches.map((s) => (
+              <button
+                key={s.id}
+                className={`ed-swatch ${bgKey(bg) === bgKey(s.bg) ? "on" : ""}`}
+                style={{ background: backgroundCss(s.bg) }}
+                aria-label={s.label}
+                title={s.label}
+                onClick={() => setBackground(s.bg)}
+              />
+            ))}
             <button
               className={`ed-swatch ed-swatch-alpha ${bg.type === "transparent" ? "on" : ""}`}
               aria-label="Transparent background (Premium)"
@@ -841,37 +894,103 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </button>
           ) : null}
           <input ref={bgFileRef} type="file" accept="image/*" hidden onChange={(e) => { onBgImage(e.target.files); e.currentTarget.value = ""; }} />
-          <div className="ed-subhead">
-            Custom gradient
-            <button
-              className={`ed-grad-toggle ${customBg.threeStop ? "on" : ""}`}
-              onClick={() => applyCustomGrad({ threeStop: !customBg.threeStop })}
-              title="Add a middle color for a smoother 3-stop gradient"
-            >
-              {customBg.threeStop ? "3-stop" : "2-stop"}
-            </button>
+
+          <div className="ed-subhead">Gradient</div>
+          <div className="ed-seg ed-gradtype" role="group" aria-label="Gradient type">
+            {(["linear", "radial", "mesh"] as const).map((k) => (
+              <button key={k} className={gradKind === k && gradBg === bg ? "on" : ""} onClick={() => setGradKind(k)}>
+                {k === "linear" ? "Linear" : k === "radial" ? "Radial" : "Mesh"}
+              </button>
+            ))}
           </div>
-          <div className="ed-grad-preview" style={{ background: `linear-gradient(${customBg.angle}deg, ${customBg.from}${customBg.threeStop ? `, ${customBg.via}` : ""}, ${customBg.to})` }} />
-          <div className="ed-grad-stops">
-            <label className="ed-grad-stop">
-              <input type="color" value={customBg.from} onChange={(e) => applyCustomGrad({ from: e.target.value })} aria-label="Gradient start color" />
-              <span>Start</span>
-              <b>{customBg.from.toUpperCase()}</b>
-            </label>
-            {customBg.threeStop ? (
+          <div className="ed-grad-editor">
+            <div className="ed-grad-preview" style={{ background: backgroundCss(gradBg) }} />
+            <div className="ed-dirpad" role="group" aria-label={gradKind === "radial" ? "Glow position" : "Direction"}>
+              {[-1, 0, 1].flatMap((dy) =>
+                [-1, 0, 1].map((dx) => {
+                  const center = dx === 0 && dy === 0;
+                  const label =
+                    gradKind === "radial" ? "Place glow here" : center ? (gradBg.type === "gradient" ? "Swap colors" : "Reset rotation") : `Point ${padAngle(dx, dy)}°`;
+                  return (
+                    <button
+                      key={`${dx},${dy}`}
+                      className={`ed-dir ${padActive(dx, dy) ? "on" : ""}`}
+                      onClick={() => onPad(dx, dy)}
+                      aria-label={label}
+                      title={label}
+                    >
+                      {gradKind === "radial" ? (
+                        <CircleDot size={11} />
+                      ) : center ? (
+                        gradBg.type === "gradient" ? <ArrowLeftRight size={12} /> : <RotateCcw size={11} />
+                      ) : (
+                        <ArrowUp size={12} style={{ transform: `rotate(${padAngle(dx, dy)}deg)` }} />
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>
+          {gradBg.type === "gradient" ? (
+            <div className="ed-grad-stops">
               <label className="ed-grad-stop">
-                <input type="color" value={customBg.via} onChange={(e) => applyCustomGrad({ via: e.target.value })} aria-label="Gradient middle color" />
-                <span>Middle</span>
-                <b>{customBg.via.toUpperCase()}</b>
+                <input type="color" value={gradBg.from} onChange={(e) => patchGrad({ from: e.target.value })} aria-label="Gradient start color" />
+                <span>Start</span>
+                <b>{gradBg.from.toUpperCase()}</b>
               </label>
-            ) : null}
-            <label className="ed-grad-stop">
-              <input type="color" value={customBg.to} onChange={(e) => applyCustomGrad({ to: e.target.value })} aria-label="Gradient end color" />
-              <span>End</span>
-              <b>{customBg.to.toUpperCase()}</b>
-            </label>
-          </div>
-          <Range label="Angle" value={customBg.angle} min={0} max={360} step={1} onChange={(v) => applyCustomGrad({ angle: v })} />
+              {gradBg.via ? (
+                <label className="ed-grad-stop">
+                  <input type="color" value={gradBg.via} onChange={(e) => patchGrad({ via: e.target.value })} aria-label="Gradient middle color" />
+                  <span>Middle</span>
+                  <b>{gradBg.via.toUpperCase()}</b>
+                </label>
+              ) : null}
+              <label className="ed-grad-stop">
+                <input type="color" value={gradBg.to} onChange={(e) => patchGrad({ to: e.target.value })} aria-label="Gradient end color" />
+                <span>End</span>
+                <b>{gradBg.to.toUpperCase()}</b>
+              </label>
+            </div>
+          ) : (
+            <div className="ed-mesh-colors">
+              <label className="ed-mesh-color" title="Base color">
+                <input type="color" value={gradBg.base} onChange={(e) => patchGrad({ base: e.target.value })} aria-label="Mesh base color" />
+                <span>Base</span>
+              </label>
+              {gradBg.blobs.map((blob, i) => (
+                <label key={i} className="ed-mesh-color" title={`Color ${i + 1}`}>
+                  <input
+                    type="color"
+                    value={blob.color}
+                    onChange={(e) => patchGrad({ blobs: gradBg.blobs.map((x, j) => (j === i ? { ...x, color: e.target.value } : x)) })}
+                    aria-label={`Mesh color ${i + 1}`}
+                  />
+                  <span>{i + 1}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          {gradBg.type === "gradient" ? (
+            <button
+              className="ed-grad-toggle ed-grad-mid"
+              onClick={() => patchGrad(gradBg.via ? { via: undefined } : { via: "#7c5cff" })}
+              title="Add or remove a middle color"
+            >
+              {gradBg.via ? "Remove middle color" : "+ Middle color"}
+            </button>
+          ) : null}
+          {gradKind !== "radial" ? (
+            <Range
+              label={gradKind === "mesh" ? "Rotate" : "Angle"}
+              value={gradBg.angle ?? 0}
+              min={0}
+              max={360}
+              step={1}
+              onChange={(v) => patchGrad({ angle: v })}
+            />
+          ) : null}
+          <Range label="Grain" value={Math.round((gradBg.grain ?? 0) * 100)} min={0} max={100} step={1} onChange={(v) => patchGrad({ grain: v / 100 })} />
           {bg.type === "image" ? (
             <>
               <div className="ed-subhead">Background image</div>
@@ -1219,6 +1338,21 @@ function EditorStyles() {
       .ed-custom-grad { display: grid; grid-template-columns: 1fr 42px 42px; gap: 8px; align-items: center; }
       .ed-custom-grad .ed-color { width: 100%; height: 40px; }
       .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); margin-top: 8px; }
+      /* Gradient type + direction pad */
+      .ed-gradtype { margin-top: 6px; }
+      .ed-gradtype button { flex: 1; }
+      .ed-grad-editor { display: flex; gap: 10px; align-items: stretch; margin-top: 10px; }
+      .ed-grad-editor .ed-grad-preview { flex: 1; height: auto; min-height: 78px; margin-top: 0; }
+      .ed-dirpad { display: grid; grid-template-columns: repeat(3, 24px); grid-template-rows: repeat(3, 24px); gap: 3px; flex: none; }
+      .ed-dir { display: grid; place-items: center; padding: 0; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,.03); color: var(--muted); cursor: pointer; transition: background .12s ease, color .12s ease, border-color .12s ease; }
+      .ed-dir:hover { color: var(--text); border-color: var(--line-2); }
+      .ed-dir.on { background: var(--acc); border-color: transparent; color: var(--acc-ink); }
+      .ed-light .ed-dir { background: #fff; }
+      .ed-mesh-colors { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 10px; }
+      .ed-mesh-color { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; }
+      .ed-mesh-color input { width: 100%; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 7px; background: transparent; cursor: pointer; }
+      .ed-mesh-color span { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+      .ed-grad-mid { width: 100%; margin-top: 8px; justify-content: center; }
       .ed-grad-stops { display: flex; gap: 8px; margin-top: 10px; }
       .ed-grad-stop { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px 7px; border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,.02); cursor: pointer; transition: border-color .15s ease; }
       .ed-grad-stop:hover { border-color: var(--line-2); }

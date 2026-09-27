@@ -3,11 +3,31 @@
 
 import { deviceBySlug, type Device } from "@/lib/editor/devices";
 
+/** A soft color blob in a mesh gradient. x/y are 0..1 of the canvas; r is 0..1 of its long edge. */
+export type MeshBlob = { x: number; y: number; r: number; color: string };
+
 export type BackgroundSetting =
   | { type: "solid"; color: string }
-  | { type: "gradient"; from: string; via?: string; to: string; angle: number }
+  | {
+      type: "gradient";
+      from: string;
+      via?: string;
+      to: string;
+      /** CSS convention: 0 = toward top, 90 = toward right (clockwise). */
+      angle: number;
+      kind?: "linear" | "radial";
+      /** Radial center, 0..1 of the canvas. */
+      cx?: number;
+      cy?: number;
+      /** Film grain strength, 0..1. */
+      grain?: number;
+    }
+  | { type: "mesh"; base: string; blobs: MeshBlob[]; angle?: number; grain?: number }
   | { type: "image"; img: HTMLImageElement | HTMLCanvasElement | ImageBitmap; angle?: number } // Premium
   | { type: "transparent" }; // Premium
+
+/** Normalized crop of the final output, 0..1 of the full render. */
+export type CropRect = { x: number; y: number; w: number; h: number };
 
 export type EditorSettings = {
   deviceSlug: string;
@@ -27,6 +47,7 @@ export type EditorSettings = {
   rotateZ: number; // degrees — in-plane roll
   perspective: number; // 0..100 — strength of the 3D perspective
   deviceZ: number; // how many overlay layers render BELOW the device (0 = device beneath all overlays)
+  crop?: CropRect | null; // keep only this region of the final output
 };
 
 export const defaultSettings: EditorSettings = {
@@ -77,7 +98,7 @@ export type TextOverlay = OverlayBase & {
 export type Overlay = ImageOverlay | TextOverlay;
 
 /** Draw overlay layers in scene-pixel space, on top of the device. */
-function drawOverlays(ctx: CanvasRenderingContext2D, overlays: Overlay[] | undefined, sceneW: number, sceneH: number, outScale: number) {
+export function drawOverlays(ctx: CanvasRenderingContext2D, overlays: Overlay[] | undefined, sceneW: number, sceneH: number, outScale: number) {
   if (!overlays || !overlays.length) return;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   for (const o of overlays) {
@@ -361,7 +382,7 @@ function renderDeviceLayer(
   return { canvas, w, h, scale: renderScale };
 }
 
-function paintBackground(ctx: CanvasRenderingContext2D, bg: BackgroundSetting, w: number, h: number) {
+export function paintBackground(ctx: CanvasRenderingContext2D, bg: BackgroundSetting, w: number, h: number) {
   if (bg.type === "transparent") return;
   if (bg.type === "solid") {
     ctx.fillStyle = bg.color;
@@ -385,16 +406,128 @@ function paintBackground(ctx: CanvasRenderingContext2D, bg: BackgroundSetting, w
     ctx.restore();
     return;
   }
-  const a = rad(bg.angle);
-  const cx = w / 2;
-  const cy = h / 2;
-  const half = Math.max(w, h);
-  const grad = ctx.createLinearGradient(cx - Math.cos(a) * half, cy - Math.sin(a) * half, cx + Math.cos(a) * half, cy + Math.sin(a) * half);
+  if (bg.type === "mesh") {
+    paintMesh(ctx, bg, w, h);
+    paintGrain(ctx, w, h, bg.grain ?? 0);
+    return;
+  }
+
+  let grad: CanvasGradient;
+  if (bg.kind === "radial") {
+    // CSS `radial-gradient(circle farthest-corner at cx cy, ...)`.
+    const cx = (bg.cx ?? 0.5) * w;
+    const cy = (bg.cy ?? 0.5) * h;
+    const r = Math.max(Math.hypot(cx, cy), Math.hypot(w - cx, cy), Math.hypot(cx, h - cy), Math.hypot(w - cx, h - cy));
+    grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  } else {
+    // CSS `linear-gradient(<angle>deg, ...)`: 0deg points up, clockwise, and the
+    // gradient line exactly spans the box so the swatch preview matches the render.
+    const a = rad(bg.angle);
+    const dx = Math.sin(a);
+    const dy = -Math.cos(a);
+    const half = (Math.abs(w * dx) + Math.abs(h * dy)) / 2;
+    grad = ctx.createLinearGradient(w / 2 - dx * half, h / 2 - dy * half, w / 2 + dx * half, h / 2 + dy * half);
+  }
   grad.addColorStop(0, bg.from);
   if (bg.via) grad.addColorStop(0.5, bg.via);
   grad.addColorStop(1, bg.to);
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, w, h);
+  paintGrain(ctx, w, h, bg.grain ?? 0);
+}
+
+/** Parse #rgb / #rrggbb into channels. */
+function hexRgb(hex: string): [number, number, number] {
+  const h = hex.replace("#", "");
+  const n = h.length === 3 ? h.split("").map((c) => c + c).join("") : h.slice(0, 6);
+  return [parseInt(n.slice(0, 2), 16) || 0, parseInt(n.slice(2, 4), 16) || 0, parseInt(n.slice(4, 6), 16) || 0];
+}
+
+/** Blob positions, rotated about the center by the mesh's direction angle. */
+export function meshBlobPositions(bg: { blobs: MeshBlob[]; angle?: number }): MeshBlob[] {
+  const a = rad(bg.angle ?? 0);
+  if (!a) return bg.blobs;
+  const cos = Math.cos(a);
+  const sin = Math.sin(a);
+  return bg.blobs.map((b) => {
+    const x = b.x - 0.5;
+    const y = b.y - 0.5;
+    return { ...b, x: 0.5 + x * cos - y * sin, y: 0.5 + x * sin + y * cos };
+  });
+}
+
+/** Mesh gradient: a base fill with soft radial color blobs layered on top. */
+function paintMesh(ctx: CanvasRenderingContext2D, bg: { base: string; blobs: MeshBlob[]; angle?: number }, w: number, h: number) {
+  ctx.fillStyle = bg.base;
+  ctx.fillRect(0, 0, w, h);
+  const long = Math.max(w, h);
+  for (const b of meshBlobPositions(bg)) {
+    const [r, g, bl] = hexRgb(b.color);
+    const x = b.x * w;
+    const y = b.y * h;
+    const radius = Math.max(1, b.r * long);
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    // Smooth, eased falloff so neighbouring blobs melt together instead of ringing.
+    grad.addColorStop(0, `rgba(${r},${g},${bl},1)`);
+    grad.addColorStop(0.35, `rgba(${r},${g},${bl},0.82)`);
+    grad.addColorStop(0.65, `rgba(${r},${g},${bl},0.36)`);
+    grad.addColorStop(1, `rgba(${r},${g},${bl},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+}
+
+// One deterministic noise tile, shared by preview and export so they match.
+let noiseTile: HTMLCanvasElement | null = null;
+function getNoiseTile(): HTMLCanvasElement | null {
+  if (noiseTile) return noiseTile;
+  if (typeof document === "undefined") return null;
+  const size = 192;
+  const c = document.createElement("canvas");
+  c.width = size;
+  c.height = size;
+  const x = c.getContext("2d");
+  if (!x) return null;
+  const data = x.createImageData(size, size);
+  let seed = 0x2f6b1234;
+  for (let i = 0; i < data.data.length; i += 4) {
+    // xorshift32: fast, seeded, identical every run.
+    seed ^= seed << 13;
+    seed ^= seed >>> 17;
+    seed ^= seed << 5;
+    const v = (seed >>> 0) % 256;
+    data.data[i] = v;
+    data.data[i + 1] = v;
+    data.data[i + 2] = v;
+    data.data[i + 3] = 255;
+  }
+  x.putImageData(data, 0, 0);
+  noiseTile = c;
+  return c;
+}
+
+/**
+ * Film grain over the background. The pattern is sized in *output* pixels, so
+ * the grain looks the same in the small preview and a 4K export.
+ */
+function paintGrain(ctx: CanvasRenderingContext2D, w: number, h: number, amount: number) {
+  if (!amount || amount <= 0) return;
+  const tile = getNoiseTile();
+  if (!tile) return;
+  const pattern = ctx.createPattern(tile, "repeat");
+  if (!pattern) return;
+  const scale = ctx.getTransform().a || 1; // scene -> output pixels
+  const outLong = Math.max(w, h) * scale;
+  const grainPx = Math.max(1, outLong / 1400); // grain size in output pixels
+  if (typeof DOMMatrix !== "undefined" && pattern.setTransform) {
+    pattern.setTransform(new DOMMatrix().scale(grainPx / scale));
+  }
+  ctx.save();
+  ctx.globalCompositeOperation = "overlay";
+  ctx.globalAlpha = Math.min(1, amount) * 0.55;
+  ctx.fillStyle = pattern;
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 }
 
 type Pt = { x: number; y: number };
@@ -453,6 +586,45 @@ function texTri(ctx: CanvasRenderingContext2D, img: CanvasImageSource, s: Pt[], 
 
 export type CompositeResult = { width: number; height: number };
 
+/** Largest full-scene render we allow, so tiny crops can't request huge canvases. */
+const MAX_FULL_RENDER_EDGE = 8000;
+
+function validCrop(crop?: CropRect | null): crop is CropRect {
+  return Boolean(crop && crop.w > 0.01 && crop.h > 0.01 && (crop.w < 0.999 || crop.h < 0.999));
+}
+
+/**
+ * Scene -> output scale. With a crop, scale so the *kept* region's long edge
+ * hits `maxEdge` (a 2K export of a cropped phone top is still 2K), capped to
+ * keep the full intermediate render a sane size.
+ */
+function outputScale(sceneW: number, sceneH: number, maxEdge: number, crop?: CropRect | null): number {
+  if (!validCrop(crop)) return maxEdge / Math.max(sceneW, sceneH);
+  const wanted = maxEdge / Math.max(crop.w * sceneW, crop.h * sceneH);
+  return Math.min(wanted, MAX_FULL_RENDER_EDGE / Math.max(sceneW, sceneH));
+}
+
+/** Keep only the crop region of the rendered canvas (in place). */
+function applyCrop(canvas: HTMLCanvasElement, crop?: CropRect | null): CompositeResult {
+  if (!validCrop(crop)) return { width: canvas.width, height: canvas.height };
+  const sx = Math.round(Math.max(0, crop.x) * canvas.width);
+  const sy = Math.round(Math.max(0, crop.y) * canvas.height);
+  const sw = Math.max(1, Math.min(canvas.width - sx, Math.round(crop.w * canvas.width)));
+  const sh = Math.max(1, Math.min(canvas.height - sy, Math.round(crop.h * canvas.height)));
+  const copy = document.createElement("canvas");
+  copy.width = sw;
+  copy.height = sh;
+  copy.getContext("2d")?.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+  canvas.width = sw;
+  canvas.height = sh;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(copy, 0, 0);
+  }
+  return { width: sw, height: sh };
+}
+
 export function composite(
   canvas: HTMLCanvasElement,
   img: HTMLImageElement | HTMLCanvasElement | ImageBitmap | null,
@@ -479,7 +651,7 @@ export function composite(
     // Flat fast path — crisp 1:1 device, single clean shadow.
     const sceneW = dW + pad * 2;
     const sceneH = dH + pad * 2;
-    const outScale = opts.maxEdge / Math.max(sceneW, sceneH);
+    const outScale = outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
     const layer = renderDeviceLayer(device, img, settings, renderScaleFor(outScale));
     canvas.width = Math.round(sceneW * outScale);
     canvas.height = Math.round(sceneH * outScale);
@@ -502,7 +674,7 @@ export function composite(
     ctx.restore();
     drawOverlays(ctx, aboveOverlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    return { width: canvas.width, height: canvas.height };
+    return applyCrop(canvas, settings.crop);
   }
 
   // 3D perspective path.
@@ -530,7 +702,7 @@ export function composite(
   }
   const sceneW = maxX - minX + pad * 2;
   const sceneH = maxY - minY + pad * 2;
-  const outScale = opts.maxEdge / Math.max(sceneW, sceneH);
+  const outScale = outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
   const layer = renderDeviceLayer(device, img, settings, renderScaleFor(outScale));
   canvas.width = Math.round(sceneW * outScale);
   canvas.height = Math.round(sceneH * outScale);
@@ -582,7 +754,7 @@ export function composite(
   ctx.restore();
   drawOverlays(ctx, aboveOverlays, sceneW, sceneH, outScale);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  return { width: canvas.width, height: canvas.height };
+  return applyCrop(canvas, settings.crop);
 }
 
 /** Load a File/Blob/URL into an HTMLImageElement, downscaling very large images first (≤20MP guard). */
