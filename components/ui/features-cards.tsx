@@ -4,7 +4,7 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
-const displayFont = { fontFamily: '"Inter Tight", Inter, system-ui, sans-serif' } as const;
+const displayFont = { fontFamily: '"Fraunces", Georgia, serif', fontWeight: 300 } as const;
 
 const features: { title: string; description: string; Icon: LucideIcon }[] = [
   { title: "Instant device frames", description: "Every major phone, tablet and laptop frame, ready in one click.", Icon: Frame },
@@ -22,12 +22,12 @@ export default function FeaturesCards() {
         <div className="mx-auto max-w-5xl px-6">
           <div className="text-center" data-reveal>
             <h2
-              className="text-balance text-4xl font-medium tracking-tight text-[#FDFFF0] md:text-5xl"
+              className="text-balance text-4xl font-light tracking-tight text-[#1A1712] md:text-5xl"
               style={displayFont}
             >
               One tool for every mockup need
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-lg text-[#969692]">
+            <p className="mx-auto mt-4 max-w-xl text-lg text-[#6E685E]">
               Everything you need to turn a screenshot into a share-ready shot.
             </p>
           </div>
@@ -59,15 +59,15 @@ const FeatureCard = ({
   return (
     <Card variant="soft" className="p-6" data-reveal style={{ "--d": index % 3 } as React.CSSProperties}>
       <div className="relative">
-        <div className="grid size-11 place-items-center rounded-[13px] border border-[#FF0055]/25 bg-[#FF0055]/10 text-[#FF0055] *:size-5">
+        <div className="grid size-11 place-items-center rounded-[13px] border border-[#E6F26A] bg-[#F4FF95] text-[#1A1712] *:size-5">
           {children}
         </div>
 
         <div className="mt-6 space-y-1.5">
-          <h3 className="text-lg font-semibold text-[#FDFFF0]" style={displayFont}>
+          <h3 className="text-lg font-normal text-[#1A1712]" style={displayFont}>
             {title}
           </h3>
-          <p className="line-clamp-2 text-[15px] leading-relaxed text-[#969692]">
+          <p className="line-clamp-2 text-[15px] leading-relaxed text-[#6E685E]">
             {description}
           </p>
         </div>

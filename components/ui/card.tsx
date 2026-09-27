@@ -7,14 +7,13 @@ type CardVariant = "default" | "soft";
 const variantClasses: Record<CardVariant, string> = {
   // Standard shadcn-style surface.
   default: "rounded-lg border bg-card text-card-foreground shadow-sm",
-  // "Soft" surface tuned to the EasyFrame supercut dark theme: warm near-black
-  // panel, hairline border, gentle top highlight and depth shadow.
+  // "Soft" surface tuned to the EasyFrame editorial light theme: white panel,
+  // warm hairline border and a gentle depth shadow.
   soft:
-    "rounded-2xl border border-[#242020] bg-[#181616] " +
-    "bg-gradient-to-b from-white/[0.035] to-transparent " +
-    "text-[#FDFFF0] shadow-[0_1px_2px_rgba(0,0,0,0.4),0_18px_40px_rgba(0,0,0,0.28)] " +
+    "rounded-[22px] border border-[#EAE3D3] bg-white " +
+    "text-[#1A1712] shadow-[0_1px_2px_rgba(26,23,18,0.05),0_16px_38px_rgba(26,23,18,0.07)] " +
     "transition-[transform,border-color,box-shadow] duration-300 " +
-    "hover:-translate-y-0.5 hover:border-[#3A3333] hover:shadow-[0_2px_4px_rgba(0,0,0,0.5),0_26px_54px_rgba(255,0,85,0.10)]"
+    "hover:-translate-y-1 hover:border-[#DBD2BE] hover:shadow-[0_2px_4px_rgba(26,23,18,0.06),0_26px_56px_rgba(26,23,18,0.10)]"
 };
 
 const Card = React.forwardRef<
