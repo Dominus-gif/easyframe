@@ -1,15 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ArrowLeftRight, ArrowUp, ChevronDown, ChevronUp, CircleDot, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
+import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
 import {
   composite,
   defaultSettings,
   exportScene,
   loadImageSafely,
   type BackgroundSetting,
+  type CropRect,
   type EditorSettings,
   type ExportFormat,
   type Overlay,
@@ -111,6 +113,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: false });
   const [dragRotate, setDragRotate] = useState(false);
   const [showAllBg, setShowAllBg] = useState(false);
+  const [cropMode, setCropMode] = useState(false);
+  const [draftCrop, setDraftCrop] = useState<CropRect>({ x: 0, y: 0, w: 1, h: 1 });
+  const [cropAspect, setCropAspect] = useState("free");
 
   useEffect(() => {
     try {
@@ -169,9 +174,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const recompose = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const res = composite(canvas, imgRef.current, settings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
+    // While cropping, show the full frame so the region can be chosen from it.
+    const renderSettings = cropMode ? { ...settings, crop: null } : settings;
+    const res = composite(canvas, imgRef.current, renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
     if (res.width && res.height) setPreviewDims(res);
-  }, [settings, overlays]);
+  }, [settings, overlays, cropMode]);
 
   useEffect(() => {
     recompose();
@@ -509,6 +516,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       setSettings((s) => ({ ...s, rotateY: clamp(s.rotateY + dx * 90), rotateX: clamp(s.rotateX - dy * 90), perspective: s.perspective || 55 }));
       return;
     }
+    // With a crop applied the canvas shows only the kept region, so a drag covers
+    // less of the full scene: scale moves back into full-scene fractions.
+    const mx = dx * (settings.crop?.w ?? 1);
+    const my = dy * (settings.crop?.h ?? 1);
     if (selectedId && selectedOverlay) {
       const transform = event.ctrlKey || event.metaKey;
       setOverlays((prev) => prev.map((o) => {
@@ -518,11 +529,11 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           const rotation = Math.max(-180, Math.min(180, o.rotation + dx * 220));
           return { ...o, scale, rotation };
         }
-        return { ...o, x: o.x + dx, y: o.y + dy };
+        return { ...o, x: o.x + mx, y: o.y + my };
       }));
     } else {
       // Move the whole mockup over the (static) background.
-      setSettings((s) => ({ ...s, frameOffsetX: s.frameOffsetX + dx, frameOffsetY: s.frameOffsetY + dy }));
+      setSettings((s) => ({ ...s, frameOffsetX: s.frameOffsetX + mx, frameOffsetY: s.frameOffsetY + my }));
     }
   };
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -569,6 +580,30 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     setSettings({ ...defaultSettings, deviceSlug: settings.deviceSlug });
   };
   // Reset only the Adjust sliders (frame/screenshot placement) to their defaults.
+  // ---- Crop (applies to the final output) ----
+  const cropFrame = { w: previewDims?.width || 1, h: previewDims?.height || 1 };
+  const startCrop = () => {
+    setDragRotate(false);
+    setSelectedId(null);
+    setDraftCrop(settings.crop ?? { x: 0, y: 0, w: 1, h: 1 });
+    setCropAspect("free");
+    setCropMode(true);
+  };
+  const chooseAspect = (id: string) => {
+    setCropAspect(id);
+    const ratio = CROP_ASPECTS.find((a) => a.id === id)?.ratio;
+    if (ratio) setDraftCrop((c) => fitAspect(ratio, cropFrame, c));
+  };
+  const applyCrop = () => {
+    const full = draftCrop.w > 0.995 && draftCrop.h > 0.995;
+    update({ crop: full ? null : draftCrop });
+    setCropMode(false);
+  };
+  const clearCrop = () => {
+    setDraftCrop({ x: 0, y: 0, w: 1, h: 1 });
+    setCropAspect("free");
+  };
+
   const resetAdjust = () =>
     update({
       padding: defaultSettings.padding,
@@ -766,17 +801,52 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
         {/* Canvas */}
         <main className="ed-stage" aria-label="Preview">
-          <div className="ed-stage-tools">
-            <button
-              className={`ed-tool-toggle ${dragRotate ? "on" : ""}`}
-              onClick={() => setDragRotate((v) => !v)}
-              aria-pressed={dragRotate}
-              title="Grab the mockup and rotate it in 3D"
-            >
-              <Move3d size={15} /> {dragRotate ? "Rotating in 3D" : "Rotate 3D"}
-            </button>
-          </div>
+          {cropMode ? (
+            <div className="ed-cropbar" role="toolbar" aria-label="Crop">
+              <div className="ed-crop-aspects" role="group" aria-label="Aspect ratio">
+                {CROP_ASPECTS.map((a) => (
+                  <button key={a.id} className={cropAspect === a.id ? "on" : ""} onClick={() => chooseAspect(a.id)} aria-pressed={cropAspect === a.id}>
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+              <span className="ed-cropbar-sep" aria-hidden="true" />
+              <button className="ed-cropbar-btn" onClick={clearCrop} title="Reset to the full frame">
+                <RotateCcw size={13} /> Reset
+              </button>
+              <button className="ed-cropbar-btn" onClick={() => setCropMode(false)}>Cancel</button>
+              <button className="ed-cropbar-btn primary" onClick={applyCrop}>
+                <Check size={14} strokeWidth={2.6} /> Apply
+              </button>
+            </div>
+          ) : (
+            <div className="ed-stage-tools">
+              <button
+                className={`ed-tool-toggle ${settings.crop ? "on" : ""}`}
+                onClick={startCrop}
+                title="Crop the final image to a region or aspect ratio"
+              >
+                <Crop size={15} /> {settings.crop ? "Cropped" : "Crop"}
+              </button>
+              <button
+                className={`ed-tool-toggle ${dragRotate ? "on" : ""}`}
+                onClick={() => setDragRotate((v) => !v)}
+                aria-pressed={dragRotate}
+                title="Grab the mockup and rotate it in 3D"
+              >
+                <Move3d size={15} /> {dragRotate ? "Rotating in 3D" : "Rotate 3D"}
+              </button>
+            </div>
+          )}
           <div className="ed-canvas-wrap" style={{ transform: `scale(${previewZoom})` }}>
+            {cropMode ? (
+              <CropOverlay
+                crop={draftCrop}
+                ratio={CROP_ASPECTS.find((a) => a.id === cropAspect)?.ratio ?? null}
+                frame={cropFrame}
+                onChange={setDraftCrop}
+              />
+            ) : null}
             <canvas
               ref={canvasRef}
               className="ed-canvas"
@@ -787,20 +857,15 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               onPointerCancel={onPointerUp}
             />
           </div>
-          {!hasImage ? (
-            <>
-              <button className="ed-drop" style={dragRotate ? { pointerEvents: "none" } : undefined} onClick={() => fileRef.current?.click()}>
-                <span className="ed-drop-ic"><Upload size={16} /></span>
-                <strong>Drop a screenshot</strong>
-                <span className="ed-drop-sub">or <b>browse files</b></span>
-                <span className="ed-drop-win">
-                  <span className="ed-drop-dots" aria-hidden="true"><i /><i /><i /></span>
-                  <span className="ed-drop-formats">PNG · JPEG · WebP</span>
-                </span>
-              </button>
-              <p className="ed-privacy-note">Nothing is uploaded — everything stays in your browser.</p>
-            </>
-          ) : null}
+          <div className={`ed-uploadbar ${hasImage ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
+            <button className="ed-upload-btn" onClick={() => fileRef.current?.click()}>
+              <Upload size={hasImage ? 14 : 16} strokeWidth={2.2} />
+              {hasImage ? "Replace screenshot" : "Upload screenshot"}
+            </button>
+            {!hasImage ? (
+              <span className="ed-upload-hint">or drop / paste anywhere · PNG, JPG, WebP · never leaves your device</span>
+            ) : null}
+          </div>
           {dropActive ? (
             <div className="ed-dragmask"><Upload size={28} /><strong>Drop to place</strong></div>
           ) : null}
@@ -1234,7 +1299,36 @@ function EditorStyles() {
           radial-gradient(1100px 560px at 50% -10%, rgba(255,255,255,.035), transparent 62%),
           radial-gradient(circle at center, rgba(255,255,255,.028) 1px, transparent 1px);
         background-size: auto, 24px 24px; }
-      .ed-canvas-wrap { max-width: 100%; max-height: 100%; transition: transform .12s ease; filter: drop-shadow(0 28px 55px rgba(0,0,0,.5)); }
+      .ed-canvas-wrap { position: relative; max-width: 100%; max-height: 100%; transition: transform .12s ease; filter: drop-shadow(0 28px 55px rgba(0,0,0,.5)); }
+      /* Crop */
+      .ed-crop { position: absolute; inset: 0; z-index: 3; overflow: hidden; touch-action: none; cursor: crosshair; border-radius: 6px; }
+      .ed-crop-frame { position: absolute; box-shadow: 0 0 0 9999px rgba(6,8,10,.62); outline: 1.5px solid #fff; cursor: move; }
+      .ed-crop-grid { position: absolute; inset: 0; pointer-events: none;
+        background:
+          linear-gradient(to right, transparent calc(33.333% - .5px), rgba(255,255,255,.45) calc(33.333% - .5px), rgba(255,255,255,.45) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255,255,255,.45) calc(66.666% - .5px), rgba(255,255,255,.45) calc(66.666% + .5px), transparent calc(66.666% + .5px)),
+          linear-gradient(to bottom, transparent calc(33.333% - .5px), rgba(255,255,255,.45) calc(33.333% - .5px), rgba(255,255,255,.45) calc(33.333% + .5px), transparent calc(33.333% + .5px), transparent calc(66.666% - .5px), rgba(255,255,255,.45) calc(66.666% - .5px), rgba(255,255,255,.45) calc(66.666% + .5px), transparent calc(66.666% + .5px)); }
+      .ed-crop-h { position: absolute; width: 16px; height: 16px; background: #fff; border-radius: 4px; box-shadow: 0 1px 6px rgba(0,0,0,.45); }
+      .ed-crop-nw { left: -8px; top: -8px; cursor: nwse-resize; }
+      .ed-crop-ne { right: -8px; top: -8px; cursor: nesw-resize; }
+      .ed-crop-sw { left: -8px; bottom: -8px; cursor: nesw-resize; }
+      .ed-crop-se { right: -8px; bottom: -8px; cursor: nwse-resize; }
+      .ed-crop-n, .ed-crop-s { left: 50%; width: 26px; height: 8px; margin-left: -13px; cursor: ns-resize; }
+      .ed-crop-n { top: -4px; }
+      .ed-crop-s { bottom: -4px; }
+      .ed-crop-e, .ed-crop-w { top: 50%; width: 8px; height: 26px; margin-top: -13px; cursor: ew-resize; }
+      .ed-crop-e { right: -4px; }
+      .ed-crop-w { left: -4px; }
+      .ed-cropbar { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 6px; padding: 5px; border-radius: 14px; background: rgba(18,21,26,.9); border: 1px solid var(--line-2); backdrop-filter: blur(12px); box-shadow: 0 12px 30px rgba(0,0,0,.45); max-width: calc(100% - 24px); overflow-x: auto; }
+      .ed-crop-aspects { display: flex; gap: 2px; }
+      .ed-crop-aspects button { height: 30px; min-width: 42px; padding: 0 9px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; font-variant-numeric: tabular-nums; }
+      .ed-crop-aspects button:hover { color: var(--text); background: rgba(255,255,255,.06); }
+      .ed-crop-aspects button.on { background: var(--acc); color: var(--acc-ink); }
+      .ed-cropbar-sep { width: 1px; height: 20px; background: var(--line-2); margin: 0 2px; flex: none; }
+      .ed-cropbar-btn { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px; border-radius: 9px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+      .ed-cropbar-btn:hover { border-color: var(--line-2); }
+      .ed-cropbar-btn.primary { background: var(--acc); color: var(--acc-ink); border-color: transparent; }
+      .ed-light .ed-cropbar { background: rgba(255,255,255,.95); }
+      .ed-light .ed-crop-aspects button:hover { background: rgba(15,18,25,.05); }
       .ed-canvas { max-width: 100%; max-height: calc(100vh - 150px); display: block; border-radius: 6px; touch-action: none; cursor: grab; }
       .ed-canvas:active { cursor: grabbing; }
       /* Compact empty-state prompt — floats near the bottom so the device preview stays visible. */
@@ -1269,6 +1363,18 @@ function EditorStyles() {
         border: 2px dashed var(--acc); border-radius: 20px; background: rgba(255,255,255,.10); backdrop-filter: blur(2px); color: var(--text); pointer-events: none; }
       .ed-dragmask svg { color: var(--acc); }
       .ed-dragmask strong { font-size: 16px; font-weight: 650; }
+      /* Upload: a docked pill at the bottom of the canvas (replaces the old drop card). */
+      .ed-uploadbar { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 5; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+      .ed-upload-btn { pointer-events: auto; display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 24px; border-radius: 999px; border: 0; background: var(--acc); color: var(--acc-ink); font: inherit; font-size: 14px; font-weight: 650; letter-spacing: -.005em; cursor: pointer; box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 12px 32px rgba(0,0,0,.45), 0 0 0 6px rgba(255,255,255,.06); transition: transform .16s ease, box-shadow .16s ease, filter .16s ease; }
+      .ed-upload-btn:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 18px 40px rgba(0,0,0,.5), 0 0 0 7px rgba(255,255,255,.08); }
+      .ed-upload-btn:active { transform: translateY(0); filter: brightness(.96); }
+      .ed-upload-hint { font-size: 11px; color: rgba(255,255,255,.78); white-space: nowrap; padding: 4px 11px; border-radius: 999px; background: rgba(12,14,18,.58); backdrop-filter: blur(8px); }
+      .ed-uploadbar.has-image .ed-upload-btn { height: 34px; padding: 0 14px; gap: 7px; font-size: 12px; font-weight: 600; background: rgba(18,21,26,.82); color: var(--text); border: 1px solid var(--line-2); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+      .ed-uploadbar.has-image .ed-upload-btn:hover { background: rgba(28,32,38,.92); }
+      .ed-light .ed-upload-btn { box-shadow: 0 12px 32px rgba(15,18,25,.22), 0 0 0 6px rgba(15,18,25,.06); }
+      .ed-light .ed-upload-hint { color: rgba(15,18,25,.66); background: rgba(255,255,255,.72); }
+      .ed-light .ed-uploadbar.has-image .ed-upload-btn { background: rgba(255,255,255,.92); color: #16181d; }
+      @media (max-width: 720px) { .ed-upload-hint { display: none; } }
       .ed-zoom { position: absolute; bottom: 18px; right: 18px; display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 999px; background: rgba(18,21,26,.85); border: 1px solid var(--line); backdrop-filter: blur(10px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
       .ed-zoom button { width: 26px; height: 26px; border-radius: 7px; background: rgba(255,255,255,.06); border: 0; color: var(--text); font: inherit; font-size: 15px; cursor: pointer; display: grid; place-items: center; }
       .ed-zoom button:hover { background: rgba(255,255,255,.12); }
