@@ -46,10 +46,14 @@ and put the 6-digit code in the sign-in email.
 <p>It expires soon. If you didn't try to sign in, you can ignore this email.</p>
 ```
 
-**Confirm signup**. Subject: `Confirm your EasyFrame account`
+**Confirm signup**. Subject: `Your EasyFrame code`
+New addresses get *this* email, not Magic Link, even when they chose
+"Email code", so it must carry the code too.
 ```html
-<h2>Confirm your email</h2>
-<p><a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/editor">Confirm my account</a></p>
+<h2>Welcome to EasyFrame</h2>
+<p>Enter this code to finish creating your account:</p>
+<p style="font-size:30px;font-weight:700;letter-spacing:8px;margin:18px 0">{{ .Token }}</p>
+<p>Or <a href="{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=email&next=/editor">confirm with one click</a>.</p>
 ```
 
 **Reset password**. Subject: `Reset your EasyFrame password`
