@@ -20,9 +20,6 @@ function Read-Hidden([string]$prompt) {
 
 # name, hidden?, hint
 $fields = @(
-  @("NEXTAUTH_SECRET",            $true,  "Leave blank to generate a new random one (only logs existing users out once)"),
-  @("GOOGLE_CLIENT_ID",           $false, "Google Cloud Console -> APIs & Services -> Credentials -> your OAuth client"),
-  @("GOOGLE_CLIENT_SECRET",       $true,  "Same OAuth client as above"),
   @("DODO_API_KEY",               $true,  "Dodo dashboard -> Developer -> API keys (use the LIVE key)"),
   @("DODO_WEBHOOK_SECRET",        $true,  "Dodo dashboard -> Developer -> Webhooks -> your endpoint's signing secret"),
   @("DODO_ENVIRONMENT",           $false, "live or test"),
@@ -47,12 +44,6 @@ foreach ($f in $fields) {
   $value = if ($hidden) { Read-Hidden "  value" } else { (Read-Host "  value").Trim() }
   $value = $value.Trim('"', "'")
 
-  if (-not $value -and $name -eq "NEXTAUTH_SECRET") {
-    $bytes = New-Object byte[] 32
-    [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-    $value = [Convert]::ToBase64String($bytes)
-    Write-Host "  generated a new random secret" -ForegroundColor DarkGray
-  }
   if ($name -eq "DODO_ENVIRONMENT" -and $value -and $value -notin @("live", "test")) {
     Write-Host "  ! expected 'live' or 'test'; using '$value' anyway" -ForegroundColor Yellow
   }

@@ -20,12 +20,6 @@
   // Served only on the custom domains below (no duplicate *.workers.dev copy).
   "workers_dev": false,
 
-  // Non-secret runtime config. Secrets go in via `wrangler secret`
-  // (scripts/setup-secrets.ps1), never in this file.
-  "vars": {
-    "NEXTAUTH_URL": "https://www.easyframe.app"
-  },
-
   // Custom domains: Cloudflare creates and manages the DNS records + certs.
   // next.config.mjs 308-redirects the apex to www.
   "routes": [

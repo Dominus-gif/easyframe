@@ -9,7 +9,8 @@ production Postgres reached through **Hyperdrive**.
 - [x] Worker deployed; `www.easyframe.app` + `easyframe.app` attached as custom domains (apex 308 → www)
 - [x] Hyperdrive `easyframe-db` (`7100bfe82eae4ae68e6806efa0809abe`) → Supabase **session** pooler, `:5432`; query caching **disabled** (billing reads must not be stale)
 - [x] `NEXTAUTH_URL` set as a plain var in `wrangler.jsonc`
-- [ ] Production secrets: run `scripts/setup-secrets.ps1`
+- [ ] Production secrets (Dodo only now): run `scripts/setup-secrets.ps1`
+- [ ] Supabase auth + Resend email: follow `SUPABASE-AUTH-SETUP.md`
 - [ ] `NEXT_PUBLIC_ADSENSE_CLIENT` / `NEXT_PUBLIC_GA_MEASUREMENT_ID` for the build (see below)
 - [ ] End-to-end: Google sign-in, a checkout, a Dodo webhook delivery; then retire Vercel
 

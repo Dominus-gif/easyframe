@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getAppSession } from "@/lib/auth/session";
 import { getUserAccess } from "@/lib/subscription";
 
+// Per-user (reads the session cookie): never prerender.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const session = await getAppSession();
 

@@ -3,6 +3,9 @@ import { getAppSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getUserAccess, grantPaidAccess } from "@/lib/subscription";
 
+// Per-user (reads the session cookie): never prerender.
+export const dynamic = "force-dynamic";
+
 type DodoPayment = {
   payment_id?: string;
   status?: string | null;

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getAppSession } from "@/lib/auth/session";
 import { grantPaidAccess } from "@/lib/subscription";
 
+// Per-user (reads the session cookie): never prerender.
+export const dynamic = "force-dynamic";
+
 const checkoutUrls = {
   monthly: process.env.DODO_MONTHLY_CHECKOUT_URL,
   lifetime: process.env.DODO_LIFETIME_CHECKOUT_URL
