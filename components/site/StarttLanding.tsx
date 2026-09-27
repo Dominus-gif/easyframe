@@ -9,6 +9,7 @@ import { SITE_URL } from "@/lib/site";
 import StarttFX from "@/components/site/StarttFX";
 import JsonLd from "@/components/site/JsonLd";
 import FeaturesCards from "@/components/ui/features-cards";
+import AccountLink from "@/components/auth/AccountLink";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
@@ -73,7 +74,10 @@ export default function StarttLanding() {
             <Link href="/templates">Templates</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
-          <Link href="/editor" className="sx-pill sx-nav-cta">Open EasyFrame</Link>
+          <div className="sx-nav-right">
+            <AccountLink className="sx-account" />
+            <Link href="/editor" className="sx-pill sx-nav-cta">Open EasyFrame</Link>
+          </div>
         </div>
       </nav>
 

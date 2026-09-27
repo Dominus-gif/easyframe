@@ -28,7 +28,7 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
         <div className="legal-links">
           <Link href="/privacy">Privacy</Link>
           <Link href="/terms">Terms</Link>
-          <Link className="legal-cta" href="/login">Open app</Link>
+          <Link className="legal-cta" href="/editor">Open app</Link>
         </div>
       </nav>
 

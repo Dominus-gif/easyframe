@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
+import AccountLink from "@/components/auth/AccountLink";
 
 const LINKS = [
   { href: "/editor", label: "Editor" },
@@ -30,6 +31,7 @@ export default function SiteNav() {
           ))}
         </div>
         <div className="mk-nav-cta">
+          <AccountLink className="mk-account" />
           <Link href="/editor" className="mk-cta">
             Open free editor <ArrowRight size={16} />
           </Link>

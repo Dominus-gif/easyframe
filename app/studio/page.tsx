@@ -1,12 +1,11 @@
 import MockupStudio from "@/components/MockupStudio";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { getAppSession } from "@/lib/auth/session";
 import { getUserAccess } from "@/lib/subscription";
 
 export default async function StudioPage() {
   if (process.env.ALLOW_LOCAL_MOCK_SESSION !== "true") {
-    const session = await getServerSession(authOptions);
+    const session = await getAppSession();
 
     if (!session?.user?.id) {
       redirect("/login");

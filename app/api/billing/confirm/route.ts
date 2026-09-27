@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { getAppSession } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { getUserAccess, grantPaidAccess } from "@/lib/subscription";
 
@@ -24,7 +23,7 @@ const DODO_API_BASE =
   (process.env.DODO_ENVIRONMENT === "test" ? "https://test.dodopayments.com" : "https://live.dodopayments.com");
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getAppSession();
   if (!session?.user?.id || !session.user.email) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   }

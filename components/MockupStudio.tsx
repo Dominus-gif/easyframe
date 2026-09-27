@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent, type ReactNode, type RefObject } from "react";
 import { toJpeg, toPng } from "html-to-image";
-import { signOut, useSession } from "next-auth/react";
+import { signOutApp as signOut, useAppSession as useSession } from "@/lib/auth/client";
 import {
   ArrowUpRight,
   Copy,

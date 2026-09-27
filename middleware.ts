@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
+import { createServerClient } from "@supabase/ssr";
+import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
 
-const protectedPaths = ["/studio", "/api/billing"];
+const protectedPaths = ["/studio", "/api/billing", "/account"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -15,22 +16,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308);
   }
 
+  const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
-  const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path));
+  let response = NextResponse.next({ request });
 
-  if (!isProtectedPath || localBypass) {
-    return NextResponse.next();
+  if (!supabaseConfigured) {
+    return isProtected && !localBypass ? toLogin(request) : response;
   }
 
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+  // Refreshes an expiring session and writes the new cookies onto the response.
+  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (list) => {
+        list.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+      }
+    }
+  });
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
 
-  if (!token) {
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
+  if (isProtected && !user && !localBypass) return toLogin(request);
+  return response;
+}
 
-  return NextResponse.next();
+function toLogin(request: NextRequest) {
+  const url = new URL("/login", request.url);
+  url.searchParams.set("next", request.nextUrl.pathname + request.nextUrl.search);
+  return NextResponse.redirect(url);
 }
 
 export const config = {
-  matcher: ["/studio/:path*", "/api/billing/:path*", "/Terms", "/Privacy"]
+  matcher: ["/studio/:path*", "/api/billing/:path*", "/account/:path*", "/Terms", "/Privacy"]
 };

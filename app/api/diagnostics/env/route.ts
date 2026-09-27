@@ -29,7 +29,6 @@ function safeHost(value: string) {
 
 export function GET() {
   const databaseUrl = normalize(process.env.DATABASE_URL);
-  const nextAuthUrl = process.env.NEXTAUTH_URL?.trim() ?? "";
 
   return NextResponse.json({
     databaseUrl: {
@@ -41,13 +40,9 @@ export function GET() {
         Boolean(process.env.DATABASE_URL?.trim().startsWith('"') && process.env.DATABASE_URL?.trim().endsWith('"')) ||
         Boolean(process.env.DATABASE_URL?.trim().startsWith("'") && process.env.DATABASE_URL?.trim().endsWith("'"))
     },
-    google: {
-      hasClientId: Boolean(process.env.GOOGLE_CLIENT_ID),
-      hasClientSecret: Boolean(process.env.GOOGLE_CLIENT_SECRET)
-    },
-    nextAuth: {
-      hasSecret: Boolean(process.env.NEXTAUTH_SECRET),
-      url: nextAuthUrl || null
+    supabase: {
+      hasUrl: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      hasAnonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
     }
   });
 }

@@ -5,6 +5,7 @@ import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, Circ
 import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
+import AccountLink from "@/components/auth/AccountLink";
 import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
 import {
   composite,
@@ -884,6 +885,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </button>
         </div>
         <div className="ed-top-actions">
+          <AccountLink className="ed-icon-btn ed-account" icon />
           <button
             className="ed-icon-btn ed-theme-toggle"
             onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}

@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { getAppSession } from "@/lib/auth/session";
 import { grantTrialAccess } from "@/lib/subscription";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await getAppSession();
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
 
   if (!session?.user?.id) {

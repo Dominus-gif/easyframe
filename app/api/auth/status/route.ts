@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
-import { isGoogleAuthConfigured } from "@/lib/auth/options";
+import { supabaseConfigured } from "@/lib/supabase/config";
 
 export const dynamic = "force-dynamic";
 
 export function GET() {
-  return NextResponse.json({
-    google: isGoogleAuthConfigured()
-  });
+  return NextResponse.json({ supabase: supabaseConfigured });
 }

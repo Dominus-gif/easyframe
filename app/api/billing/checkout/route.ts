@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/options";
+import { getAppSession } from "@/lib/auth/session";
 import { grantPaidAccess } from "@/lib/subscription";
 
 const checkoutUrls = {
@@ -11,7 +10,7 @@ const checkoutUrls = {
 export async function POST(request: Request) {
   const formData = await request.formData();
   const plan = formData.get("plan");
-  const session = await getServerSession(authOptions);
+  const session = await getAppSession();
   const localBypass = process.env.ALLOW_LOCAL_MOCK_SESSION === "true";
 
   if (plan !== "monthly" && plan !== "lifetime") {
