@@ -1598,7 +1598,13 @@ html { background: #100E0E; }
 .mk-nav-cta { display: flex; align-items: center; gap: 18px; }
 .mk-account { color: #969692; font-size: 14px; font-weight: 600; text-decoration: none; }
 .mk-account:hover { color: #FDFFF0; }
-.sx-nav-right { display: flex; align-items: center; gap: 18px; }
+.sx-nav-right { display: flex; align-items: center; gap: 18px; justify-self: end; }
 .sx-account { color: #969692; font-size: 14px; font-weight: 500; text-decoration: none; }
 .sx-account:hover { color: #FDFFF0; }
 @media (max-width: 720px) { .mk-account, .sx-account { font-size: 13px; } .mk-nav-cta, .sx-nav-right { gap: 12px; } }
+/* Homepage nav on narrow screens: links collapse, so use a plain left/right split. */
+@media (max-width: 820px) {
+  .sx-nav-in { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .sx-nav-right { gap: 12px; }
+  .sx-nav-cta { white-space: nowrap; }
+}

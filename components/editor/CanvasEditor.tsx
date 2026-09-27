@@ -443,7 +443,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     </>
   );
 
+  /** Fill or fit the screenshot and recenter it (clears manual zoom/pan/tilt). */
+  const fitImage = (fit: "cover" | "contain") => update({ fit, imageScale: 1, imageOffsetX: 0, imageOffsetY: 0, imageRotate: 0 });
+
   const setImage = (img: HTMLImageElement | null) => {
+    // A new screenshot starts centered and filling the screen, rather than
+    // inheriting the previous image's zoom and position.
+    if (img) setSettings((cur) => ({ ...cur, fit: "cover", imageScale: 1, imageOffsetX: 0, imageOffsetY: 0, imageRotate: 0 }));
     imgRef.current = img;
     setHasImage(!!img);
     setImgVersion((v) => v + 1);
@@ -806,6 +812,19 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           e.currentTarget.value = "";
         }}
       />
+      <div className="ed-subhead">
+        Spacing
+        <button
+          className="ed-mini-reset"
+          onClick={() => setCollage((c) => ({ ...c, gap: defaultCollage.gap, padding: defaultCollage.padding, radius: defaultCollage.radius }))}
+          title="Reset spacing"
+        >
+          <RotateCcw size={12} /> Reset
+        </button>
+      </div>
+      <Range label="Space between photos" value={Math.round(collage.gap * 1000)} min={0} max={120} step={1} onChange={(v) => setCollage((c) => ({ ...c, gap: v / 1000 }))} />
+      <Range label="Outer margin" value={Math.round(collage.padding * 1000)} min={0} max={180} step={1} onChange={(v) => setCollage((c) => ({ ...c, padding: v / 1000 }))} />
+      <Range label="Corner radius" value={Math.round(collage.radius * 1000)} min={0} max={150} step={1} onChange={(v) => setCollage((c) => ({ ...c, radius: v / 1000 }))} />
       <p className="ed-hint">Click an empty slot to add a photo, or drop several at once. Drag a photo to reposition it.</p>
     </section>
   );
@@ -831,21 +850,6 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </div>
         </section>
       ) : null}
-      <section className="ed-card">
-        <div className="ed-card-title ed-card-title-row">
-          <span>Spacing</span>
-          <button
-            className="ed-mini-reset"
-            onClick={() => setCollage((c) => ({ ...c, gap: defaultCollage.gap, padding: defaultCollage.padding, radius: defaultCollage.radius }))}
-            title="Reset spacing"
-          >
-            <RotateCcw size={12} /> Reset
-          </button>
-        </div>
-        <Range label="Gap" value={Math.round(collage.gap * 1000)} min={0} max={80} step={1} onChange={(v) => setCollage((c) => ({ ...c, gap: v / 1000 }))} />
-        <Range label="Padding" value={Math.round(collage.padding * 1000)} min={0} max={150} step={1} onChange={(v) => setCollage((c) => ({ ...c, padding: v / 1000 }))} />
-        <Range label="Corner radius" value={Math.round(collage.radius * 1000)} min={0} max={120} step={1} onChange={(v) => setCollage((c) => ({ ...c, radius: v / 1000 }))} />
-      </section>
     </>
   );
   // Background swatches: show the first 8, reveal the rest behind "Show more".
@@ -1127,7 +1131,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <b>{Math.round(previewZoom * 100)}%</b>
             <button onClick={() => setPreviewZoom((z) => Math.min(3, z + 0.1))}>+</button>
           </div>
-          {notice ? <div className="ed-toast" role="status">{notice}</div> : null}
+          {notice ? (
+            <div className="ed-toast" role="status">
+              <span>{notice}</span>
+              {/Premium/.test(notice) ? <a href="/pricing">See Premium</a> : null}
+            </div>
+          ) : null}
         </main>
 
         {/* Right rail: adjustments */}
@@ -1323,15 +1332,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <span>Adjust</span>
             <button className="ed-mini-reset" onClick={resetAdjust} title="Reset these sliders to default"><RotateCcw size={12} /> Reset</button>
           </div>
+          <div className="ed-subhead">Screenshot in frame</div>
+          <div className="ed-seg ed-fitseg" role="group" aria-label="Screenshot fit">
+            <button className={settings.fit === "cover" ? "on" : ""} onClick={() => fitImage("cover")} title="Scale the screenshot to fill the whole screen (edges may crop)">Fill screen</button>
+            <button className={settings.fit === "contain" ? "on" : ""} onClick={() => fitImage("contain")} title="Show the entire screenshot inside the screen">Fit whole image</button>
+          </div>
+          <Range label="Image scale" value={settings.imageScale} min={0.1} max={3} step={0.01} onChange={(v) => update({ imageScale: v })} />
+          <p className="ed-hint">Arrow keys nudge the screenshot inside the frame (Shift for bigger steps).</p>
           <Range label="Padding" value={settings.padding} min={0} max={0.4} step={0.01} onChange={(v) => update({ padding: v })} />
-          <Range label="Image scale" value={settings.imageScale} min={0.4} max={2.5} step={0.01} onChange={(v) => update({ imageScale: v })} />
           <Range label="Rotate" value={settings.imageRotate} min={-45} max={45} step={1} onChange={(v) => update({ imageRotate: v })} />
           <Range label="Shadow" value={settings.shadow} min={0} max={1} step={0.02} onChange={(v) => update({ shadow: v })} />
           <Range label="Corner radius" value={settings.cornerRadius} min={0} max={0.3} step={0.01} onChange={(v) => update({ cornerRadius: v })} />
-          <div className="ed-seg">
-            <button className={settings.fit === "cover" ? "on" : ""} onClick={() => update({ fit: "cover" })}>Cover</button>
-            <button className={settings.fit === "contain" ? "on" : ""} onClick={() => update({ fit: "contain" })}>Contain</button>
-          </div>
           </section>
 
           <section className="ed-card">
@@ -1640,7 +1651,9 @@ function EditorStyles() {
       .ed-tool-toggle.on { background: var(--acc); border-color: transparent; color: #fff; }
       .ed-light .ed-tool-toggle { background: rgba(255,255,255,.92); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
       .ed-light .ed-tool-toggle.on { background: var(--acc); color: #fff; }
-      .ed-toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: #1c1f24; border: 1px solid var(--line-2); font-size: 13px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+      .ed-toast { position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 10px 16px; border-radius: 12px; background: #1c1f24; border: 1px solid var(--line-2); font-size: 13px; color: #f4f5f7; z-index: 30; display: flex; align-items: center; gap: 12px; max-width: calc(100% - 32px); box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+      .ed-toast a { color: inherit; font-weight: 650; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+      .ed-light .ed-toast { background: #ffffff; color: #16181d; border-color: rgba(15,18,25,.14); box-shadow: 0 16px 40px rgba(15,18,25,.18); }
 
       .ed-swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
       .ed-swatch { aspect-ratio: 1; border-radius: 9px; border: 1px solid var(--line); cursor: pointer; transition: transform .12s; }
@@ -1727,6 +1740,8 @@ function EditorStyles() {
       .ed-photo-actions > * { height: 34px; }
       /* Gradient type + direction pad */
       .ed-gradtype { margin-top: 6px; }
+      .ed-fitseg { margin-top: 6px; margin-bottom: 4px; }
+      .ed-fitseg button { flex: 1; }
       .ed-gradtype button { flex: 1; }
       .ed-grad-editor { display: flex; gap: 10px; align-items: stretch; margin-top: 10px; }
       .ed-grad-editor .ed-grad-preview { flex: 1; height: auto; min-height: 78px; margin-top: 0; }

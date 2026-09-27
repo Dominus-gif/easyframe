@@ -90,7 +90,7 @@ export const COLLAGE_TEMPLATES: CollageTemplate[] = [
 export const defaultCollage: CollageState = {
   templateId: "grid4",
   aspect: "1:1",
-  gap: 0.018,
+  gap: 0.024,
   padding: 0.04,
   radius: 0.02,
   photos: []

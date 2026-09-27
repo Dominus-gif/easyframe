@@ -89,10 +89,10 @@ export default function CookieConsent() {
             /* Light variant — only when the editor is explicitly toggled to light. */
             :global(html[data-editor-theme="light"]) .cc { background: #fafafb; border-top-color: rgba(0,0,0,.10); box-shadow: 0 -6px 24px rgba(0,0,0,.10); color: #28282c; }
             :global(html[data-editor-theme="light"]) .cc p { color: #40404a; }
-            :global(html[data-editor-theme="light"]) .cc a { color: #6E41E2; }
+            :global(html[data-editor-theme="light"]) .cc a { color: #16181d; }
             :global(html[data-editor-theme="light"]) .cc-decline { background: #fff; border-color: rgba(0,0,0,.12); color: #28282c; }
             :global(html[data-editor-theme="light"]) .cc-decline:hover { border-color: rgba(0,0,0,.28); }
-            :global(html[data-editor-theme="light"]) .cc-accept { background: #6E41E2; color: #fff; }
+            :global(html[data-editor-theme="light"]) .cc-accept { background: #16181d; color: #fff; }
             .cc-btn:focus-visible { outline: 2px solid #FF0055; outline-offset: 2px; }
           `}</style>
         </div>
