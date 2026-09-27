@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
+import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
 import {
   composite,
   defaultSettings,
@@ -116,6 +117,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [cropMode, setCropMode] = useState(false);
   const [draftCrop, setDraftCrop] = useState<CropRect>({ x: 0, y: 0, w: 1, h: 1 });
   const [cropAspect, setCropAspect] = useState("free");
+  // Collage mode
+  const [mode, setMode] = useState<"mockup" | "collage">("mockup");
+  const [collage, setCollage] = useState<CollageState>(defaultCollage);
+  const [selectedCell, setSelectedCell] = useState<number | null>(null);
+  const collageFileRef = useRef<HTMLInputElement>(null);
+  const collageTarget = useRef<number | null>(null);
+  const cellDrag = useRef<{ index: number; x: number; y: number } | null>(null);
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const collageRef = useRef(collage);
+  collageRef.current = collage;
 
   useEffect(() => {
     try {
@@ -174,11 +186,16 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const recompose = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    if (mode === "collage") {
+      const res = renderCollage(canvas, collage, settings.background, overlays, { maxEdge: PREVIEW_MAX_EDGE, preview: true, selected: selectedCell });
+      if (res.width && res.height) setPreviewDims(res);
+      return;
+    }
     // While cropping, show the full frame so the region can be chosen from it.
     const renderSettings = cropMode ? { ...settings, crop: null } : settings;
     const res = composite(canvas, imgRef.current, renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
     if (res.width && res.height) setPreviewDims(res);
-  }, [settings, overlays, cropMode]);
+  }, [settings, overlays, cropMode, mode, collage, selectedCell]);
 
   useEffect(() => {
     recompose();
@@ -450,7 +467,63 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     }
   }, []);
 
+  /** Load photos into the collage: the first goes to `startAt` (if given), the rest fill empty slots. */
+  const loadPhotos = async (files: File[], startAt: number | null = null) => {
+    const usable = files.filter((file) => /image\/(png|jpeg|webp)/.test(file.type));
+    if (!usable.length) {
+      if (files.length) flash("Unsupported file. Use PNG, JPEG, or WebP.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const loaded = await Promise.all(usable.map((file) => loadImageSafely(file)));
+      const c = collageRef.current;
+      const slots = templateById(c.templateId).cells.length;
+      const photos: (CollagePhoto | null)[] = [...c.photos];
+      while (photos.length < slots) photos.push(null);
+      const targets: number[] = [];
+      if (startAt != null) targets.push(startAt);
+      for (let i = 0; i < slots; i++) if (!photos[i] && i !== startAt) targets.push(i);
+      let placed = 0;
+      for (const img of loaded) {
+        const t = targets[placed];
+        if (t == null) break;
+        photos[t] = { img, zoom: 1, ox: 0, oy: 0 };
+        placed++;
+      }
+      setCollage({ ...c, photos });
+      if (placed < loaded.length) flash(`This layout has ${slots} photo slots. Pick a bigger layout for more.`);
+      track("collage_photos_added", { count: placed });
+    } catch {
+      flash("Could not load one of those images.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const loadPhotosRef = useRef(loadPhotos);
+  loadPhotosRef.current = loadPhotos;
+  const patchPhoto = (index: number, patch: Partial<CollagePhoto>) =>
+    setCollage((c) => ({ ...c, photos: c.photos.map((p, i) => (i === index && p ? { ...p, ...patch } : p)) }));
+  const removePhoto = (index: number) => setCollage((c) => ({ ...c, photos: c.photos.map((p, i) => (i === index ? null : p)) }));
+  const pickPhotos = (target: number | null) => {
+    collageTarget.current = target;
+    collageFileRef.current?.click();
+  };
+  const switchMode = (next: "mockup" | "collage") => {
+    if (next === mode) return;
+    setMode(next);
+    setCropMode(false);
+    setDragRotate(false);
+    setSelectedCell(null);
+    setSelectedId(null);
+    track("editor_mode", { mode: next });
+  };
+
   const onFiles = (files: FileList | null) => {
+    if (mode === "collage") {
+      void loadPhotos(Array.from(files ?? []));
+      return;
+    }
     const file = files?.[0];
     if (!file) return;
     if (!/image\/(png|jpeg|webp)/.test(file.type)) {
@@ -465,7 +538,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     const onPaste = (event: ClipboardEvent) => {
       const item = Array.from(event.clipboardData?.items ?? []).find((i) => i.type.startsWith("image/"));
       const file = item?.getAsFile();
-      if (file) void ingest(file);
+      if (!file) return;
+      if (modeRef.current === "collage") void loadPhotosRef.current([file]);
+      else void ingest(file);
     };
     window.addEventListener("paste", onPaste);
     return () => window.removeEventListener("paste", onPaste);
@@ -501,11 +576,48 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
   // Drag the image within the frame.
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (mode === "collage" && !(selectedId && selectedOverlay)) {
+      const cv = event.currentTarget;
+      const rect = cv.getBoundingClientRect();
+      const px = ((event.clientX - rect.left) / rect.width) * cv.width;
+      const py = ((event.clientY - rect.top) / rect.height) * cv.height;
+      const i = hitCell(collage, cv.width, cv.height, px, py);
+      if (i < 0) {
+        setSelectedCell(null);
+        return;
+      }
+      setSelectedCell(i);
+      if (!collage.photos[i]) {
+        pickPhotos(i); // empty slot: fill it
+        return;
+      }
+      cellDrag.current = { index: i, x: event.clientX, y: event.clientY };
+      try {
+        cv.setPointerCapture(event.pointerId);
+      } catch {
+        /* ignore */
+      }
+      return;
+    }
     if (!hasImage && !selectedOverlay && !dragRotate) return;
     dragRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (cellDrag.current) {
+      // Pan the photo inside its collage slot.
+      const cv = event.currentTarget;
+      const rect = cv.getBoundingClientRect();
+      const d = cellDrag.current;
+      const dxPx = ((event.clientX - d.x) / rect.width) * cv.width;
+      const dyPx = ((event.clientY - d.y) / rect.height) * cv.height;
+      cellDrag.current = { ...d, x: event.clientX, y: event.clientY };
+      setCollage((c) => {
+        const pan = panPhoto(c, d.index, cv.width, cv.height, dxPx, dyPx);
+        return pan ? { ...c, photos: c.photos.map((p, i) => (i === d.index && p ? { ...p, ...pan } : p)) } : c;
+      });
+      return;
+    }
     if (!dragRef.current) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const dx = (event.clientX - dragRef.current.x) / rect.width;
@@ -518,8 +630,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     }
     // With a crop applied the canvas shows only the kept region, so a drag covers
     // less of the full scene: scale moves back into full-scene fractions.
-    const mx = dx * (settings.crop?.w ?? 1);
-    const my = dy * (settings.crop?.h ?? 1);
+    const cropped = mode === "mockup" ? settings.crop : null;
+    const mx = dx * (cropped?.w ?? 1);
+    const my = dy * (cropped?.h ?? 1);
     if (selectedId && selectedOverlay) {
       const transform = event.ctrlKey || event.metaKey;
       setOverlays((prev) => prev.map((o) => {
@@ -537,6 +650,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     }
   };
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    cellDrag.current = null;
     dragRef.current = null;
     try { event.currentTarget.releasePointerCapture(event.pointerId); } catch {}
   };
@@ -550,12 +664,19 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         (settings.background.type === "transparent" || settings.background.type === "image") && !premium
           ? { ...settings, background: { type: "solid" as const, color: "#0b0d0f" } }
           : settings;
-      const blob = await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge, overlays);
+      if (mode === "collage" && !collage.photos.some(Boolean)) {
+        flash("Add at least one photo to your collage first.");
+        return;
+      }
+      const blob =
+        mode === "collage"
+          ? await exportCollage(collage, exportSettings.background, overlays, format, quality / 100, maxEdge)
+          : await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge, overlays);
       track("export_completed", { device: settings.deviceSlug, format, premium });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       const ext = format === "jpeg" ? "jpg" : format;
-      const filename = `${settings.deviceSlug}-${maxEdge}px.${ext}`;
+      const filename = `${mode === "collage" ? `collage-${collage.aspect.replace(":", "x")}` : settings.deviceSlug}-${maxEdge}px.${ext}`;
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
@@ -619,6 +740,113 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     });
 
   const bg = settings.background;
+
+  // ---- Collage panels ----
+  const collageSlots = templateById(collage.templateId).cells.length;
+  const collageFilled = collage.photos.slice(0, collageSlots).filter(Boolean).length;
+  const selectedPhoto = selectedCell != null ? collage.photos[selectedCell] ?? null : null;
+
+  const collageLeft = (
+    <section className="ed-card">
+      <div className="ed-card-title">Collage</div>
+      <div className="ed-subhead">Canvas size</div>
+      <div className="ed-seg ed-collage-aspects" role="group" aria-label="Canvas size">
+        {COLLAGE_ASPECTS.map((a) => (
+          <button key={a.id} className={collage.aspect === a.id ? "on" : ""} onClick={() => setCollage((c) => ({ ...c, aspect: a.id }))} title={a.label}>
+            {a.id}
+          </button>
+        ))}
+      </div>
+      <div className="ed-subhead">
+        Layout
+        <span className="ed-collage-count">{collageFilled}/{collageSlots} photos</span>
+      </div>
+      <div className="ed-layouts">
+        {COLLAGE_TEMPLATES.map((t) => (
+          <button
+            key={t.id}
+            className={`ed-layout ${collage.templateId === t.id ? "on" : ""}`}
+            onClick={() => {
+              setCollage((c) => ({ ...c, templateId: t.id }));
+              setSelectedCell(null);
+            }}
+            title={`${t.label} (${t.cells.length} photo${t.cells.length > 1 ? "s" : ""})`}
+            aria-label={`${t.label} layout`}
+          >
+            <span className="ed-layout-art">
+              {t.cells.map((c, i) => (
+                <i
+                  key={i}
+                  className={c.polaroid ? "polaroid" : c.circle ? "circle" : ""}
+                  style={{
+                    left: `calc(${c.x * 100}% + 1.5px)`,
+                    top: `calc(${c.y * 100}% + 1.5px)`,
+                    width: `calc(${c.w * 100}% - 3px)`,
+                    height: c.circle ? undefined : `calc(${c.h * 100}% - 3px)`,
+                    aspectRatio: c.circle ? "1 / 1" : undefined,
+                    transform: c.rot ? `rotate(${c.rot}deg)` : undefined
+                  }}
+                />
+              ))}
+            </span>
+            <span className="ed-layout-name">{t.label}</span>
+          </button>
+        ))}
+      </div>
+      <input
+        ref={collageFileRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        multiple
+        hidden
+        onChange={(e) => {
+          void loadPhotos(Array.from(e.target.files ?? []), collageTarget.current);
+          collageTarget.current = null;
+          e.currentTarget.value = "";
+        }}
+      />
+      <p className="ed-hint">Click an empty slot to add a photo, or drop several at once. Drag a photo to reposition it.</p>
+    </section>
+  );
+
+  const collageRight = (
+    <>
+      {selectedCell != null && selectedPhoto ? (
+        <section className="ed-card">
+          <div className="ed-card-title ed-card-title-row">
+            <span>Photo {selectedCell + 1}</span>
+            <button className="ed-mini-reset" onClick={() => patchPhoto(selectedCell, { zoom: 1, ox: 0, oy: 0 })} title="Recenter and reset zoom">
+              <RotateCcw size={12} /> Reset
+            </button>
+          </div>
+          <Range label="Zoom" value={selectedPhoto.zoom} min={1} max={3} step={0.01} onChange={(v) => patchPhoto(selectedCell, { zoom: v })} />
+          <div className="ed-photo-actions">
+            <button className="ed-upload" onClick={() => pickPhotos(selectedCell)}>
+              <ImagePlus size={14} /> Replace
+            </button>
+            <button className="ed-remove" onClick={() => removePhoto(selectedCell)}>
+              <Trash2 size={14} /> Remove
+            </button>
+          </div>
+        </section>
+      ) : null}
+      <section className="ed-card">
+        <div className="ed-card-title ed-card-title-row">
+          <span>Spacing</span>
+          <button
+            className="ed-mini-reset"
+            onClick={() => setCollage((c) => ({ ...c, gap: defaultCollage.gap, padding: defaultCollage.padding, radius: defaultCollage.radius }))}
+            title="Reset spacing"
+          >
+            <RotateCcw size={12} /> Reset
+          </button>
+        </div>
+        <Range label="Gap" value={Math.round(collage.gap * 1000)} min={0} max={80} step={1} onChange={(v) => setCollage((c) => ({ ...c, gap: v / 1000 }))} />
+        <Range label="Padding" value={Math.round(collage.padding * 1000)} min={0} max={150} step={1} onChange={(v) => setCollage((c) => ({ ...c, padding: v / 1000 }))} />
+        <Range label="Corner radius" value={Math.round(collage.radius * 1000)} min={0} max={120} step={1} onChange={(v) => setCollage((c) => ({ ...c, radius: v / 1000 }))} />
+      </section>
+    </>
+  );
   // Background swatches: show the first 8, reveal the rest behind "Show more".
   const bgSwatches: Array<{ id: string; label: string; bg: BackgroundSetting }> = [
     ...BACKGROUND_PRESETS,
@@ -647,6 +875,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <span className="ed-brand-name">EasyFrame</span>
           <span className="ed-brand-tag">Editor</span>
         </a>
+        <div className="ed-modes" role="tablist" aria-label="Editor mode">
+          <button role="tab" aria-selected={mode === "mockup"} className={mode === "mockup" ? "on" : ""} onClick={() => switchMode("mockup")}>
+            <Smartphone size={14} /> Mockup
+          </button>
+          <button role="tab" aria-selected={mode === "collage"} className={mode === "collage" ? "on" : ""} onClick={() => switchMode("collage")}>
+            <LayoutGrid size={14} /> Collage
+          </button>
+        </div>
         <div className="ed-top-actions">
           <button
             className="ed-icon-btn ed-theme-toggle"
@@ -683,7 +919,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
       <div className="ed-body">
         {/* Left rail: devices */}
-        <aside className="ed-rail ed-rail-left" aria-label="Devices">
+        <aside className="ed-rail ed-rail-left" aria-label={mode === "collage" ? "Collage" : "Devices"}>
+          {mode === "collage" ? collageLeft : null}
+          {mode === "mockup" ? (
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, devices: !c.devices }))} aria-expanded={!collapsed.devices}>
               <span>Device</span>
@@ -722,6 +960,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             ) : null}
           </section>
 
+          ) : null}
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, elements: !c.elements }))} aria-expanded={!collapsed.elements}>
               <span>Elements</span>
@@ -741,6 +980,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             ) : null}
           </section>
 
+          {mode === "mockup" ? (
           <section className="ed-card">
             <div className="ed-card-title">Image</div>
             <button className="ed-upload" onClick={() => fileRef.current?.click()}>
@@ -759,6 +999,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             ) : null}
           </section>
 
+          ) : null}
           <section className="ed-card">
             <div className="ed-card-title"><Layers size={12} style={{ marginRight: -2 }} /> Layers</div>
             <div className="ed-layer-add">
@@ -769,6 +1010,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <div className="ed-layers">
               {[...layerStack].reverse().map((item) => {
                 if (item.kind === "device") {
+                  if (mode === "collage") return null;
                   return (
                     <div key="__device__" className={`ed-layer ${selectedId === null ? "on" : ""}`}>
                       <button className="ed-layer-main" onClick={() => setSelectedId(null)}>
@@ -801,7 +1043,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
         {/* Canvas */}
         <main className="ed-stage" aria-label="Preview">
-          {cropMode ? (
+          {mode === "collage" ? null : cropMode ? (
             <div className="ed-cropbar" role="toolbar" aria-label="Crop">
               <div className="ed-crop-aspects" role="group" aria-label="Aspect ratio">
                 {CROP_ASPECTS.map((a) => (
@@ -857,12 +1099,21 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               onPointerCancel={onPointerUp}
             />
           </div>
-          <div className={`ed-uploadbar ${hasImage ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
-            <button className="ed-upload-btn" onClick={() => fileRef.current?.click()}>
-              <Upload size={hasImage ? 14 : 16} strokeWidth={2.2} />
-              {hasImage ? "Replace screenshot" : "Upload screenshot"}
-            </button>
-            {!hasImage ? (
+          <div className={`ed-uploadbar ${(mode === "collage" ? collageFilled > 0 : hasImage) ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
+            {mode === "collage" ? (
+              <button className="ed-upload-btn" onClick={() => pickPhotos(null)}>
+                <ImagePlus size={collageFilled ? 14 : 16} strokeWidth={2.2} />
+                {collageFilled ? "Add more photos" : "Add photos"}
+              </button>
+            ) : (
+              <button className="ed-upload-btn" onClick={() => fileRef.current?.click()}>
+                <Upload size={hasImage ? 14 : 16} strokeWidth={2.2} />
+                {hasImage ? "Replace screenshot" : "Upload screenshot"}
+              </button>
+            )}
+            {mode === "collage" ? (
+              collageFilled ? null : <span className="ed-upload-hint">pick several at once · they fill the layout in order</span>
+            ) : !hasImage ? (
               <span className="ed-upload-hint">or drop / paste anywhere · PNG, JPG, WebP · never leaves your device</span>
             ) : null}
           </div>
@@ -1064,6 +1315,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           ) : null}
           </section>
 
+          {mode === "collage" ? collageRight : (<>
           <section className="ed-card">
           <div className="ed-card-title ed-card-title-row">
             <span>Adjust</span>
@@ -1111,6 +1363,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <button className="ed-reset-flat" onClick={() => update({ rotateX: 0, rotateY: 0, rotateZ: 0 })}>Reset to flat</button>
           </>) : null}
           </section>
+          </>)}
         </aside>
       </div>
 
@@ -1444,6 +1697,32 @@ function EditorStyles() {
       .ed-custom-grad { display: grid; grid-template-columns: 1fr 42px 42px; gap: 8px; align-items: center; }
       .ed-custom-grad .ed-color { width: 100%; height: 40px; }
       .ed-grad-preview { height: 40px; border-radius: 9px; border: 1px solid var(--line); margin-top: 8px; }
+      /* Mode switch (Mockup | Collage) */
+      .ed-modes { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid var(--line); }
+      .ed-modes button { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 14px; border-radius: 9px; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .14s ease, color .14s ease; }
+      .ed-modes button:hover { color: var(--text); }
+      .ed-modes button.on { background: var(--acc); color: var(--acc-ink); }
+      .ed-light .ed-modes { background: rgba(15,18,25,.04); }
+      @media (max-width: 720px) { .ed-modes button { padding: 0 10px; } }
+      /* Collage */
+      .ed-collage-aspects button { flex: 1; font-variant-numeric: tabular-nums; }
+      .ed-collage-count { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); text-transform: none; letter-spacing: 0; }
+      .ed-layouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
+      .ed-layout { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 4px 5px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--muted); cursor: pointer; transition: border-color .14s ease, color .14s ease, transform .14s ease; }
+      .ed-layout:hover { border-color: var(--line-2); color: var(--text); transform: translateY(-1px); }
+      .ed-layout.on { border-color: var(--acc); color: var(--text); box-shadow: 0 0 0 1px var(--acc) inset; }
+      .ed-layout-art { position: relative; width: 100%; aspect-ratio: 1; border-radius: 5px; background: rgba(255,255,255,.04); overflow: hidden; }
+      .ed-layout-art i { position: absolute; border-radius: 2px; background: rgba(255,255,255,.34); }
+      .ed-layout.on .ed-layout-art i { background: var(--acc); opacity: .85; }
+      .ed-layout-art i.circle { border-radius: 50%; }
+      .ed-layout-art i.polaroid { background: #f4f1ea; box-shadow: inset 0 0 0 2px #f4f1ea, inset 0 -5px 0 #f4f1ea, 0 1px 3px rgba(0,0,0,.4); }
+      .ed-layout-art i.polaroid::after { content: ""; position: absolute; inset: 2px 2px 6px; background: rgba(120,130,150,.55); border-radius: 1px; }
+      .ed-layout-name { font-size: 10px; font-weight: 600; white-space: nowrap; }
+      .ed-light .ed-layout { background: #fff; }
+      .ed-light .ed-layout-art { background: rgba(15,18,25,.05); }
+      .ed-light .ed-layout-art i { background: rgba(15,18,25,.28); }
+      .ed-photo-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
+      .ed-photo-actions > * { height: 34px; }
       /* Gradient type + direction pad */
       .ed-gradtype { margin-top: 6px; }
       .ed-gradtype button { flex: 1; }

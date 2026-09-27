@@ -9,7 +9,9 @@ export type AnalyticsEvent =
   | "ad_unfilled"
   | "ad_click"
   | "premium_started"
-  | "premium_purchased";
+  | "premium_purchased"
+  | "editor_mode"
+  | "collage_photos_added";
 
 export function track(event: AnalyticsEvent, params: Record<string, unknown> = {}): void {
   if (typeof window === "undefined") return;
