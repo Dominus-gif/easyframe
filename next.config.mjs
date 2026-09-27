@@ -8,7 +8,9 @@ const nextConfig = {
         has: [
           {
             type: "host",
-            value: "easyframe.app"
+            // `has.value` is a regex: anchor it, or it also matches inside
+            // "www.easyframe.app" and redirects www to itself forever.
+            value: "^easyframe\\.app$"
           }
         ],
         destination: "https://www.easyframe.app/:path*",

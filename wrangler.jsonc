@@ -17,6 +17,22 @@
     "enabled": true
   },
 
+  // Served only on the custom domains below (no duplicate *.workers.dev copy).
+  "workers_dev": false,
+
+  // Non-secret runtime config. Secrets go in via `wrangler secret`
+  // (scripts/setup-secrets.ps1), never in this file.
+  "vars": {
+    "NEXTAUTH_URL": "https://www.easyframe.app"
+  },
+
+  // Custom domains: Cloudflare creates and manages the DNS records + certs.
+  // next.config.mjs 308-redirects the apex to www.
+  "routes": [
+    { "pattern": "www.easyframe.app", "custom_domain": true },
+    { "pattern": "easyframe.app", "custom_domain": true }
+  ],
+
   // Pooled connection to the existing production Postgres.
   // Create it once with your own connection string (see MIGRATION-CLOUDFLARE.md):
   //   npx wrangler hyperdrive create easyframe-db --connection-string="postgres://..."
@@ -24,7 +40,11 @@
   "hyperdrive": [
     {
       "binding": "HYPERDRIVE",
-      "id": "REPLACE_WITH_HYPERDRIVE_ID"
+      "id": "7100bfe82eae4ae68e6806efa0809abe",
+      // Local emulation only (`wrangler dev`, `cf:preview`, and the deploy
+      // command's env probe). Not a real credential; production always uses
+      // the Hyperdrive config above.
+      "localConnectionString": "postgresql://postgres:postgres@127.0.0.1:5432/easyframe"
     }
   ]
 }

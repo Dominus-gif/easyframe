@@ -4,8 +4,25 @@ Moves the app off Vercel onto **Cloudflare Workers** using
 [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare), with the existing
 production Postgres reached through **Hyperdrive**.
 
-The code side is done and verified locally against the real `workerd` runtime.
-What remains needs *your* credentials, so it's listed under "Your steps" below.
+## Status (2026-09-27)
+
+- [x] Worker deployed; `www.easyframe.app` + `easyframe.app` attached as custom domains (apex 308 → www)
+- [x] Hyperdrive `easyframe-db` (`7100bfe82eae4ae68e6806efa0809abe`) → Supabase **session** pooler, `:5432`; query caching **disabled** (billing reads must not be stale)
+- [x] `NEXTAUTH_URL` set as a plain var in `wrangler.jsonc`
+- [ ] Production secrets: run `scripts/setup-secrets.ps1`
+- [ ] `NEXT_PUBLIC_ADSENSE_CLIENT` / `NEXT_PUBLIC_GA_MEASUREMENT_ID` for the build (see below)
+- [ ] End-to-end: Google sign-in, a checkout, a Dodo webhook delivery; then retire Vercel
+
+### Gotchas hit during cutover
+- **Local env leaks into the Worker.** OpenNext bakes `.env` / `.env.local` into the
+  bundle at build time. Dev secrets therefore live in `.env.development.local`
+  (loaded by `next dev` only); `.gitignore` covers `.env*.local`.
+- **Self-redirect loop on www.** `next.config.mjs`'s `has.host` value is a regex;
+  unanchored, `easyframe.app` matched inside `www.easyframe.app`. Now `^easyframe\.app$`.
+- **Supabase URL:** Hyperdrive must use the *session* pooler (`:5432`), not the
+  transaction pooler (`:6543`, `pgbouncer=true`) that Vercel uses.
+- **Windows:** call wrangler via `node node_modules/wrangler/bin/wrangler.js`
+  when passing credentials; `npx.cmd` routes args through `cmd.exe`, which mangles `& ^ %`.
 
 ---
 

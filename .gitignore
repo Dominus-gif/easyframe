@@ -13,3 +13,6 @@ dev.db-journal
 # Cloudflare / OpenNext
 .open-next
 .dev.vars
+
+# Any local env file (dev secrets) - never commit
+.env*.local
