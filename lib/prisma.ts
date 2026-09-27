@@ -1,4 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+// The default client's Node runtime (runtime/library.js) calls eval(), which
+// Cloudflare Workers forbids at request time. The wasm runtime is eval-free and
+// is what the Hyperdrive/driver-adapter path must use on the Worker.
+import { PrismaClient as PrismaClientWasm } from "@prisma/client/wasm";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
 
@@ -44,12 +48,14 @@ function getCloudflareEnv(): CloudflareEnv | undefined {
   }
 }
 
-/** Workers: route Prisma through Hyperdrive with the pg driver adapter. */
+/** Workers: route Prisma through Hyperdrive with the pg driver adapter (wasm engine). */
 function createWorkersClient(connectionString: string): PrismaClient {
   // Hyperdrive already pools on Cloudflare's side, so keep the local pool small
   // and scoped to this request.
   const pool = new Pool({ connectionString, max: 5 });
-  return new PrismaClient({ adapter: new PrismaPg(pool), log: logLevels });
+  // Cast: the wasm client is API-compatible with PrismaClient but has its own
+  // (structurally identical) constructor type.
+  return new PrismaClientWasm({ adapter: new PrismaPg(pool), log: logLevels }) as unknown as PrismaClient;
 }
 
 /** Node (local dev, build, any non-Workers host): plain client over DATABASE_URL. */
