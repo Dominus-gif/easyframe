@@ -90,18 +90,18 @@ export async function POST(request: Request) {
     userId = user?.id;
 
     if (user) {
+      // No yearly plan exists; lifetime is checked first so a product id shared
+      // with the (unused) yearly field always resolves to lifetime.
       const plan =
         productId && productId === process.env.DODO_LIFETIME_PRODUCT_ID
           ? "lifetime"
-          : productId && productId === process.env.DODO_YEARLY_PRODUCT_ID
-            ? "yearly"
-            : productId && productId === process.env.DODO_MONTHLY_PRODUCT_ID
-              ? "monthly"
-              : user.subscriptionPlan;
+          : productId && productId === process.env.DODO_MONTHLY_PRODUCT_ID
+            ? "monthly"
+            : user.subscriptionPlan;
 
       const paidEvent = ["subscription.created", "subscription.active", "payment.successful", "payment.succeeded", "payment.success"].includes(eventType);
 
-      if (paidEvent && (plan === "monthly" || plan === "yearly" || plan === "lifetime")) {
+      if (paidEvent && (plan === "monthly" || plan === "lifetime")) {
         await grantPaidAccess(user.id, plan, payload.data?.subscription_id, customerId);
       } else {
         await prisma.user.update({
