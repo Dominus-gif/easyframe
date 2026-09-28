@@ -12,12 +12,12 @@ import AccountLink from "@/components/auth/AccountLink";
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
 const floatTiles = [
-  { Icon: Smartphone, cls: "t1" },
-  { Icon: Tablet, cls: "t2" },
-  { Icon: Laptop, cls: "t3" },
-  { Icon: AppWindow, cls: "t4" },
-  { Icon: Watch, cls: "t5" },
-  { Icon: Monitor, cls: "t6" }
+  { Icon: Smartphone, cls: "t1", par: -40 },
+  { Icon: Tablet, cls: "t2", par: -62 },
+  { Icon: Laptop, cls: "t3", par: -30 },
+  { Icon: AppWindow, cls: "t4", par: -68 },
+  { Icon: Watch, cls: "t5", par: -46 },
+  { Icon: Monitor, cls: "t6", par: -34 }
 ];
 
 const deviceNames = [
@@ -109,7 +109,7 @@ export default function HomeLanding() {
             <span><Gift size={15} /> Free forever</span>
             <span><ShieldCheck size={15} /> Images never leave your browser</span>
           </div>
-          <h1 className="bx-h1" data-reveal style={rd(1)}>Device mockups<br />without designing</h1>
+          <h1 className="bx-h1" data-reveal="blur" style={rd(1)}>Device mockups<br />without designing</h1>
           <p className="bx-lead" data-reveal style={rd(2)}>
             Drop in a screenshot and get a polished, store-ready mockup in seconds. No Figma file, no Photoshop template, no sign-up.
           </p>
@@ -120,8 +120,8 @@ export default function HomeLanding() {
         </div>
 
         <div className="bx-stage">
-          {floatTiles.map(({ Icon, cls }) => (
-            <span className={`bx-tile ${cls}`} key={cls} aria-hidden="true"><Icon size={26} strokeWidth={1.8} /></span>
+          {floatTiles.map(({ Icon, cls, par }) => (
+            <span className={`bx-tile ${cls}`} key={cls} data-par={par} aria-hidden="true"><Icon size={26} strokeWidth={1.8} /></span>
           ))}
 
           <div className="bx-window" data-reveal style={rd(4)} role="img" aria-label="The EasyFrame editor framing an app screenshot in an iPhone on a pastel gradient">
@@ -166,8 +166,8 @@ export default function HomeLanding() {
             </div>
           </div>
 
-          <p className="bx-note bx-note-a" aria-hidden="true">your screenshot, framed</p>
-          <p className="bx-note bx-note-b" aria-hidden="true">18 devices to pick from</p>
+          <p className="bx-note bx-note-a" data-par={-28} aria-hidden="true">your screenshot, framed</p>
+          <p className="bx-note bx-note-b" data-par={-38} aria-hidden="true">18 devices to pick from</p>
         </div>
       </header>
 
@@ -191,13 +191,13 @@ export default function HomeLanding() {
             <h2 className="bx-h2s">What your audience actually sees</h2>
           </div>
           <div className="bx-ba">
-            <figure className="bx-ba-card bx-before" data-reveal>
+            <figure className="bx-ba-card bx-before" data-reveal="left">
               <span className="bx-ba-tag">Before</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/showcase/app-screen.webp" alt="A plain app screenshot with no frame or background" width={780} height={1688} loading="lazy" />
               <figcaption>A raw screenshot</figcaption>
             </figure>
-            <figure className="bx-ba-card bx-after" data-reveal style={rd(1)}>
+            <figure className="bx-ba-card bx-after" data-reveal="right" data-bgpar={-14}>
               <span className="bx-ba-tag on">After</span>
               <Phone className="bx-tilt-soft" />
               <figcaption>The same screenshot, framed in EasyFrame</figcaption>
@@ -218,8 +218,8 @@ export default function HomeLanding() {
             <p className="bx-lead">Pick a frame, drop in your screenshot and it snaps into the screen — corners, notch and all.</p>
           </div>
           <div className="bx-cards">
-            <article className="bx-fcard" data-reveal>
-              <div className="bx-vis bx-vis-blue">
+            <article className="bx-fcard" data-reveal="left">
+              <div className="bx-vis bx-vis-blue" data-bgpar={-18}>
                 <div className="bx-devrow">
                   <span className="d-watch" /><span className="d-phone" /><span className="d-tab" /><span className="d-lap" />
                 </div>
@@ -230,7 +230,7 @@ export default function HomeLanding() {
               </div>
             </article>
             <article className="bx-fcard" data-reveal style={rd(1)}>
-              <div className="bx-vis bx-vis-lilac">
+              <div className="bx-vis bx-vis-lilac" data-bgpar={-18}>
                 <div className="bx-swatchgrid">
                   {swatches.map((bg) => <span key={bg} style={{ background: bg }} />)}
                 </div>
@@ -240,8 +240,8 @@ export default function HomeLanding() {
                 <p>Mesh, radial and linear gradients with a film-grain finish, or solid colors.</p>
               </div>
             </article>
-            <article className="bx-fcard" data-reveal style={rd(2)}>
-              <div className="bx-vis bx-vis-peach">
+            <article className="bx-fcard" data-reveal="right">
+              <div className="bx-vis bx-vis-peach" data-bgpar={-18}>
                 <Phone className="bx-mini bx-tilt" />
               </div>
               <div className="bx-fcopy">
@@ -262,8 +262,8 @@ export default function HomeLanding() {
             <p className="bx-lead">Arrange several screens, crop to the size you need and export — without leaving the tab.</p>
           </div>
           <div className="bx-cards">
-            <article className="bx-fcard" data-reveal>
-              <div className="bx-vis bx-vis-lilac">
+            <article className="bx-fcard" data-reveal="left">
+              <div className="bx-vis bx-vis-lilac" data-bgpar={-18}>
                 <div className="bx-collage">
                   <Phone className="bx-mini c1" /><Phone className="bx-mini c2" /><Phone className="bx-mini c3" />
                 </div>
@@ -274,7 +274,7 @@ export default function HomeLanding() {
               </div>
             </article>
             <article className="bx-fcard" data-reveal style={rd(1)}>
-              <div className="bx-vis bx-vis-blue">
+              <div className="bx-vis bx-vis-blue" data-bgpar={-18}>
                 <div className="bx-crop">
                   <span className="bx-crop-size">1290 × 2796</span>
                   <b /><b /><b /><b />
@@ -285,8 +285,8 @@ export default function HomeLanding() {
                 <p>App Store, Instagram, X and slide sizes — or crop freely to your own.</p>
               </div>
             </article>
-            <article className="bx-fcard" data-reveal style={rd(2)}>
-              <div className="bx-vis bx-vis-peach">
+            <article className="bx-fcard" data-reveal="right">
+              <div className="bx-vis bx-vis-peach" data-bgpar={-18}>
                 <div className="bx-files">
                   <span>PNG</span><span>JPEG</span><span>WebP</span><span className="pro">4K · Premium</span>
                 </div>
@@ -309,7 +309,7 @@ export default function HomeLanding() {
           </div>
           <div className="bx-dest">
             {destinations.map((d, i) => (
-              <article className="bx-dcard" data-reveal style={rd(i % 3)} key={d.title}>
+              <article className="bx-dcard" data-reveal="scale" style={rd(i % 3)} key={d.title}>
                 <span className="bx-dic"><d.Icon size={20} strokeWidth={1.8} /></span>
                 <h3>{d.title}</h3>
                 <p>{d.body}</p>
@@ -346,9 +346,9 @@ export default function HomeLanding() {
       </section>
 
       {/* Final CTA */}
-      <section className="bx-final">
+      <section className="bx-final" data-bgpar={-22}>
         <div className="bx-wrap">
-          <div className="bx-glass" data-reveal>
+          <div className="bx-glass" data-reveal="scale">
             <h2 className="bx-h2">Mockups that<br />just work</h2>
             <p className="bx-lead">The free mockup tool that lives in a browser tab.</p>
             <Link href="/editor" className="bx-btn bx-btn-blue bx-btn-lg">Try EasyFrame free <ArrowRight size={18} /></Link>

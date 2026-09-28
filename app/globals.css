@@ -1891,19 +1891,27 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .bx-tilt-soft { transform: perspective(1200px) rotateY(-12deg) rotateX(5deg); }
 
 /* floating device tiles + hand notes */
-.bx-tile { position: absolute; z-index: 3; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 18px; color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 16px 30px -12px rgba(10,20,50,.45); animation: bx-bob 6s ease-in-out infinite; }
+/* Tile drifts on scroll (--parY, set by StarttFX); the icon keeps a gentle idle
+   float so the two motions compose without fighting one transform. */
+.bx-tile { position: absolute; z-index: 3; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 18px; color: #fff; box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 16px 30px -12px rgba(10,20,50,.45); transform: translate3d(0, var(--parY, 0px), 0); will-change: transform; }
+.bx-tile > svg { animation: bx-bob 6s ease-in-out infinite; }
 .bx-tile.t1 { top: -34px; left: 5%; background: linear-gradient(145deg,#3E7BFF,#1753FE); }
-.bx-tile.t2 { top: -52px; left: 25%; background: linear-gradient(145deg,#FFFFFF,#E9EDF5); color: var(--bx-ink); animation-delay: -1s; }
-.bx-tile.t3 { top: -30px; left: 37%; background: linear-gradient(145deg,#8C7BFF,#6A5CFF); animation-delay: -2s; }
-.bx-tile.t4 { top: -50px; right: 26%; background: linear-gradient(145deg,#FFFFFF,#E9EDF5); color: var(--bx-blue); animation-delay: -3s; }
-.bx-tile.t5 { top: -28px; right: 8%; background: linear-gradient(145deg,#FF8CC6,#E45CB5); animation-delay: -4s; }
-.bx-tile.t6 { top: 34%; right: -24px; background: linear-gradient(145deg,#FFC574,#F59A2B); animation-delay: -5s; }
-@keyframes bx-bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-10px) rotate(3deg); } }
-.bx-note { position: absolute; z-index: 3; margin: 0; font-family: var(--bx-hand); font-weight: 600; font-size: 28px; line-height: 1; color: var(--bx-blue); white-space: nowrap; }
+.bx-tile.t2 { top: -52px; left: 25%; background: linear-gradient(145deg,#FFFFFF,#E9EDF5); color: var(--bx-ink); }
+.bx-tile.t2 > svg { animation-delay: -1s; }
+.bx-tile.t3 { top: -30px; left: 37%; background: linear-gradient(145deg,#8C7BFF,#6A5CFF); }
+.bx-tile.t3 > svg { animation-delay: -2s; }
+.bx-tile.t4 { top: -50px; right: 26%; background: linear-gradient(145deg,#FFFFFF,#E9EDF5); color: var(--bx-blue); }
+.bx-tile.t4 > svg { animation-delay: -3s; }
+.bx-tile.t5 { top: -28px; right: 8%; background: linear-gradient(145deg,#FF8CC6,#E45CB5); }
+.bx-tile.t5 > svg { animation-delay: -4s; }
+.bx-tile.t6 { top: 34%; right: -24px; background: linear-gradient(145deg,#FFC574,#F59A2B); }
+.bx-tile.t6 > svg { animation-delay: -5s; }
+@keyframes bx-bob { 0%,100% { transform: translateY(-3px) rotate(-4deg); } 50% { transform: translateY(3px) rotate(4deg); } }
+.bx-note { position: absolute; z-index: 3; margin: 0; font-family: var(--bx-hand); font-weight: 600; font-size: 28px; line-height: 1; color: var(--bx-blue); white-space: nowrap; transform: rotate(var(--rot,0deg)) translateY(var(--parY, 0px)); will-change: transform; }
 .bx-note::after { content: ""; position: absolute; width: 46px; height: 30px; border: 2.5px solid currentColor; border-color: currentColor transparent transparent transparent; border-radius: 50%; }
-.bx-note-a { left: -8px; bottom: calc(clamp(70px, 9vw, 120px) - 44px); transform: rotate(-4deg); }
+.bx-note-a { --rot: -4deg; left: -8px; bottom: calc(clamp(70px, 9vw, 120px) - 44px); }
 .bx-note-a::after { right: -54px; top: -14px; transform: rotate(-30deg); }
-.bx-note-b { right: 0; bottom: calc(clamp(70px, 9vw, 120px) - 46px); transform: rotate(3deg); color: var(--bx-pink); }
+.bx-note-b { --rot: 3deg; right: 0; bottom: calc(clamp(70px, 9vw, 120px) - 46px); color: var(--bx-pink); }
 .bx-note-b::after { left: -54px; top: -14px; transform: rotate(210deg) scaleY(-1); }
 
 /* --------------------------- device strip --------------------------- */
@@ -2041,10 +2049,33 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
   .bx-badges span:last-child { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bx-tile { animation: none; }
+  .bx-tile > svg { animation: none; }
+  .bx-tile, .bx-note { --parY: 0px; }
   .bx-marquee-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
   .bx-marquee-track > [aria-hidden="true"] { display: none; }
   .bx-marquee { -webkit-mask-image: none; mask-image: none; padding-inline: 20px; }
+}
+
+/* ==================== HOMEPAGE REVEAL VARIANTS (Boom) ====================
+   Directional / scale / blur entrance reveals, scoped to .bx so they override
+   the base .sx-reveal-ready rule. Every variant lands at the same resting
+   state (transform:none, no blur), so .in stays one clean rule. */
+.sx-reveal-ready .bx [data-reveal] {
+  opacity: 0; transform: translateY(32px); filter: blur(0);
+  transition: opacity .85s cubic-bezier(.22,.61,.36,1), transform .85s cubic-bezier(.22,.61,.36,1), filter .85s ease;
+  transition-delay: calc(var(--d,0) * 95ms); will-change: opacity, transform;
+}
+.sx-reveal-ready .bx [data-reveal="left"]  { transform: translateX(-48px); }
+.sx-reveal-ready .bx [data-reveal="right"] { transform: translateX(48px); }
+.sx-reveal-ready .bx [data-reveal="scale"] { transform: scale(.9); }
+.sx-reveal-ready .bx [data-reveal="rise"]  { transform: translateY(64px); }
+.sx-reveal-ready .bx [data-reveal="blur"]  { transform: translateY(26px); filter: blur(14px); }
+.sx-reveal-ready .bx [data-reveal].in { opacity: 1; transform: none; filter: none; }
+/* Keep the hero window's own scale-in (more specific so it wins over the above). */
+.sx-reveal-ready .bx .bx-window[data-reveal] { transform: translateY(48px) scale(.965); filter: none; }
+.sx-reveal-ready .bx .bx-window[data-reveal].in { transform: translate3d(0,0,0); }
+@media (prefers-reduced-motion: reduce) {
+  .sx-reveal-ready .bx [data-reveal] { opacity: 1 !important; transform: none !important; filter: none !important; }
 }
 
 /* ==================== MARKETING PAGES (.mk) — Boom ==================== */
