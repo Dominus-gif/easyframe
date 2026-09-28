@@ -58,7 +58,7 @@ export default function CookieConsent() {
             <button className="cc-btn cc-accept" onClick={() => setConsent("granted")}>Accept</button>
           </div>
           <style jsx>{`
-            /* Dark by default — the whole site is dark (supercut). */
+            /* Light, matching the site theme (Boom layer tokens in globals.css). */
             .cc {
               position: fixed;
               left: 0;
@@ -72,28 +72,23 @@ export default function CookieConsent() {
               justify-content: center;
               gap: 14px 20px;
               padding: 12px 24px;
-              background: #181616;
-              border-top: 1px solid #262323;
-              box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.5);
-              color: #FDFFF0;
-              font-family: "Inter", system-ui, sans-serif;
+              background: rgba(255, 255, 255, 0.92);
+              backdrop-filter: blur(16px) saturate(1.3);
+              -webkit-backdrop-filter: blur(16px) saturate(1.3);
+              border-top: 1px solid #e6e8ec;
+              box-shadow: 0 -10px 30px -12px rgba(10, 20, 40, 0.18);
+              color: #0a0a0a;
+              font-family: var(--bx-body, "Figtree", system-ui, sans-serif);
             }
-            .cc p { margin: 0; font-size: 13px; line-height: 1.5; color: #969692; max-width: 760px; }
-            .cc a { color: #FF6B9D; text-decoration: underline; }
+            .cc p { margin: 0; font-size: 13px; line-height: 1.5; color: #324454; max-width: 760px; }
+            .cc a { color: #1753fe; text-decoration: underline; }
             .cc-actions { display: flex; gap: 10px; flex: none; }
             .cc-btn { height: 38px; padding: 0 18px; border-radius: 999px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-            .cc-decline { background: transparent; border: 1px solid #2C2828; color: #FDFFF0; }
-            .cc-decline:hover { border-color: #4A4444; }
-            .cc-accept { background: #FDFFF0; border: 0; color: #100E0E; padding: 0 22px; }
-            .cc-accept:hover { background: #fff; }
-            /* Light variant — only when the editor is explicitly toggled to light. */
-            :global(html[data-editor-theme="light"]) .cc { background: #fafafb; border-top-color: rgba(0,0,0,.10); box-shadow: 0 -6px 24px rgba(0,0,0,.10); color: #28282c; }
-            :global(html[data-editor-theme="light"]) .cc p { color: #40404a; }
-            :global(html[data-editor-theme="light"]) .cc a { color: #16181d; }
-            :global(html[data-editor-theme="light"]) .cc-decline { background: #fff; border-color: rgba(0,0,0,.12); color: #28282c; }
-            :global(html[data-editor-theme="light"]) .cc-decline:hover { border-color: rgba(0,0,0,.28); }
-            :global(html[data-editor-theme="light"]) .cc-accept { background: #16181d; color: #fff; }
-            .cc-btn:focus-visible { outline: 2px solid #FF0055; outline-offset: 2px; }
+            .cc-decline { background: #fff; border: 1px solid #d6dbe3; color: #0a0a0a; }
+            .cc-decline:hover { border-color: #0a0a0a; }
+            .cc-accept { background: linear-gradient(140deg, #1753fe 0%, #1753fe 18%, #0841f7 100%); border: 0; color: #fff; padding: 0 22px; }
+            .cc-accept:hover { filter: brightness(1.06); }
+            .cc-btn:focus-visible { outline: 2px solid #1753fe; outline-offset: 2px; }
           `}</style>
         </div>
       ) : null}

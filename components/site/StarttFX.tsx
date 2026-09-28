@@ -28,7 +28,7 @@ export default function StarttFX() {
       fallback = window.setTimeout(() => els.forEach((el) => el.classList.add("in")), 1600);
     }
 
-    const nav = document.querySelector<HTMLElement>(".sx-nav");
+    const nav = document.querySelector<HTMLElement>(".sx-nav, .bx-nav");
     const onScroll = () => nav?.classList.toggle("scrolled", window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();

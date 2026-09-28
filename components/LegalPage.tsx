@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { EasyFrameMark } from "@/components/EasyFrameLogo";
 import SponsorLine from "@/components/SponsorLine";
 
 type LegalSection = {
@@ -22,7 +21,8 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
     <main className="legal-shell">
       <nav className="legal-nav">
         <Link className="legal-brand" href="/">
-          <span><EasyFrameMark size={34} /></span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
           <strong>EasyFrame</strong>
         </Link>
         <div className="legal-links">

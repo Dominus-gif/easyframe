@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import StarttLanding from "@/components/site/StarttLanding";
+import HomeLanding from "@/components/site/HomeLanding";
 
 export const metadata: Metadata = {
   title: "EasyFrame — Free Device Mockup Generator",
@@ -16,5 +16,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  return <StarttLanding />;
+  return <HomeLanding />;
 }

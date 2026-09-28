@@ -8,12 +8,12 @@ import SiteFooter from "@/components/site/SiteFooter";
 import MockShot from "@/components/site/MockShot";
 import { SAMPLE_COUNT } from "@/lib/editor/sampleScreens";
 
-// Warm, cohesive dark tiles (supercut theme) with a hint of variation per card.
+// Soft pastel tiles (Boom theme) with a hint of variation per card.
 const tiles: { css: string; bg: BackgroundSetting }[] = [
-  { css: "linear-gradient(135deg, #201618, #141011)", bg: { type: "gradient", from: "#201618", to: "#141011", angle: 135 } },
-  { css: "linear-gradient(135deg, #181a1d, #121315)", bg: { type: "gradient", from: "#181a1d", to: "#121315", angle: 135 } },
-  { css: "linear-gradient(135deg, #1c1a1a, #141212)", bg: { type: "gradient", from: "#1c1a1a", to: "#141212", angle: 135 } },
-  { css: "linear-gradient(135deg, #171a19, #121413)", bg: { type: "gradient", from: "#171a19", to: "#121413", angle: 135 } }
+  { css: "linear-gradient(135deg, #C9DBFF, #E9E2FF)", bg: { type: "gradient", from: "#C9DBFF", to: "#E9E2FF", angle: 135 } },
+  { css: "linear-gradient(135deg, #FFE3F1, #FFE7D6)", bg: { type: "gradient", from: "#FFE3F1", to: "#FFE7D6", angle: 135 } },
+  { css: "linear-gradient(135deg, #DCD2FF, #CFE6FF)", bg: { type: "gradient", from: "#DCD2FF", to: "#CFE6FF", angle: 135 } },
+  { css: "linear-gradient(135deg, #D6F1FF, #E7EFFF)", bg: { type: "gradient", from: "#D6F1FF", to: "#E7EFFF", angle: 135 } }
 ];
 
 export const metadata: Metadata = {

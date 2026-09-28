@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { track } from "@/lib/analytics";
 
@@ -12,20 +12,18 @@ type AccessResponse = {
 
 export default function BillingReturnPage() {
   const [status, setStatus] = useState<"checking" | "ready" | "pending">("checking");
-  const plan = useMemo(() => {
-    if (typeof window === "undefined") return "plan";
-    return new URLSearchParams(window.location.search).get("plan") ?? "plan";
+  // Query params are read after mount so the server and first client render
+  // match (reading window during render caused a hydration mismatch).
+  const [params, setParams] = useState<{ plan: string; paymentId: string | null; paymentStatus: string | null } | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    setParams({ plan: q.get("plan") ?? "plan", paymentId: q.get("payment_id"), paymentStatus: q.get("status") });
   }, []);
-  const paymentId = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("payment_id");
-  }, []);
-  const paymentStatus = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("status");
-  }, []);
+  const plan = params?.plan ?? "plan";
 
   useEffect(() => {
+    if (!params) return;
+    const { plan, paymentId, paymentStatus } = params;
     let cancelled = false;
     let attempts = 0;
 
@@ -79,11 +77,15 @@ export default function BillingReturnPage() {
     return () => {
       cancelled = true;
     };
-  }, [paymentId, paymentStatus, plan]);
+  }, [params]);
 
   return (
     <main className="billing-return-shell">
-      <Link className="billing-return-brand" href="/">EasyFrame</Link>
+      <Link className="billing-return-brand" href="/">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
+        EasyFrame
+      </Link>
 
       <section className="billing-return-card">
         <div className="billing-return-icon">
@@ -102,7 +104,7 @@ export default function BillingReturnPage() {
         </div>
       </section>
 
-      {/* Themed with the shared --sr-* solidroad tokens (globals.css) so it
+      {/* Themed with the shared --bx-* tokens (globals.css, Boom layer) so it
           stays in sync whenever the site theme changes. */}
       <style jsx global>{`
         .billing-return-shell {
@@ -110,28 +112,38 @@ export default function BillingReturnPage() {
           display: grid;
           place-items: center;
           padding: 28px;
-          color: var(--sr-ink, #1a1712);
-          background: var(--sr-paper, #fbf7eb);
-          font-family: "Inter", system-ui, -apple-system, sans-serif;
+          color: var(--bx-ink, #0a0a0a);
+          background: url(/bg/hero-glow.webp) center bottom / cover no-repeat, var(--bx-bg, #f8f8f8);
+          font-family: var(--bx-body, "Figtree", system-ui, sans-serif);
         }
         .billing-return-brand {
           position: fixed;
           top: 28px;
           left: 28px;
-          font-family: var(--sr-serif, "Fraunces", Georgia, serif);
-          font-weight: 400;
-          font-size: 24px;
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          font-family: var(--bx-display, "Archivo", sans-serif);
+          font-stretch: 112%;
+          font-weight: 800;
+          font-size: 19px;
           letter-spacing: -0.02em;
-          color: var(--sr-ink, #1a1712);
+          color: var(--bx-ink, #0a0a0a);
           text-decoration: none;
+        }
+        .billing-return-brand img {
+          border-radius: 9px;
+          box-shadow: 0 6px 16px -6px rgba(10, 20, 40, 0.35);
         }
         .billing-return-card {
           width: min(100%, 520px);
           padding: 40px 34px;
-          border: 1px solid var(--sr-line, #eae3d3);
-          border-radius: 22px;
-          background: var(--sr-white, #fff);
-          box-shadow: 0 1px 2px rgba(26, 23, 18, 0.05), 0 18px 44px rgba(26, 23, 18, 0.07);
+          border: 1px solid rgba(255, 255, 255, 0.75);
+          border-radius: 28px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(22px) saturate(1.4);
+          -webkit-backdrop-filter: blur(22px) saturate(1.4);
+          box-shadow: 0 30px 70px -30px rgba(23, 53, 140, 0.35);
           text-align: center;
         }
         .billing-return-icon {
@@ -141,33 +153,36 @@ export default function BillingReturnPage() {
           border-radius: 16px;
           display: grid;
           place-items: center;
-          color: #1a1712;
-          background: #f4ff95;
-          border: 1px solid #e6f26a;
+          color: #fff;
+          background: var(--bx-grad, linear-gradient(140deg, #1753fe, #0841f7));
+          box-shadow: 0 12px 26px -12px rgba(23, 83, 254, 0.75);
         }
         .billing-return-icon svg {
           animation: billing-spin 1s linear infinite;
         }
         .billing-return-eyebrow {
-          color: var(--sr-sub, #6e685e);
+          color: var(--bx-sub, #324454);
+          font-family: var(--bx-mono, "IBM Plex Mono", monospace);
           font-size: 12.5px;
-          font-weight: 600;
+          font-weight: 500;
           text-transform: uppercase;
           letter-spacing: 0.1em;
         }
         .billing-return-card h1 {
           margin: 12px 0 12px;
-          font-family: var(--sr-serif, "Fraunces", Georgia, serif);
-          font-weight: 300;
-          font-size: clamp(28px, 5vw, 40px);
-          line-height: 1.05;
+          font-family: var(--bx-display, "Archivo", sans-serif);
+          font-stretch: 125%;
+          font-weight: 800;
+          text-transform: uppercase;
+          font-size: clamp(26px, 4.4vw, 36px);
+          line-height: 0.98;
           letter-spacing: -0.03em;
-          color: var(--sr-ink, #1a1712);
+          color: var(--bx-ink, #0a0a0a);
         }
         .billing-return-card p {
           margin: 0 auto;
           max-width: 420px;
-          color: var(--sr-sub, #6e685e);
+          color: var(--bx-sub, #324454);
           font-size: 15px;
           line-height: 1.6;
         }
@@ -185,26 +200,31 @@ export default function BillingReturnPage() {
           gap: 8px;
           border-radius: 999px;
           text-decoration: none;
-          font-size: 14px;
-          font-weight: 600;
+          font-family: var(--bx-display, "Archivo", sans-serif);
+          font-stretch: 112%;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 0.03em;
+          text-transform: uppercase;
           transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
         }
         .billing-return-primary {
-          color: var(--sr-paper, #fbf7eb);
-          background: var(--sr-btn, #17140f);
+          color: #fff;
+          background: var(--bx-grad, linear-gradient(140deg, #1753fe, #0841f7));
           border: 1px solid transparent;
+          box-shadow: 0 12px 26px -12px rgba(23, 83, 254, 0.75);
         }
         .billing-return-primary:hover {
-          background: #000;
+          filter: brightness(1.06);
           transform: translateY(-1px);
         }
         .billing-return-ghost {
-          color: var(--sr-ink, #1a1712);
-          background: var(--sr-white, #fff);
-          border: 1px solid var(--sr-line2, #dbd2be);
+          color: var(--bx-ink, #0a0a0a);
+          background: #fff;
+          border: 1px solid var(--bx-line, #e6e8ec);
         }
         .billing-return-ghost:hover {
-          border-color: var(--sr-ink, #1a1712);
+          border-color: var(--bx-ink, #0a0a0a);
         }
         @keyframes billing-spin {
           to { transform: rotate(360deg); }

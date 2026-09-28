@@ -21,7 +21,9 @@ export default function SiteNav() {
     <nav className="mk-nav" aria-label="Primary">
       <div className="mk-wrap mk-nav-inner">
         <Link href="/" className="mk-brand">
-          EasyFrame<b>.</b>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
+          EasyFrame
         </Link>
         <div className="mk-nav-links">
           {LINKS.map((l) => (
@@ -33,7 +35,7 @@ export default function SiteNav() {
         <div className="mk-nav-cta">
           <AccountLink className="mk-account" />
           <Link href="/editor" className="mk-cta">
-            Open free editor <ArrowRight size={16} />
+            Get started <ArrowRight size={16} />
           </Link>
         </div>
       </div>
