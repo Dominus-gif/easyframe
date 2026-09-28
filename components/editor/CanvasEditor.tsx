@@ -1,12 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Laptop, Layers, Monitor, Moon, Move3d, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
 import AccountLink from "@/components/auth/AccountLink";
 import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
+import { CAROUSEL_ASPECTS, defaultCarousel, exportCarousel, renderCarousel, type CarouselState } from "@/lib/editor/carousel";
+import { makeZip } from "@/lib/editor/zip";
 import {
   composite,
   defaultSettings,
@@ -65,7 +67,25 @@ const ELEMENTS: { id: string; label: string; svg: string }[] = [
   { id: "bubble", label: "Speech bubble", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 88"><path d="M14 10 H86 A8 8 0 0 1 94 18 V56 A8 8 0 0 1 86 64 H44 L26 82 L28 64 H14 A8 8 0 0 1 6 56 V18 A8 8 0 0 1 14 10 Z" fill="none" stroke="__C__" stroke-width="6" stroke-linejoin="round"/></svg>` },
   { id: "pin", label: "Location pin", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 68 100"><path d="M34 94 C34 94 8 60 8 36 A26 26 0 0 1 60 36 C60 60 34 94 34 94 Z" fill="__C__"/><circle cx="34" cy="34" r="9" fill="#ffffff"/></svg>` },
   { id: "bang", label: "Exclamation", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 100"><path d="M20 10 V64" fill="none" stroke="__C__" stroke-width="12" stroke-linecap="round"/><circle cx="20" cy="88" r="8" fill="__C__"/></svg>` },
-  { id: "scribble", label: "Scribble", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><path d="M6 30 C18 6 26 6 34 24 C40 38 48 38 54 20 C60 4 70 6 76 26 C80 38 88 34 94 14" fill="none" stroke="__C__" stroke-width="6" stroke-linecap="round"/></svg>` }
+  { id: "scribble", label: "Scribble", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40"><path d="M6 30 C18 6 26 6 34 24 C40 38 48 38 54 20 C60 4 70 6 76 26 C80 38 88 34 94 14" fill="none" stroke="__C__" stroke-width="6" stroke-linecap="round"/></svg>` },
+  // Trending UI / social elements (SaaS showcase, posts, decks).
+  { id: "menu", label: "Menu (3 lines)", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><path d="M12 16 H88 M12 30 H88 M12 44 H88" fill="none" stroke="__C__" stroke-width="8" stroke-linecap="round"/></svg>` },
+  { id: "lines2", label: "Text lines", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 44"><path d="M6 12 H94 M6 24 H94 M6 36 H64" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round"/></svg>` },
+  { id: "ellipsis", label: "More (•••)", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 24"><circle cx="18" cy="12" r="8" fill="__C__"/><circle cx="50" cy="12" r="8" fill="__C__"/><circle cx="82" cy="12" r="8" fill="__C__"/></svg>` },
+  { id: "divider", label: "Divider", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 12"><path d="M6 6 H114" fill="none" stroke="__C__" stroke-width="5" stroke-linecap="round"/></svg>` },
+  { id: "dashed", label: "Dashed line", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 12"><path d="M6 6 H114" fill="none" stroke="__C__" stroke-width="5" stroke-linecap="round" stroke-dasharray="2 14"/></svg>` },
+  { id: "progress", label: "Progress bar", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 20"><rect x="2" y="5" width="116" height="10" rx="5" fill="rgba(148,163,184,.35)"/><rect x="2" y="5" width="74" height="10" rx="5" fill="__C__"/></svg>` },
+  { id: "toggle", label: "Toggle", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 40"><rect x="2" y="2" width="72" height="36" rx="18" fill="__C__"/><circle cx="56" cy="20" r="14" fill="#ffffff"/></svg>` },
+  { id: "stars5", label: "5 stars", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48"><g fill="__C__">${[0,1,2,3,4].map((i)=>`<path transform="translate(${i*48},0)" d="M24 4 L30 18 L45 19 L33 29 L37 44 L24 35 L11 44 L15 29 L3 19 L18 18 Z"/>`).join("")}</g></svg>` },
+  { id: "quote", label: "Quote marks", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 72"><path d="M8 64 C8 40 20 20 42 12 L46 24 C34 30 28 40 28 48 L44 48 L44 64 Z M56 64 C56 40 68 20 90 12 L94 24 C82 30 76 40 76 48 L92 48 L92 64 Z" fill="__C__"/></svg>` },
+  { id: "play", label: "Play button", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="__C__"/><path d="M40 32 L72 50 L40 68 Z" fill="#ffffff"/></svg>` },
+  { id: "hashtag", label: "Hashtag", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M38 12 L30 88 M70 12 L62 88 M14 36 H86 M10 64 H82" fill="none" stroke="__C__" stroke-width="9" stroke-linecap="round"/></svg>` },
+  { id: "mention", label: "Mention @", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="18" fill="none" stroke="__C__" stroke-width="8"/><path d="M68 50 C68 38 68 68 78 62 C90 55 90 20 62 12 C32 4 8 28 12 58 C16 86 46 96 72 84" fill="none" stroke="__C__" stroke-width="8" stroke-linecap="round"/></svg>` },
+  { id: "bars", label: "Bar chart", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80"><g fill="__C__"><rect x="8" y="46" width="16" height="30" rx="4"/><rect x="34" y="30" width="16" height="46" rx="4"/><rect x="60" y="14" width="16" height="62" rx="4"/></g><rect x="8" y="20" width="16" height="0" fill="__C__"/></svg>` },
+  { id: "trend", label: "Trend up", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 72"><path d="M8 60 L36 34 L52 46 L92 12" fill="none" stroke="__C__" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 12 H92 V34" fill="none" stroke="__C__" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  { id: "dotgrid", label: "Dot grid", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><g fill="__C__">${[0,1,2].flatMap((r)=>[0,1,2].map((c)=>`<circle cx="${16+c*24}" cy="${16+r*24}" r="6"/>`)).join("")}</g></svg>` },
+  { id: "tag", label: "Tag", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 60"><path d="M6 30 L34 8 H88 A6 6 0 0 1 94 14 V46 A6 6 0 0 1 88 52 H34 Z" fill="none" stroke="__C__" stroke-width="6" stroke-linejoin="round"/><circle cx="30" cy="30" r="6" fill="__C__"/></svg>` },
+  { id: "brackets", label: "Brackets", svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80"><path d="M28 10 H14 A4 4 0 0 0 10 14 V66 A4 4 0 0 0 14 70 H28 M72 10 H86 A4 4 0 0 1 90 14 V66 A4 4 0 0 1 86 70 H72" fill="none" stroke="__C__" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>` }
 ];
 
 const KIND_ICON: Record<DeviceKind, typeof Smartphone> = {
@@ -119,7 +139,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [draftCrop, setDraftCrop] = useState<CropRect>({ x: 0, y: 0, w: 1, h: 1 });
   const [cropAspect, setCropAspect] = useState("free");
   // Collage mode
-  const [mode, setMode] = useState<"mockup" | "collage">("mockup");
+  const [mode, setMode] = useState<"mockup" | "collage" | "carousel">("mockup");
   const [collage, setCollage] = useState<CollageState>(defaultCollage);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const collageFileRef = useRef<HTMLInputElement>(null);
@@ -129,6 +149,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   modeRef.current = mode;
   const collageRef = useRef(collage);
   collageRef.current = collage;
+  // Carousel mode (one wide image -> N seamless panels)
+  const [carousel, setCarousel] = useState<CarouselState>(defaultCarousel);
+  const carouselImgRef = useRef<HTMLImageElement | null>(null);
+  const [carouselVersion, setCarouselVersion] = useState(0);
+  const carouselFileRef = useRef<HTMLInputElement>(null);
+  const batchFileRef = useRef<HTMLInputElement>(null);
+  const hasCarousel = carouselVersion > 0 && !!carouselImgRef.current;
 
   useEffect(() => {
     try {
@@ -164,6 +191,44 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     } catch { /* ignore */ }
   }, []);
 
+  // Local, in-browser save: restore the editor "look" (device, background, adjust,
+  // collage/carousel config, mode) on load. Images are never persisted — they stay
+  // on the device. Free for everyone; nothing is uploaded.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ef-editor-state");
+      if (!raw) return;
+      const s = JSON.parse(raw) as { mode?: string; settings?: Partial<EditorSettings>; collage?: Partial<CollageState>; carousel?: Partial<CarouselState> };
+      if (s.settings) {
+        setSettings((prev) => {
+          const next = { ...prev, ...s.settings, background: s.settings?.background ?? prev.background } as EditorSettings;
+          // A deep-linked device (e.g. /templates/iphone-mockup) wins over the saved one.
+          if (initialDevice) next.deviceSlug = prev.deviceSlug;
+          lastCommittedRef.current = next;
+          return next;
+        });
+      }
+      if (s.collage) setCollage((c) => ({ ...c, ...s.collage, photos: c.photos }));
+      if (s.carousel) setCarousel((c) => ({ ...c, ...s.carousel }));
+      if (!initialDevice && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel")) setMode(s.mode);
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Debounced autosave of the same look (no images).
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      try {
+        const st: Partial<EditorSettings> = { ...settings };
+        if (st.background && st.background.type === "image") delete st.background; // can't serialize an <img>
+        const { photos: _photos, ...collageCfg } = collage;
+        void _photos;
+        localStorage.setItem("ef-editor-state", JSON.stringify({ v: 1, mode, settings: st, collage: collageCfg, carousel }));
+      } catch { /* ignore */ }
+    }, 600);
+    return () => window.clearTimeout(id);
+  }, [settings, collage, carousel, mode]);
+
   // Close the export menu on outside-click; close menu + dialog on Escape.
   useEffect(() => {
     if (!exportMenuOpen) return;
@@ -192,11 +257,18 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       if (res.width && res.height) setPreviewDims(res);
       return;
     }
+    if (mode === "carousel") {
+      // Fit the whole N-wide strip inside the preview budget.
+      const panelPx = Math.max(120, Math.floor(PREVIEW_MAX_EDGE / Math.max(2, Math.min(10, carousel.panels))));
+      const res = renderCarousel(canvas, carouselImgRef.current, settings.background, carousel, { panelPx, preview: true });
+      if (res.width && res.height) setPreviewDims({ width: res.width, height: res.height });
+      return;
+    }
     // While cropping, show the full frame so the region can be chosen from it.
     const renderSettings = cropMode ? { ...settings, crop: null } : settings;
     const res = composite(canvas, imgRef.current, renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
     if (res.width && res.height) setPreviewDims(res);
-  }, [settings, overlays, cropMode, mode, collage, selectedCell]);
+  }, [settings, overlays, cropMode, mode, collage, selectedCell, carousel, carouselVersion]);
 
   useEffect(() => {
     recompose();
@@ -516,7 +588,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     collageTarget.current = target;
     collageFileRef.current?.click();
   };
-  const switchMode = (next: "mockup" | "collage") => {
+  const switchMode = (next: "mockup" | "collage" | "carousel") => {
     if (next === mode) return;
     setMode(next);
     setCropMode(false);
@@ -526,9 +598,34 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     track("editor_mode", { mode: next });
   };
 
+  /** Load the single wide source image used by carousel mode. */
+  const loadCarouselImage = async (file: File | undefined) => {
+    if (!file) return;
+    if (!/image\/(png|jpeg|webp)/.test(file.type)) {
+      flash("Unsupported file. Use PNG, JPEG, or WebP.");
+      return;
+    }
+    setBusy(true);
+    try {
+      carouselImgRef.current = await loadImageSafely(file);
+      setCarouselVersion((v) => v + 1);
+      track("carousel_image_added", {});
+    } catch {
+      flash("Could not load that image.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const loadCarouselRef = useRef(loadCarouselImage);
+  loadCarouselRef.current = loadCarouselImage;
+
   const onFiles = (files: FileList | null) => {
     if (mode === "collage") {
       void loadPhotos(Array.from(files ?? []));
+      return;
+    }
+    if (mode === "carousel") {
+      void loadCarouselImage(files?.[0]);
       return;
     }
     const file = files?.[0];
@@ -547,6 +644,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       const file = item?.getAsFile();
       if (!file) return;
       if (modeRef.current === "collage") void loadPhotosRef.current([file]);
+      else if (modeRef.current === "carousel") void loadCarouselRef.current(file);
       else void ingest(file);
     };
     window.addEventListener("paste", onPaste);
@@ -606,6 +704,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       }
       return;
     }
+    if (mode === "carousel") {
+      if (!hasCarousel) return;
+      dragRef.current = { x: event.clientX, y: event.clientY };
+      try { event.currentTarget.setPointerCapture(event.pointerId); } catch { /* ignore */ }
+      return;
+    }
     if (!hasImage && !selectedOverlay && !dragRotate) return;
     dragRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -630,6 +734,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     const dx = (event.clientX - dragRef.current.x) / rect.width;
     const dy = (event.clientY - dragRef.current.y) / rect.height;
     dragRef.current = { x: event.clientX, y: event.clientY };
+    if (mode === "carousel") {
+      const clamp = (v: number) => Math.max(-1, Math.min(1, v));
+      // Drag the wide image behind the panels (pan across the overflow).
+      setCarousel((c) => ({ ...c, ox: clamp(c.ox - dx * 2), oy: clamp(c.oy - dy * 2) }));
+      return;
+    }
     if (dragRotate && !(selectedId && selectedOverlay)) {
       const clamp = (v: number) => Math.max(-50, Math.min(50, v));
       setSettings((s) => ({ ...s, rotateY: clamp(s.rotateY + dx * 90), rotateX: clamp(s.rotateX - dy * 90), perspective: s.perspective || 55 }));
@@ -662,7 +772,87 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     try { event.currentTarget.releasePointerCapture(event.pointerId); } catch {}
   };
 
+  const triggerBlobDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  // Carousel export: slice the wide image into N seamless panels and bundle them
+  // into one .zip. Multi-file output is a paid (batch) feature.
+  const onExportCarousel = async () => {
+    if (!premium) {
+      flash("Carousel export is a Premium feature.");
+      return;
+    }
+    if (!hasCarousel) {
+      flash("Add a wide image to split first.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const bg =
+        (settings.background.type === "transparent" || settings.background.type === "image") && !premium
+          ? { type: "solid" as const, color: "#0b0d0f" }
+          : settings.background;
+      const panelPx = Math.min(premium ? 1440 : FREE_MAX_EDGE, 1440);
+      const panels = await exportCarousel(carouselImgRef.current, bg, carousel, format, quality / 100, panelPx);
+      if (!panels.length) { flash("Export failed. Try a smaller size."); return; }
+      const zip = await makeZip(panels);
+      const name = `easyframe-carousel-${carousel.panels}up-${carousel.aspect.replace(":", "x")}.zip`;
+      triggerBlobDownload(zip, name);
+      track("carousel_exported", { panels: carousel.panels, aspect: carousel.aspect });
+      flash(`✓ Saved ${panels.length} panels as ${name}`);
+      setExportOpen(false);
+      setExportMenuOpen(false);
+    } catch {
+      flash("Export failed — the image may be too large. Try a smaller size.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Batch export (mockup): apply the current frame + settings to many screenshots
+  // at once and bundle the results into one .zip. Paid feature.
+  const onBatchFiles = async (files: FileList | null) => {
+    const list = Array.from(files ?? []).filter((f) => /image\/(png|jpeg|webp)/.test(f.type));
+    if (!list.length) return;
+    if (!premium) {
+      flash("Batch export is a Premium feature.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const maxEdge = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
+      const ext = format === "jpeg" ? "jpg" : format;
+      const out: { name: string; blob: Blob }[] = [];
+      for (let i = 0; i < list.length; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        const img = await loadImageSafely(list[i]);
+        // eslint-disable-next-line no-await-in-loop
+        const blob = await exportScene(img, settings, format, quality / 100, maxEdge, overlays);
+        const base = list[i].name.replace(/\.[^.]+$/, "") || `mockup-${i + 1}`;
+        out.push({ name: `${base}-${settings.deviceSlug}.${ext}`, blob });
+      }
+      const zip = await makeZip(out);
+      const name = `easyframe-batch-${out.length}.zip`;
+      triggerBlobDownload(zip, name);
+      track("batch_exported", { count: out.length, device: settings.deviceSlug });
+      flash(`✓ Exported ${out.length} mockups as ${name}`);
+    } catch {
+      flash("Batch export failed — one of the images may be too large.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onDownload = async () => {
+    if (mode === "carousel") { await onExportCarousel(); return; }
     setBusy(true);
     try {
       const maxEdge = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
@@ -852,6 +1042,38 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       ) : null}
     </>
   );
+
+  const PANEL_CHOICES = [2, 3, 4, 5, 6, 8, 10];
+  const carouselLeft = (
+    <section className="ed-card">
+      <div className="ed-card-title">Carousel</div>
+      <p className="ed-hint" style={{ marginTop: 0 }}>Split one wide image into seamless posts that read as one picture when swiped on Instagram.</p>
+      <div className="ed-subhead">Panels</div>
+      <div className="ed-seg ed-carousel-panels" role="group" aria-label="Number of panels">
+        {PANEL_CHOICES.map((n) => (
+          <button key={n} className={carousel.panels === n ? "on" : ""} onClick={() => setCarousel((c) => ({ ...c, panels: n }))} title={`${n} panels`}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <div className="ed-subhead">Each panel</div>
+      <div className="ed-seg ed-collage-aspects" role="group" aria-label="Panel size">
+        {CAROUSEL_ASPECTS.map((a) => (
+          <button key={a.id} className={carousel.aspect === a.id ? "on" : ""} onClick={() => setCarousel((c) => ({ ...c, aspect: a.id }))} title={a.label}>
+            {a.id}
+          </button>
+        ))}
+      </div>
+      <div className="ed-subhead">
+        Position
+        <button className="ed-mini-reset" onClick={() => setCarousel((c) => ({ ...c, zoom: 1, ox: 0, oy: 0 }))} title="Recenter and reset zoom">
+          <RotateCcw size={12} /> Reset
+        </button>
+      </div>
+      <Range label="Zoom" value={carousel.zoom} min={1} max={3} step={0.01} onChange={(v) => setCarousel((c) => ({ ...c, zoom: v }))} />
+      <p className="ed-hint">Drag on the canvas to reposition. Export bundles all {carousel.panels} panels into a ZIP{premium ? "" : " (Premium)"}.</p>
+    </section>
+  );
   // Background swatches: show the first 8, reveal the rest behind "Show more".
   const bgSwatches: Array<{ id: string; label: string; bg: BackgroundSetting }> = [
     ...BACKGROUND_PRESETS,
@@ -887,6 +1109,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <button role="tab" aria-selected={mode === "collage"} className={mode === "collage" ? "on" : ""} onClick={() => switchMode("collage")}>
             <LayoutGrid size={14} /> Collage
           </button>
+          <button role="tab" aria-selected={mode === "carousel"} className={mode === "carousel" ? "on" : ""} onClick={() => switchMode("carousel")}>
+            <Images size={14} /> Carousel
+          </button>
         </div>
         <div className="ed-top-actions">
           <AccountLink className="ed-icon-btn ed-account" icon />
@@ -915,8 +1140,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                 <div className="ed-dl-menu-title">Export settings</div>
                 {renderExportControls()}
                 <button className="ed-primary ed-dl-menu-go" onClick={() => onDownload()} disabled={busy}>
-                  <Download size={15} /> {busy ? "Working…" : outDims ? `Download ${outDims.w}×${outDims.h}` : "Download"}
+                  <Download size={15} /> {busy ? "Working…" : mode === "carousel" ? `Download ${carousel.panels}-panel ZIP` : outDims ? `Download ${outDims.w}×${outDims.h}` : "Download"}
                 </button>
+                {mode === "mockup" ? (
+                  <button className="ed-dl-menu-batch" onClick={() => { setExportMenuOpen(false); if (premium) batchFileRef.current?.click(); else flash("Batch export is a Premium feature."); }} disabled={busy}>
+                    <Package size={15} /> Batch export{premium ? "" : " (Premium)"}…
+                  </button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -925,8 +1155,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
 
       <div className="ed-body">
         {/* Left rail: devices */}
-        <aside className="ed-rail ed-rail-left" aria-label={mode === "collage" ? "Collage" : "Devices"}>
+        <aside className="ed-rail ed-rail-left" aria-label={mode === "collage" ? "Collage" : mode === "carousel" ? "Carousel" : "Devices"}>
           {mode === "collage" ? collageLeft : null}
+          {mode === "carousel" ? carouselLeft : null}
           {mode === "mockup" ? (
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, devices: !c.devices }))} aria-expanded={!collapsed.devices}>
@@ -967,6 +1198,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </section>
 
           ) : null}
+          {mode !== "carousel" ? (<>
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, elements: !c.elements }))} aria-expanded={!collapsed.elements}>
               <span>Elements</span>
@@ -1045,11 +1277,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </div>
             {!overlays.length ? <p className="ed-hint">Add text or images as layers, then drag them on the canvas.</p> : null}
           </section>
+          </>) : null}
         </aside>
 
         {/* Canvas */}
         <main className="ed-stage" aria-label="Preview">
-          {mode === "collage" ? null : cropMode ? (
+          {mode !== "mockup" ? null : cropMode ? (
             <div className="ed-cropbar" role="toolbar" aria-label="Crop">
               <div className="ed-crop-aspects" role="group" aria-label="Aspect ratio">
                 {CROP_ASPECTS.map((a) => (
@@ -1105,11 +1338,16 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               onPointerCancel={onPointerUp}
             />
           </div>
-          <div className={`ed-uploadbar ${(mode === "collage" ? collageFilled > 0 : hasImage) ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
+          <div className={`ed-uploadbar ${(mode === "collage" ? collageFilled > 0 : mode === "carousel" ? hasCarousel : hasImage) ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
             {mode === "collage" ? (
               <button className="ed-upload-btn" onClick={() => pickPhotos(null)}>
                 <ImagePlus size={collageFilled ? 14 : 16} strokeWidth={2.2} />
                 {collageFilled ? "Add more photos" : "Add photos"}
+              </button>
+            ) : mode === "carousel" ? (
+              <button className="ed-upload-btn" onClick={() => carouselFileRef.current?.click()}>
+                <Images size={hasCarousel ? 14 : 16} strokeWidth={2.2} />
+                {hasCarousel ? "Replace wide image" : "Upload a wide image"}
               </button>
             ) : (
               <button className="ed-upload-btn" onClick={() => fileRef.current?.click()}>
@@ -1119,10 +1357,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             )}
             {mode === "collage" ? (
               collageFilled ? null : <span className="ed-upload-hint">pick several at once · they fill the layout in order</span>
+            ) : mode === "carousel" ? (
+              hasCarousel ? <span className="ed-upload-hint">drag on the canvas to reposition · panels export as a ZIP</span> : <span className="ed-upload-hint">a wide/panoramic image works best · it splits into seamless posts</span>
             ) : !hasImage ? (
               <span className="ed-upload-hint">or drop / paste anywhere · PNG, JPG, WebP · never leaves your device</span>
             ) : null}
           </div>
+          <input ref={carouselFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { void loadCarouselImage(e.target.files?.[0]); e.currentTarget.value = ""; }} />
+          <input ref={batchFileRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { void onBatchFiles(e.target.files); e.currentTarget.value = ""; }} />
           {dropActive ? (
             <div className="ed-dragmask"><Upload size={28} /><strong>Drop to place</strong></div>
           ) : null}
@@ -1326,7 +1568,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           ) : null}
           </section>
 
-          {mode === "collage" ? collageRight : (<>
+          {mode === "carousel" ? null : mode === "collage" ? collageRight : (<>
           <section className="ed-card">
           <div className="ed-card-title ed-card-title-row">
             <span>Adjust</span>
@@ -1776,6 +2018,9 @@ function EditorStyles() {
       .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
       .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
       .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      .ed-dl-menu-batch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 9px; background: transparent; border: 1px solid var(--line-2); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s; }
+      .ed-dl-menu-batch:hover { border-color: var(--acc); background: rgba(255,255,255,.04); }
+      .ed-dl-menu-batch:disabled { opacity: .5; cursor: default; }
       .ed-remember { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text); cursor: pointer; margin-top: 2px; line-height: 1.35; }
       .ed-remember input { width: 16px; height: 16px; accent-color: var(--acc); cursor: pointer; flex: none; }
       /* Export dialog */

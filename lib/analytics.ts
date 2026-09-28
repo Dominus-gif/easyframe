@@ -11,7 +11,10 @@ export type AnalyticsEvent =
   | "premium_started"
   | "premium_purchased"
   | "editor_mode"
-  | "collage_photos_added";
+  | "collage_photos_added"
+  | "carousel_image_added"
+  | "carousel_exported"
+  | "batch_exported";
 
 export function track(event: AnalyticsEvent, params: Record<string, unknown> = {}): void {
   if (typeof window === "undefined") return;

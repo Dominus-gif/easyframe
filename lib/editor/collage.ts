@@ -84,6 +84,17 @@ export const COLLAGE_TEMPLATES: CollageTemplate[] = [
     { x: 0.56, y: 0.08, w: 0.4, h: 0.4, circle: true },
     { x: 0.44, y: 0.5, w: 0.46, h: 0.46, circle: true }
   ] },
+  { id: "row4", label: "Row of 4", cells: grid(4, 1) },
+  { id: "tallsix", label: "Tall six", cells: grid(2, 3) },
+  { id: "grid8", label: "Eight", cells: grid(4, 2) },
+  { id: "sidebar", label: "Sidebar", cells: [
+    { x: 0, y: 0, w: 0.58, h: 1 },
+    { x: 0.58, y: 0, w: 0.42, h: 1 / 3 }, { x: 0.58, y: 1 / 3, w: 0.42, h: 1 / 3 }, { x: 0.58, y: 2 / 3, w: 0.42, h: 1 / 3 }
+  ] },
+  { id: "magazine", label: "Magazine", cells: [
+    { x: 0, y: 0, w: 0.5, h: 1 },
+    { x: 0.5, y: 0, w: 0.5, h: 0.5 }, { x: 0.5, y: 0.5, w: 0.25, h: 0.5 }, { x: 0.75, y: 0.5, w: 0.25, h: 0.5 }
+  ] },
   { id: "single", label: "Single", cells: [{ x: 0, y: 0, w: 1, h: 1 }] }
 ];
 

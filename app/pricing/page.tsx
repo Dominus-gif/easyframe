@@ -17,20 +17,21 @@ const LIFETIME = process.env.NEXT_PUBLIC_PREMIUM_LIFETIME ?? "99";
 
 const freeFeatures = [
   "Unlimited mockups — no account",
-  "All device templates",
+  "All device templates & collage layouts",
   "Export up to 2048px",
   "PNG, JPEG & WebP",
   "Solid & gradient backgrounds",
+  "Saved in your browser",
   "Ad-supported"
 ];
 
 const premiumFeatures = [
   "Everything in Free, ad-free",
+  "Batch export — many screenshots at once",
+  "Carousel export — split one wide image into a ZIP",
   "4K export (up to 3840px)",
   "Transparent-background PNGs",
-  "Custom background image uploads",
-  "Batch export",
-  "Saved projects"
+  "Custom background image uploads"
 ];
 
 export default function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
