@@ -72,6 +72,32 @@ export const COLLAGE_TEMPLATES: CollageTemplate[] = [
     { x: 0.48, y: 0.06, w: 0.46, h: 0.5, rot: 6, polaroid: true },
     { x: 0.25, y: 0.45, w: 0.5, h: 0.52, rot: -2, polaroid: true }
   ] },
+  { id: "polaroid-pair", label: "Polaroid pair", freeform: true, cells: [
+    { x: 0.06, y: 0.16, w: 0.5, h: 0.62, rot: -7, polaroid: true },
+    { x: 0.44, y: 0.22, w: 0.5, h: 0.62, rot: 6, polaroid: true }
+  ] },
+  { id: "polaroid-row", label: "Polaroid row", freeform: true, cells: [
+    { x: 0.01, y: 0.26, w: 0.35, h: 0.48, rot: -6, polaroid: true },
+    { x: 0.33, y: 0.22, w: 0.35, h: 0.48, rot: 2, polaroid: true },
+    { x: 0.65, y: 0.26, w: 0.35, h: 0.48, rot: 7, polaroid: true }
+  ] },
+  { id: "polaroid-4", label: "Polaroid scatter", freeform: true, cells: [
+    { x: 0.04, y: 0.06, w: 0.45, h: 0.45, rot: -8, polaroid: true },
+    { x: 0.5, y: 0.04, w: 0.45, h: 0.45, rot: 5, polaroid: true },
+    { x: 0.02, y: 0.5, w: 0.45, h: 0.45, rot: 4, polaroid: true },
+    { x: 0.52, y: 0.52, w: 0.45, h: 0.45, rot: -6, polaroid: true }
+  ] },
+  { id: "polaroid-grid", label: "Polaroid grid", freeform: true, cells: [
+    { x: 0.05, y: 0.05, w: 0.43, h: 0.43, polaroid: true },
+    { x: 0.52, y: 0.05, w: 0.43, h: 0.43, polaroid: true },
+    { x: 0.05, y: 0.52, w: 0.43, h: 0.43, polaroid: true },
+    { x: 0.52, y: 0.52, w: 0.43, h: 0.43, polaroid: true }
+  ] },
+  { id: "polaroid-stack", label: "Polaroid stack", freeform: true, cells: [
+    { x: 0.16, y: 0.14, w: 0.56, h: 0.66, rot: -11, polaroid: true },
+    { x: 0.22, y: 0.16, w: 0.56, h: 0.66, rot: -3, polaroid: true },
+    { x: 0.28, y: 0.18, w: 0.56, h: 0.66, rot: 6, polaroid: true }
+  ] },
   { id: "trio", label: "Trio", cells: grid(3, 1) },
   { id: "strip", label: "Film strip", cells: grid(1, 3) },
   { id: "hero-top3", label: "Feature", cells: [{ x: 0, y: 0, w: 1, h: 0.6 }, { x: 0, y: 0.6, w: 1 / 3, h: 0.4 }, { x: 1 / 3, y: 0.6, w: 1 / 3, h: 0.4 }, { x: 2 / 3, y: 0.6, w: 1 / 3, h: 0.4 }] },

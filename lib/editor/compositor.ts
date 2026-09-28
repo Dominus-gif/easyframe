@@ -700,8 +700,16 @@ export function composite(
       if (p.y > maxY) maxY = p.y;
     }
   }
-  const sceneW = maxX - minX + pad * 2;
-  const sceneH = maxY - minY + pad * 2;
+  // The canvas keeps the SAME size as the un-rotated scene, so a 3D tilt only
+  // changes the subject — never the export dimensions. The projected quad is
+  // then centred and scaled down (never up) to stay inside the content box.
+  const projW = Math.max(1e-6, maxX - minX);
+  const projH = Math.max(1e-6, maxY - minY);
+  const sceneW = dW + pad * 2;
+  const sceneH = dH + pad * 2;
+  const fit = Math.min(1, dW / projW, dH / projH);
+  const offX = pad + (dW - projW * fit) / 2;
+  const offY = pad + (dH - projH * fit) / 2;
   const outScale = outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
   const layer = renderDeviceLayer(device, img, settings, renderScaleFor(outScale));
   canvas.width = Math.round(sceneW * outScale);
@@ -723,8 +731,8 @@ export function composite(
   const wctx = warp.getContext("2d");
   if (wctx) {
     const dest = (r: number, c: number): Pt => ({
-      x: (raw[r][c].x - minX + pad) * outScale,
-      y: (raw[r][c].y - minY + pad) * outScale
+      x: (offX + (raw[r][c].x - minX) * fit) * outScale,
+      y: (offY + (raw[r][c].y - minY) * fit) * outScale
     });
     const src = (r: number, c: number): Pt => ({ x: (c / cols) * dW * layer.scale, y: (r / rows) * dH * layer.scale });
     for (let r = 0; r < rows; r += 1) {

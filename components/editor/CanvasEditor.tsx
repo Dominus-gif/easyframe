@@ -173,6 +173,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const bgFileRef = useRef<HTMLInputElement>(null);
   const { premium } = usePremium();
   const [resolution, setResolution] = useState(FREE_MAX_EDGE);
+  // Custom export size (longest edge in px). Kept as raw text so it can be typed
+  // freely; the value is clamped to the plan's ceiling when it leaves the field.
+  const [customOn, setCustomOn] = useState(false);
+  const [customText, setCustomText] = useState(String(FREE_MAX_EDGE));
   const [previewDims, setPreviewDims] = useState<{ width: number; height: number } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
@@ -186,7 +190,14 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       const p = JSON.parse(raw) as { format?: ExportFormat; quality?: number; resolution?: number };
       if (p.format) setFormat(p.format);
       if (typeof p.quality === "number") setQuality(p.quality);
-      if (typeof p.resolution === "number") setResolution(p.resolution);
+      if (typeof p.resolution === "number") {
+        setResolution(p.resolution);
+        // A saved size that isn't one of the presets was a custom one.
+        if (!RES_PRESETS.some((r) => r.v === p.resolution)) {
+          setCustomOn(true);
+          setCustomText(String(p.resolution));
+        }
+      }
       setRememberExport(true);
     } catch { /* ignore */ }
   }, []);
@@ -477,6 +488,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   };
 
   // Effective export resolution (free is capped at 2K) and the resulting output dimensions.
+  const maxAllowedEdge = premium ? PREMIUM_MAX_EDGE : FREE_MAX_EDGE;
   const effResolution = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
   const outDims = previewDims
     ? (() => {
@@ -493,13 +505,44 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         {RES_PRESETS.map((p) => (
           <button
             key={p.v}
-            className={`ed-res-btn ${effResolution === p.v ? "on" : ""}`}
-            onClick={() => { if (p.pro && !premium) { flash("4K export is a Premium feature."); return; } setResolution(p.v); }}
+            className={`ed-res-btn ${!customOn && effResolution === p.v ? "on" : ""}`}
+            onClick={() => { if (p.pro && !premium) { flash("4K export is a Premium feature."); return; } setCustomOn(false); setResolution(p.v); }}
           >
             {p.label}{p.pro && !premium ? <span className="ed-pro">PRO</span> : null}
           </button>
         ))}
+        <button
+          className={`ed-res-btn ${customOn ? "on" : ""}`}
+          onClick={() => { setCustomOn(true); setCustomText(String(effResolution)); }}
+          title="Set your own export size"
+        >
+          Custom
+        </button>
       </div>
+      {customOn ? (
+        <label className="ed-custom-res">
+          <span>Longest edge</span>
+          <input
+            type="number"
+            min={256}
+            max={maxAllowedEdge}
+            value={customText}
+            onChange={(e) => {
+              setCustomText(e.target.value);
+              const n = Number(e.target.value);
+              if (Number.isFinite(n) && n >= 256 && n <= maxAllowedEdge) setResolution(Math.round(n));
+            }}
+            onBlur={() => {
+              const n = Math.round(Number(customText));
+              const clamped = Math.max(256, Math.min(maxAllowedEdge, Number.isFinite(n) && n > 0 ? n : effResolution));
+              setCustomText(String(clamped));
+              setResolution(clamped);
+            }}
+            aria-label="Custom export size in pixels"
+          />
+          <span>px</span>
+        </label>
+      ) : null}
       <p className="ed-dims">{outDims ? `${outDims.w} × ${outDims.h} px` : "Add an image to see the size"}</p>
       <div className="ed-subhead">Format</div>
       <div className="ed-seg">
@@ -2018,6 +2061,10 @@ function EditorStyles() {
       .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
       .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
       .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      .ed-custom-res { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+      .ed-custom-res input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }
+      .ed-custom-res input:focus { outline: none; border-color: var(--acc); }
+      .ed-light .ed-custom-res input { background: #fff; color: #16181d; }
       .ed-dl-menu-batch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 9px; background: transparent; border: 1px solid var(--line-2); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s; }
       .ed-dl-menu-batch:hover { border-color: var(--acc); background: rgba(255,255,255,.04); }
       .ed-dl-menu-batch:disabled { opacity: .5; cursor: default; }

@@ -170,3 +170,15 @@ const appSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H
   <rect x="270" y="1650" width="240" height="10" rx="5" fill="#0A0A0A"/>
 </svg>`;
 await out(appSvg, "public/showcase/app-screen.webp", 90);
+
+// 7. Collage "photo" tiles — abstract, original stand-in photos used by the
+// homepage collage card (and anywhere a sample photo is needed).
+const photoTiles = [
+  { name: "photo-1", base: "#8FB4FF", blobs: [[0.25, 0.3, 0.42, 0.4, "#1753FE", 0.85], [0.8, 0.8, 0.45, 0.4, "#6A5CFF", 0.8], [0.6, 0.15, 0.25, 0.22, "#BBD3FF", 0.9]] },
+  { name: "photo-2", base: "#FFC7DE", blobs: [[0.2, 0.75, 0.45, 0.45, "#FF6FB8", 0.85], [0.8, 0.25, 0.4, 0.4, "#FFB257", 0.8], [0.45, 0.45, 0.22, 0.2, "#FFE7F1", 0.9]] },
+  { name: "photo-3", base: "#BFE9F5", blobs: [[0.3, 0.25, 0.4, 0.38, "#5FD4FF", 0.9], [0.75, 0.75, 0.42, 0.4, "#1FB5E8", 0.8], [0.15, 0.85, 0.3, 0.28, "#D9F6FF", 0.9]] },
+  { name: "photo-4", base: "#D9CFFF", blobs: [[0.7, 0.3, 0.42, 0.4, "#7C6CFF", 0.85], [0.25, 0.8, 0.42, 0.4, "#B39BFF", 0.85], [0.85, 0.9, 0.25, 0.25, "#F0EAFF", 0.9]] }
+];
+for (const p of photoTiles) {
+  await out(glow({ w: 800, h: 800, base: p.base, blur: 90, grainOpacity: 0.07, blobs: p.blobs }), `public/showcase/${p.name}.webp`, 84);
+}

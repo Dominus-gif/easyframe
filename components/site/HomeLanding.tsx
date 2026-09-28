@@ -264,13 +264,16 @@ export default function HomeLanding() {
           <div className="bx-cards">
             <article className="bx-fcard" data-reveal="left">
               <div className="bx-vis bx-vis-lilac" data-bgpar={-18}>
-                <div className="bx-collage">
-                  <Phone className="bx-mini c1" /><Phone className="bx-mini c2" /><Phone className="bx-mini c3" />
+                <div className="bx-collage" aria-hidden="true">
+                  {[1, 2, 3, 4].map((n) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={n} src={`/showcase/photo-${n}.webp`} alt="" width={800} height={800} loading="lazy" />
+                  ))}
                 </div>
               </div>
               <div className="bx-fcopy">
                 <h3>Collage layouts</h3>
-                <p>Put several screenshots on one canvas with spacing that stays even.</p>
+                <p>Arrange several photos on one canvas — grids, polaroids and more.</p>
               </div>
             </article>
             <article className="bx-fcard" data-reveal style={rd(1)}>

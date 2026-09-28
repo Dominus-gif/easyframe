@@ -82,10 +82,6 @@ export default function PricingPage({ searchParams }: { searchParams?: { reason?
               <PremiumButtons monthly={MONTHLY} lifetime={LIFETIME} />
             </div>
           </div>
-
-          <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 13, marginTop: 22 }}>
-            You&apos;ll be asked to sign in at checkout. Premium one-time purchases are refundable within 14 days.
-          </p>
         </div>
       </section>
 
