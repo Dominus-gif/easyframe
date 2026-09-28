@@ -25,9 +25,7 @@ $fields = @(
   @("DODO_ENVIRONMENT",           $false, "live or test"),
   @("DODO_MONTHLY_PRODUCT_ID",    $false, "Dodo product id for the monthly plan"),
   @("DODO_YEARLY_PRODUCT_ID",     $false, "Dodo product id for the yearly plan (blank if none)"),
-  @("DODO_LIFETIME_PRODUCT_ID",   $false, "Dodo product id for the lifetime plan"),
-  @("DODO_MONTHLY_CHECKOUT_URL",  $false, "Dodo checkout link for the monthly plan"),
-  @("DODO_LIFETIME_CHECKOUT_URL", $false, "Dodo checkout link for the lifetime plan")
+  @("DODO_LIFETIME_PRODUCT_ID",   $false, "Dodo product id for the lifetime plan")
 )
 
 Write-Host ""
