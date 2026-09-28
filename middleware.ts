@@ -2,7 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
 
-const protectedPaths = ["/studio", "/api/billing", "/account"];
+// Page routes we redirect to /login when signed out. API routes under
+// /api/billing authenticate themselves and return their own nicer redirects
+// (to /pricing), so they're intentionally not force-redirected here — but they
+// stay in the matcher below so their session cookie is still refreshed.
+const protectedPaths = ["/studio", "/account"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
