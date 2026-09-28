@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Loader2 } from "lucide-react";
-import { EasyFrameMark } from "@/components/EasyFrameLogo";
 import { track } from "@/lib/analytics";
 
 type AccessResponse = {
@@ -56,7 +55,7 @@ export default function BillingReturnPage() {
           return;
         }
 
-        if (attempts === 1 && await confirmPayment()) {
+        if (attempts === 1 && (await confirmPayment())) {
           setStatus("ready");
           track("premium_purchased", { plan });
           window.location.replace("/editor");
@@ -84,164 +83,137 @@ export default function BillingReturnPage() {
 
   return (
     <main className="billing-return-shell">
-      <Link className="billing-return-brand" href="/">
-        <span><EasyFrameMark size={34} /></span>
-        <strong>EasyFrame</strong>
-      </Link>
+      <Link className="billing-return-brand" href="/">EasyFrame</Link>
 
       <section className="billing-return-card">
         <div className="billing-return-icon">
-          {status === "pending" ? <ArrowRight size={24} /> : <Loader2 size={25} />}
+          {status === "pending" ? <ArrowRight size={22} /> : <Loader2 size={22} />}
         </div>
-        <span>{status === "pending" ? "Payment received" : "Confirming payment"}</span>
-        <h1>{status === "pending" ? "Your access is almost ready." : "Setting up your EasyFrame access."}</h1>
+        <span className="billing-return-eyebrow">{status === "pending" ? "Payment received" : "Confirming payment"}</span>
+        <h1>{status === "pending" ? "Your access is almost ready." : "Setting up your access."}</h1>
         <p>
           {status === "pending"
-            ? "Dodo is still sending the final confirmation. This usually finishes in a moment, and you can open the editor from here."
-            : `We are checking your ${plan} access and will redirect you to the editor automatically.`}
+            ? "The final confirmation is still on its way. This usually finishes in a moment — you can open the editor from here."
+            : `We're checking your ${plan} access and will take you to the editor automatically.`}
         </p>
         <div className="billing-return-actions">
-          <Link href="/editor">Open editor</Link>
-          <Link href="/pricing">Back to pricing</Link>
+          <Link className="billing-return-primary" href="/editor">Open editor <ArrowRight size={16} /></Link>
+          <Link className="billing-return-ghost" href="/pricing">Back to pricing</Link>
         </div>
       </section>
 
+      {/* Themed with the shared --sr-* solidroad tokens (globals.css) so it
+          stays in sync whenever the site theme changes. */}
       <style jsx global>{`
         .billing-return-shell {
           min-height: 100vh;
           display: grid;
           place-items: center;
           padding: 28px;
-          color: var(--text-primary);
-          background:
-            radial-gradient(circle at 78% -10%, rgba(47, 107, 255, 0.2), transparent 30%),
-            radial-gradient(circle at 12% 12%, rgba(34, 184, 230, 0.08), transparent 28%),
-            linear-gradient(145deg, #07080a 0%, #0b0c10 52%, #08090b 100%);
-          font-family: var(--font-sans);
+          color: var(--sr-ink, #1a1712);
+          background: var(--sr-paper, #fbf7eb);
+          font-family: "Inter", system-ui, -apple-system, sans-serif;
         }
-
         .billing-return-brand {
           position: fixed;
           top: 28px;
           left: 28px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: var(--text-primary);
+          font-family: var(--sr-serif, "Fraunces", Georgia, serif);
+          font-weight: 400;
+          font-size: 24px;
+          letter-spacing: -0.02em;
+          color: var(--sr-ink, #1a1712);
           text-decoration: none;
         }
-
-        .billing-return-icon {
-          display: grid;
-          place-items: center;
-          background: var(--accent-gradient);
-          box-shadow: 0 18px 44px rgba(47, 107, 255, 0.24);
-        }
-
-        .billing-return-brand span {
-          width: 44px;
-          height: 44px;
-          display: grid;
-          place-items: center;
-          border-radius: 0;
-          background: transparent;
-          box-shadow: none;
-          overflow: visible;
-        }
-
-        .billing-return-brand span img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-
-        .billing-return-brand strong {
-          font-size: 25px;
-          letter-spacing: -0.04em;
-        }
-
         .billing-return-card {
-          width: min(100%, 560px);
-          padding: 34px;
-          border: 1px solid var(--stroke);
-          border-radius: 28px;
-          background:
-            linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.018)),
-            var(--panel);
-          box-shadow: var(--shadow-panel);
+          width: min(100%, 520px);
+          padding: 40px 34px;
+          border: 1px solid var(--sr-line, #eae3d3);
+          border-radius: 22px;
+          background: var(--sr-white, #fff);
+          box-shadow: 0 1px 2px rgba(26, 23, 18, 0.05), 0 18px 44px rgba(26, 23, 18, 0.07);
           text-align: center;
         }
-
         .billing-return-icon {
-          width: 58px;
-          height: 58px;
+          width: 54px;
+          height: 54px;
           margin: 0 auto 18px;
-          border-radius: 18px;
-          color: white;
+          border-radius: 16px;
+          display: grid;
+          place-items: center;
+          color: #1a1712;
+          background: #f4ff95;
+          border: 1px solid #e6f26a;
         }
-
         .billing-return-icon svg {
           animation: billing-spin 1s linear infinite;
         }
-
-        .billing-return-card span {
-          color: #68d5ec;
-          font-size: 13px;
-          font-weight: 850;
+        .billing-return-eyebrow {
+          color: var(--sr-sub, #6e685e);
+          font-size: 12.5px;
+          font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.08em;
+          letter-spacing: 0.1em;
         }
-
         .billing-return-card h1 {
-          margin: 14px 0 12px;
-          font-size: clamp(34px, 6vw, 54px);
-          line-height: 0.98;
-          letter-spacing: -0.06em;
+          margin: 12px 0 12px;
+          font-family: var(--sr-serif, "Fraunces", Georgia, serif);
+          font-weight: 300;
+          font-size: clamp(28px, 5vw, 40px);
+          line-height: 1.05;
+          letter-spacing: -0.03em;
+          color: var(--sr-ink, #1a1712);
         }
-
         .billing-return-card p {
           margin: 0 auto;
-          max-width: 450px;
-          color: var(--text-muted);
+          max-width: 420px;
+          color: var(--sr-sub, #6e685e);
           font-size: 15px;
           line-height: 1.6;
         }
-
         .billing-return-actions {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 12px;
-          margin-top: 24px;
+          margin-top: 26px;
         }
-
         .billing-return-actions a {
           min-height: 48px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          border-radius: 14px;
-          border: 1px solid var(--stroke);
-          color: var(--text-primary);
-          background: rgba(255, 255, 255, 0.045);
+          gap: 8px;
+          border-radius: 999px;
           text-decoration: none;
           font-size: 14px;
-          font-weight: 800;
+          font-weight: 600;
+          transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
         }
-
-        .billing-return-actions a:first-child {
-          color: white;
-          border-color: transparent;
-          background: var(--accent-gradient);
+        .billing-return-primary {
+          color: var(--sr-paper, #fbf7eb);
+          background: var(--sr-btn, #17140f);
+          border: 1px solid transparent;
         }
-
+        .billing-return-primary:hover {
+          background: #000;
+          transform: translateY(-1px);
+        }
+        .billing-return-ghost {
+          color: var(--sr-ink, #1a1712);
+          background: var(--sr-white, #fff);
+          border: 1px solid var(--sr-line2, #dbd2be);
+        }
+        .billing-return-ghost:hover {
+          border-color: var(--sr-ink, #1a1712);
+        }
         @keyframes billing-spin {
           to { transform: rotate(360deg); }
         }
-
+        @media (prefers-reduced-motion: reduce) {
+          .billing-return-icon svg { animation: none; }
+        }
         @media (max-width: 640px) {
-          .billing-return-actions {
-            grid-template-columns: 1fr;
-          }
+          .billing-return-actions { grid-template-columns: 1fr; }
         }
       `}</style>
     </main>
