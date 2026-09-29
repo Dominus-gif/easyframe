@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
-import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
+import { deviceBySlug, editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
 import AccountLink from "@/components/auth/AccountLink";
@@ -600,6 +600,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const effResolution = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
   // An exact canvas size (mockup mode) wins over the size presets.
   const activeCanvas = mode === "mockup" ? canvasTarget(settings) : null;
+  const activeDevice = deviceBySlug(settings.deviceSlug);
   const outDims = activeCanvas
     ? { w: activeCanvas.w * activeCanvas.density, h: activeCanvas.h * activeCanvas.density }
     : previewDims
@@ -1373,6 +1374,33 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </section>
 
           ) : null}
+
+          {/* Browser frames: let the address in the chrome be edited. */}
+          {mode === "mockup" && activeDevice.kind === "browser" ? (
+            <section className="ed-card">
+              <div className="ed-card-title ed-card-title-row">
+                <span>Address bar</span>
+                {settings.browserUrl ? (
+                  <button className="ed-mini-reset" onClick={() => update({ browserUrl: "" })} title="Use the default address">
+                    <RotateCcw size={12} /> Reset
+                  </button>
+                ) : null}
+              </div>
+              <label className="ed-url-field">
+                <input
+                  type="text"
+                  value={settings.browserUrl ?? ""}
+                  placeholder={activeDevice.browser?.label ?? "yoursite.com"}
+                  onChange={(e) => update({ browserUrl: e.target.value })}
+                  spellCheck={false}
+                  autoComplete="off"
+                  aria-label="Address shown in the browser window"
+                />
+              </label>
+              <p className="ed-hint">Shown in the browser&apos;s URL field. Leave empty for {activeDevice.browser?.label ?? "the default"}.</p>
+            </section>
+          ) : null}
+
           {mode !== "carousel" ? (<>
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, elements: !c.elements }))} aria-expanded={!collapsed.elements}>
@@ -2202,7 +2230,7 @@ function EditorStyles() {
       .ed-collage-aspects button { flex: 1; font-variant-numeric: tabular-nums; }
       .ed-collage-count { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--muted); text-transform: none; letter-spacing: 0; }
       .ed-layouts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 8px; }
-      .ed-layout { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 4px 5px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--muted); cursor: pointer; transition: border-color .14s ease, color .14s ease, transform .14s ease; }
+      .ed-layout { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; min-width: 0; gap: 5px; padding: 6px 4px 5px; border-radius: 10px; border: 1px solid var(--line); background: rgba(255,255,255,.02); color: var(--muted); cursor: pointer; transition: border-color .14s ease, color .14s ease, transform .14s ease; }
       .ed-layout:hover { border-color: var(--line-2); color: var(--text); transform: translateY(-1px); }
       .ed-layout.on { border-color: var(--acc); color: var(--text); box-shadow: 0 0 0 1px var(--acc) inset; }
       .ed-layout-art { position: relative; width: 100%; aspect-ratio: 1; border-radius: 5px; background: rgba(255,255,255,.04); overflow: hidden; }
@@ -2211,7 +2239,7 @@ function EditorStyles() {
       .ed-layout-art i.circle { border-radius: 50%; }
       .ed-layout-art i.polaroid { background: #f4f1ea; box-shadow: inset 0 0 0 2px #f4f1ea, inset 0 -5px 0 #f4f1ea, 0 1px 3px rgba(0,0,0,.4); }
       .ed-layout-art i.polaroid::after { content: ""; position: absolute; inset: 2px 2px 6px; background: rgba(120,130,150,.55); border-radius: 1px; }
-      .ed-layout-name { font-size: 10px; font-weight: 600; white-space: nowrap; }
+      .ed-layout-name { font-size: 9.5px; font-weight: 600; line-height: 1.2; text-align: center; max-width: 100%; min-height: 22px; white-space: normal; overflow-wrap: anywhere; }
       .ed-light .ed-layout { background: #fff; }
       .ed-light .ed-layout-art { background: rgba(15,18,25,.05); }
       .ed-light .ed-layout-art i { background: rgba(15,18,25,.28); }
@@ -2255,6 +2283,11 @@ function EditorStyles() {
       .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
       .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
       .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      .ed-url-field { display: block; margin-top: 4px; }
+      .ed-url-field input { width: 100%; height: 34px; padding: 0 12px; border-radius: 9px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; }
+      .ed-url-field input::placeholder { color: var(--muted); }
+      .ed-url-field input:focus { outline: none; border-color: var(--acc); }
+      .ed-light .ed-url-field input { background: #fff; color: #16181d; }
       .ed-size-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
       .ed-size-row label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--muted); }
       .ed-size-row input { width: 100%; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }

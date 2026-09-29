@@ -53,6 +53,9 @@ export type EditorSettings = {
   canvasW?: number | null;
   canvasH?: number | null;
   canvasDensity?: number; // 1 | 2 | 3
+  /** Address shown in the browser chrome (browser frames only). Falls back to
+   *  the device's own default when empty. */
+  browserUrl?: string;
 };
 
 export const defaultSettings: EditorSettings = {
@@ -75,7 +78,8 @@ export const defaultSettings: EditorSettings = {
   deviceZ: 0,
   canvasW: null,
   canvasH: null,
-  canvasDensity: 1
+  canvasDensity: 1,
+  browserUrl: ""
 };
 
 /** The requested exact output canvas, or null when sizing is automatic. */
@@ -236,7 +240,7 @@ function drawPlaceholder(ctx: CanvasRenderingContext2D, device: Device) {
   ctx.fillText("Your screenshot", s.x + s.w / 2, s.y + s.h / 2);
 }
 
-function drawChrome(ctx: CanvasRenderingContext2D, device: Device) {
+function drawChrome(ctx: CanvasRenderingContext2D, device: Device, settings?: EditorSettings) {
   const s = device.screen;
   ctx.save();
   ctx.strokeStyle = "rgba(255,255,255,0.06)";
@@ -262,7 +266,7 @@ function drawChrome(ctx: CanvasRenderingContext2D, device: Device) {
     ctx.fill();
   }
 
-  if (device.kind === "browser") drawBrowserChrome(ctx, device);
+  if (device.kind === "browser") drawBrowserChrome(ctx, device, settings);
 
   if (device.kind === "laptop") {
     const overhang = device.frameW * 0.06;
@@ -303,7 +307,7 @@ function drawChrome(ctx: CanvasRenderingContext2D, device: Device) {
 
 /** Realistic browser window chrome: traffic lights / Windows controls, tab strip,
  *  toolbar with nav buttons and a URL field. Drawn in design units. */
-function drawBrowserChrome(ctx: CanvasRenderingContext2D, device: Device) {
+function drawBrowserChrome(ctx: CanvasRenderingContext2D, device: Device, settings?: EditorSettings) {
   const b = device.browser;
   if (!b) return;
   const W = device.frameW;
@@ -443,7 +447,7 @@ function drawBrowserChrome(ctx: CanvasRenderingContext2D, device: Device) {
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.font = `500 15px Inter, system-ui, -apple-system, sans-serif`;
-  ctx.fillText(b.label, lockX + 12, midY + 0.5);
+  ctx.fillText((settings?.browserUrl || "").trim() || b.label, lockX + 12, midY + 0.5);
 
   // right-hand toolbar icons (menu dots / share)
   ctx.fillStyle = faint;
@@ -620,7 +624,7 @@ function renderDeviceLayer(
   ctx.stroke();
   ctx.restore();
 
-  drawChrome(ctx, device);
+  drawChrome(ctx, device, settings);
   return { canvas, w, h, scale: renderScale };
 }
 
