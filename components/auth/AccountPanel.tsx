@@ -8,8 +8,9 @@ import { signOutApp } from "@/lib/auth/client";
 
 type Props = {
   email: string;
+  /** `renews` is already formatted on the server — never re-format dates here. */
   plan: { premium: boolean; label: string; renews: string | null };
-  purchases: { id: string; type: string; date: string }[];
+  purchases: { id: string; type: string; date: string; dateLabel: string }[];
   /** Arrived from a password-reset email: open straight onto "set new password". */
   resetMode: boolean;
 };
@@ -58,7 +59,7 @@ export default function AccountPanel({ email, plan, purchases, resetMode }: Prop
             <span>
               {plan.premium
                 ? plan.renews
-                  ? `Renews ${new Date(plan.renews).toLocaleDateString()}`
+                  ? `Renews ${plan.renews}`
                   : "Active. Thanks for supporting EasyFrame."
                 : "Unlimited mockups, exports up to 2K."}
             </span>
@@ -110,7 +111,7 @@ export default function AccountPanel({ email, plan, purchases, resetMode }: Prop
             {purchases.map((p) => (
               <li key={p.id}>
                 <span>{eventLabel(p.type)}</span>
-                <time dateTime={p.date}>{new Date(p.date).toLocaleDateString()}</time>
+                <time dateTime={p.date}>{p.dateLabel}</time>
               </li>
             ))}
           </ul>

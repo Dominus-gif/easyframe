@@ -6,6 +6,7 @@ import { editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
 import AccountLink from "@/components/auth/AccountLink";
+import UpgradeStar from "@/components/auth/UpgradeStar";
 import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
 import { CAROUSEL_ASPECTS, defaultCarousel, exportCarousel, renderCarousel, type CarouselState } from "@/lib/editor/carousel";
 import { makeZip } from "@/lib/editor/zip";
@@ -1287,6 +1288,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </button>
         </div>
         <div className="ed-top-actions">
+          <UpgradeStar />
           <AccountLink className="ed-icon-btn ed-account" icon />
           <button
             className="ed-icon-btn ed-theme-toggle"

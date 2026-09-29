@@ -14,9 +14,9 @@ export default function SiteFooter() {
           <div className="mk-footer-col">
             <h4>Product</h4>
             <Link href="/editor">Free editor</Link>
-            <Link href="/templates">All templates</Link>
             <Link href="/blog">Blog</Link>
             <Link href="/pricing">Pricing</Link>
+            <Link href="/contact">Contact</Link>
           </div>
           <div className="mk-footer-col mk-footer-col--devices">
             <h4>Devices</h4>

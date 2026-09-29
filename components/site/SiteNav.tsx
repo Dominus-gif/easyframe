@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import AccountLink from "@/components/auth/AccountLink";
+import UpgradeStar from "@/components/auth/UpgradeStar";
 
 const LINKS = [
   { href: "/editor", label: "Editor" },
-  { href: "/templates", label: "Templates" },
   { href: "/blog", label: "Blog" },
   { href: "/pricing", label: "Pricing" }
 ];
@@ -33,6 +33,7 @@ export default function SiteNav() {
           ))}
         </div>
         <div className="mk-nav-cta">
+          <UpgradeStar />
           <AccountLink className="mk-account" />
           <Link href="/editor" className="mk-cta">
             Get started <ArrowRight size={16} />

@@ -27,7 +27,7 @@ export default function CategoryView({ slug }: { slug: string }) {
             {list.map((d, i) => {
               const g = gradientPresets[i % gradientPresets.length];
               return (
-                <Link key={d.slug} href={`/templates/${d.slug}`} className="mk-card">
+                <Link key={d.slug} href={`/editor?device=${d.slug}`} className="mk-card">
                   <div className="mk-card-visual" style={{ background: `linear-gradient(135deg, ${g.from}, ${g.to})` }}>
                     <span className={`mk-dev ${silhouetteClass(d)}`}><i /></span>
                   </div>

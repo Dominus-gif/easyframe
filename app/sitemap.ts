@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { devices } from "@/lib/editor/devices";
 import { categories } from "@/lib/site";
 import { posts } from "@/lib/blog";
 
@@ -17,12 +16,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     entry("", 1, "weekly"),
     entry("/editor", 0.95, "weekly"),
-    entry("/templates", 0.9, "weekly"),
-    ...devices.map((d) => entry(`/templates/${d.slug}`, 0.8, "monthly")),
     ...categories.map((c) => entry(`/${c.slug}`, 0.7, "monthly")),
     entry("/blog", 0.7, "weekly"),
     ...posts.map((p) => entry(`/blog/${p.slug}`, 0.6, "monthly")),
     entry("/pricing", 0.6, "monthly"),
+    entry("/contact", 0.4, "yearly"),
     entry("/terms", 0.3, "yearly"),
     entry("/privacy", 0.3, "yearly")
   ];

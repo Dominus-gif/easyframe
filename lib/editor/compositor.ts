@@ -163,6 +163,23 @@ function rr(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: n
   ctx.closePath();
 }
 
+/** Rounded rect with per-corner radii [topLeft, topRight, bottomRight, bottomLeft]. */
+function rrc(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, c: [number, number, number, number]) {
+  const m = Math.min(w, h) / 2;
+  const [tl, tr, br, bl] = c.map((v) => Math.max(0, Math.min(v, m))) as [number, number, number, number];
+  ctx.beginPath();
+  ctx.moveTo(x + tl, y);
+  ctx.lineTo(x + w - tr, y);
+  ctx.arcTo(x + w, y, x + w, y + tr, tr);
+  ctx.lineTo(x + w, y + h - br);
+  ctx.arcTo(x + w, y + h, x + w - br, y + h, br);
+  ctx.lineTo(x + bl, y + h);
+  ctx.arcTo(x, y + h, x, y + h - bl, bl);
+  ctx.lineTo(x, y + tl);
+  ctx.arcTo(x, y, x + tl, y, tl);
+  ctx.closePath();
+}
+
 /** Extra height below the frame for laptop decks and monitor stands. */
 function baseHeight(device: Device) {
   if (device.kind === "laptop") return 46;
@@ -177,7 +194,8 @@ function bodyPath(ctx: CanvasRenderingContext2D, device: Device) {
 function screenPath(ctx: CanvasRenderingContext2D, device: Device) {
   const s = device.screen;
   if (device.kind === "browser") {
-    rr(ctx, s.x + 12, s.y, s.w - 24, s.h - 12, 12);
+    const r = device.bodyRadius;
+    rrc(ctx, s.x, s.y, s.w, s.h, [0, 0, r, r]);
   } else {
     rr(ctx, s.x, s.y, s.w, s.h, s.r);
   }
@@ -244,23 +262,7 @@ function drawChrome(ctx: CanvasRenderingContext2D, device: Device) {
     ctx.fill();
   }
 
-  if (device.kind === "browser") {
-    ctx.save();
-    rr(ctx, 0, 0, device.frameW, 76, device.bodyRadius);
-    ctx.clip();
-    ctx.fillStyle = "#1c1c20";
-    ctx.fillRect(0, 0, device.frameW, 56);
-    ctx.restore();
-    ["#ff5f57", "#febc2e", "#28c840"].forEach((color, i) => {
-      ctx.beginPath();
-      ctx.arc(28 + i * 26, 28, 8, 0, Math.PI * 2);
-      ctx.fillStyle = color;
-      ctx.fill();
-    });
-    rr(ctx, device.frameW * 0.28, 16, device.frameW * 0.44, 26, 13);
-    ctx.fillStyle = "#0e0e11";
-    ctx.fill();
-  }
+  if (device.kind === "browser") drawBrowserChrome(ctx, device);
 
   if (device.kind === "laptop") {
     const overhang = device.frameW * 0.06;
@@ -292,6 +294,222 @@ function drawChrome(ctx: CanvasRenderingContext2D, device: Device) {
     ctx.fill();
     rr(ctx, device.frameW - 3, device.frameH * 0.52, 9, 34, 4);
     ctx.fillStyle = "#151517";
+    ctx.fill();
+  }
+
+  drawHardware(ctx, device);
+}
+
+
+/** Realistic browser window chrome: traffic lights / Windows controls, tab strip,
+ *  toolbar with nav buttons and a URL field. Drawn in design units. */
+function drawBrowserChrome(ctx: CanvasRenderingContext2D, device: Device) {
+  const b = device.browser;
+  if (!b) return;
+  const W = device.frameW;
+  const chromeH = device.screen.y;
+  const R = device.bodyRadius;
+  const dark = b.theme === "dark";
+
+  const barBg = dark ? (b.tabs ? "#202124" : "#2c2c2e") : b.tabs ? "#dee1e6" : "#e9e9ea";
+  const toolbarBg = dark ? (b.tabs ? "#35363a" : "#2c2c2e") : b.tabs ? "#ffffff" : "#e9e9ea";
+  const urlBg = dark ? "#202124" : b.tabs ? "#f1f3f4" : "#ffffff";
+  const ink = dark ? "#c9cdd2" : "#5f6368";
+  const faint = dark ? "rgba(255,255,255,.28)" : "rgba(0,0,0,.34)";
+
+  // Chrome background (top corners follow the window radius).
+  ctx.save();
+  rrc(ctx, 0, 0, W, chromeH, [R, R, 0, 0]);
+  ctx.clip();
+  ctx.fillStyle = barBg;
+  ctx.fillRect(0, 0, W, chromeH);
+
+  const tabH = b.tabs ? 40 : 0;
+  if (b.tabs) {
+    // Toolbar sits below the tab strip.
+    ctx.fillStyle = toolbarBg;
+    ctx.fillRect(0, tabH, W, chromeH - tabH);
+    // Active tab (rounded top), then two inactive ones.
+    const tabStart = b.os === "mac" ? 96 : 12;
+    const tabW = 210;
+    rrc(ctx, tabStart, 8, tabW, tabH - 8, [10, 10, 0, 0]);
+    ctx.fillStyle = toolbarBg;
+    ctx.fill();
+    ctx.fillStyle = faint;
+    rr(ctx, tabStart + 16, tabH / 2 - 4, 12, 12, 3);
+    ctx.fill();
+    rr(ctx, tabStart + 38, tabH / 2 - 3, 110, 8, 4);
+    ctx.fill();
+    for (let i = 1; i <= 2; i++) {
+      const x = tabStart + i * (tabW + 6);
+      ctx.fillStyle = dark ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.05)";
+      rrc(ctx, x, 10, tabW - 10, tabH - 10, [10, 10, 0, 0]);
+      ctx.fill();
+      ctx.fillStyle = faint;
+      rr(ctx, x + 16, tabH / 2 - 3, 96, 7, 3.5);
+      ctx.fill();
+    }
+    // "+" new tab
+    const plusX = tabStart + 3 * (tabW + 6) + 12;
+    ctx.strokeStyle = faint;
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(plusX - 7, tabH / 2);
+    ctx.lineTo(plusX + 7, tabH / 2);
+    ctx.moveTo(plusX, tabH / 2 - 7);
+    ctx.lineTo(plusX, tabH / 2 + 7);
+    ctx.stroke();
+  }
+
+  // Window controls.
+  if (b.os === "mac") {
+    const cy = b.tabs ? tabH / 2 : chromeH / 2;
+    ["#ff5f57", "#febc2e", "#28c840"].forEach((color, i) => {
+      ctx.beginPath();
+      ctx.arc(24 + i * 20, cy, 6.5, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  } else {
+    // Windows: minimise / maximise / close at the right of the tab strip.
+    const cy = tabH / 2;
+    ctx.strokeStyle = ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(W - 118, cy);
+    ctx.lineTo(W - 106, cy);
+    ctx.stroke();
+    ctx.strokeRect(W - 78, cy - 5.5, 11, 11);
+    ctx.beginPath();
+    ctx.moveTo(W - 39, cy - 5.5);
+    ctx.lineTo(W - 28, cy + 5.5);
+    ctx.moveTo(W - 28, cy - 5.5);
+    ctx.lineTo(W - 39, cy + 5.5);
+    ctx.stroke();
+  }
+
+  // Toolbar row: nav buttons + URL field.
+  const barY = b.tabs ? tabH : 0;
+  const barH = chromeH - barY;
+  const midY = barY + barH / 2;
+  const navX = b.os === "mac" && !b.tabs ? 92 : 24;
+
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  // back / forward chevrons
+  [0, 1].forEach((i) => {
+    const x = navX + i * 34;
+    const dir = i === 0 ? -1 : 1;
+    ctx.beginPath();
+    ctx.moveTo(x - dir * 4, midY - 6);
+    ctx.lineTo(x + dir * 3, midY);
+    ctx.lineTo(x - dir * 4, midY + 6);
+    ctx.stroke();
+  });
+  // reload circle
+  const rx = navX + 70;
+  ctx.beginPath();
+  ctx.arc(rx, midY, 7, 0.5, Math.PI * 1.8);
+  ctx.stroke();
+
+  // URL field
+  const fieldX = rx + 22;
+  const fieldW = b.tabs ? W - fieldX - (b.os === "win" ? 210 : 96) : Math.min(W * 0.46, W - fieldX - 150);
+  const fieldCX = b.tabs ? fieldX : (W - fieldW) / 2;
+  const fieldH = 30;
+  rr(ctx, fieldCX, midY - fieldH / 2, fieldW, fieldH, fieldH / 2);
+  ctx.fillStyle = urlBg;
+  ctx.fill();
+  if (!dark) {
+    ctx.strokeStyle = "rgba(0,0,0,.08)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+  // padlock
+  const lockX = fieldCX + 18;
+  ctx.strokeStyle = faint;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(lockX, midY - 2.5, 3.2, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = faint;
+  rr(ctx, lockX - 4.5, midY - 2.5, 9, 7.5, 1.6);
+  ctx.fill();
+  // address text
+  ctx.fillStyle = ink;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.font = `500 15px Inter, system-ui, -apple-system, sans-serif`;
+  ctx.fillText(b.label, lockX + 12, midY + 0.5);
+
+  // right-hand toolbar icons (menu dots / share)
+  ctx.fillStyle = faint;
+  const iconX = W - (b.os === "win" ? 150 : 46);
+  for (let i = 0; i < 3; i++) {
+    ctx.beginPath();
+    ctx.arc(iconX, midY - 6 + i * 6, 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Hairline under the chrome.
+  ctx.fillStyle = dark ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.10)";
+  ctx.fillRect(0, chromeH - 1, W, 1);
+}
+
+/** Side buttons, SIM tray, antenna bands and earpiece — the details that make a
+ *  procedural frame read as real hardware rather than a rounded rectangle. */
+function drawHardware(ctx: CanvasRenderingContext2D, device: Device) {
+  const hw = device.hardware;
+  if (!hw) return;
+  const W = device.frameW;
+  const H = device.frameH;
+  const t = Math.max(3, Math.round(W * 0.011)); // rail thickness
+  const rail = (x: number, y: number, w: number, h: number, r: number) => {
+    rr(ctx, x, y, w, h, r);
+    const g = ctx.createLinearGradient(x, y, x + w, y);
+    g.addColorStop(0, "rgba(255,255,255,.30)");
+    g.addColorStop(0.5, "rgba(255,255,255,.10)");
+    g.addColorStop(1, "rgba(0,0,0,.28)");
+    ctx.fillStyle = g;
+    ctx.fill();
+  };
+
+  if (hw.buttons) {
+    // Left rail: silence switch (short) + volume up/down.
+    const volH = Math.round(H * 0.072);
+    rail(0, H * 0.155, t, Math.round(H * 0.032), t / 2);
+    rail(0, H * 0.235, t, volH, t / 2);
+    rail(0, H * 0.235 + volH + H * 0.022, t, volH, t / 2);
+    // Right rail: side / power button.
+    rail(W - t, H * 0.26, t, Math.round(H * 0.105), t / 2);
+  }
+
+  if (hw.antenna) {
+    // Thin bands wrapping the rail, as on a stainless/aluminium frame.
+    ctx.fillStyle = "rgba(255,255,255,.16)";
+    [0.085, 0.915].forEach((fy) => {
+      ctx.fillRect(0, Math.round(H * fy), t, 2.5);
+      ctx.fillRect(W - t, Math.round(H * fy), t, 2.5);
+    });
+  }
+
+  if (hw.sim) {
+    // SIM tray slot: a hairline seam low on the left rail.
+    ctx.fillStyle = "rgba(0,0,0,.45)";
+    rr(ctx, 0.6, H * 0.545, t - 1.2, Math.round(H * 0.052), 1.5);
+    ctx.fill();
+  }
+
+  if (hw.speaker) {
+    // Earpiece slit centred in the top bezel.
+    const s = device.screen;
+    const sw = Math.max(40, s.w * 0.14);
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    rr(ctx, s.x + s.w / 2 - sw / 2, Math.max(3, s.y * 0.42), sw, 4, 2);
     ctx.fill();
   }
 }

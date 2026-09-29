@@ -1,13 +1,14 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import {
-  ArrowRight, LayoutGrid, Gift, ShieldCheck, Smartphone, Tablet, Laptop, AppWindow, Watch, Monitor,
+  ArrowRight, Crown, Gift, ShieldCheck, Smartphone, Tablet, Laptop, AppWindow, Watch, Monitor,
   Store, Presentation, Share2, LayoutTemplate, Rocket, Check
 } from "lucide-react";
 import { SITE_URL } from "@/lib/site";
 import StarttFX from "@/components/site/StarttFX";
 import JsonLd from "@/components/site/JsonLd";
 import AccountLink from "@/components/auth/AccountLink";
+import UpgradeStar from "@/components/auth/UpgradeStar";
 import SponsorLine from "@/components/SponsorLine";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
@@ -93,10 +94,10 @@ export default function HomeLanding() {
           </Link>
           <div className="bx-nav-links">
             <Link href="#features">Features</Link>
-            <Link href="/templates">Templates</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
           <div className="bx-nav-right">
+            <UpgradeStar />
             <AccountLink className="bx-account" />
             <Link href="/editor" className="bx-btn bx-btn-blue bx-btn-sm">Get started</Link>
           </div>
@@ -117,7 +118,7 @@ export default function HomeLanding() {
           </p>
           <div className="bx-ctas" data-reveal style={rd(3)}>
             <Link href="/editor" className="bx-btn bx-btn-blue bx-btn-lg">Open the editor <ArrowRight size={18} /></Link>
-            <Link href="/templates" className="bx-btn bx-btn-white bx-btn-lg"><LayoutGrid size={17} /> See templates</Link>
+            <Link href="/pricing" className="bx-btn bx-btn-white bx-btn-lg"><Crown size={17} /> Upgrade to Premium</Link>
           </div>
         </div>
 
@@ -323,7 +324,7 @@ export default function HomeLanding() {
             <article className="bx-dcard bx-dcard-cta" data-reveal style={rd(2)}>
               <h3>Private by design</h3>
               <p>Everything runs in your browser. Your screenshots are never uploaded.</p>
-              <Link href="/templates" className="bx-textlink">Browse templates <ArrowRight size={15} /></Link>
+              <Link href="/pricing" className="bx-textlink">See Premium <ArrowRight size={15} /></Link>
             </article>
           </div>
         </div>
@@ -376,7 +377,6 @@ export default function HomeLanding() {
           <nav aria-label="Product">
             <h4>Product</h4>
             <Link href="/editor">Editor</Link>
-            <Link href="/templates">Templates</Link>
             <Link href="/pricing">Pricing</Link>
             <Link href="/blog">Blog</Link>
           </nav>

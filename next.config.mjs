@@ -23,7 +23,11 @@ const nextConfig = {
         ],
         destination: "https://www.easyframe.app/:path*",
         permanent: true
-      }
+      },
+      // /templates was retired: keep old links and search results alive by
+      // sending them into the editor (device slug preserved where present).
+      { source: "/templates", destination: "/editor", permanent: true },
+      { source: "/templates/:slug", destination: "/editor?device=:slug", permanent: true }
       // NOTE: Do NOT add case-only redirects like /terms -> /Terms here.
       // Next.js redirect `source` matching is case-INSENSITIVE, so such a rule
       // also matches its own destination and creates an infinite 308 loop.

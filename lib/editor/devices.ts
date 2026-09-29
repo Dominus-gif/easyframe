@@ -6,6 +6,24 @@ export type DeviceKind = "phone" | "tablet" | "laptop" | "browser" | "watch" | "
 
 export type ScreenRect = { x: number; y: number; w: number; h: number; r: number };
 
+/** Realistic browser window chrome (kind === "browser"). */
+export type BrowserChrome = {
+  os: "mac" | "win";
+  theme: "light" | "dark";
+  /** Tab strip above the toolbar (Chrome/Edge) vs a single unified bar (Safari). */
+  tabs: boolean;
+  /** Address drawn in the URL field. */
+  label: string;
+};
+
+/** Physical details drawn on the device rail so frames read as real hardware. */
+export type Hardware = {
+  buttons?: boolean; // volume pair + side/power button
+  sim?: boolean;     // SIM tray slot
+  speaker?: boolean; // earpiece slit
+  antenna?: boolean; // antenna bands across the rail
+};
+
 export type Device = {
   slug: string;
   name: string;
@@ -19,6 +37,8 @@ export type Device = {
   bodyRadius: number;
   bodyColor: string;
   notch?: "island" | "camera" | "punch" | "none";
+  hardware?: Hardware;
+  browser?: BrowserChrome;
 };
 
 export const devices: Device[] = [
@@ -29,8 +49,9 @@ export const devices: Device[] = [
     kind: "phone",
     category: "phone",
     frameW: 460, frameH: 940,
-    screen: { x: 18, y: 18, w: 424, h: 904, r: 74 },
-    bodyRadius: 90, bodyColor: "#0a0a0c", notch: "island"
+    screen: { x: 11, y: 11, w: 438, h: 918, r: 80 },
+    bodyRadius: 88, bodyColor: "#1d1d20", notch: "island",
+    hardware: { buttons: true, sim: true, antenna: true }
   },
   {
     slug: "android-phone-mockup",
@@ -39,8 +60,9 @@ export const devices: Device[] = [
     kind: "phone",
     category: "phone",
     frameW: 452, frameH: 936,
-    screen: { x: 15, y: 15, w: 422, h: 906, r: 46 },
-    bodyRadius: 56, bodyColor: "#0b0b0d", notch: "punch"
+    screen: { x: 10, y: 10, w: 432, h: 916, r: 48 },
+    bodyRadius: 56, bodyColor: "#1a1a1d", notch: "punch",
+    hardware: { buttons: true, speaker: true }
   },
   {
     slug: "pixel-phone-mockup",
@@ -49,8 +71,9 @@ export const devices: Device[] = [
     kind: "phone",
     category: "phone",
     frameW: 456, frameH: 940,
-    screen: { x: 16, y: 16, w: 424, h: 908, r: 40 },
-    bodyRadius: 50, bodyColor: "#0a0a0c", notch: "punch"
+    screen: { x: 10, y: 10, w: 436, h: 920, r: 44 },
+    bodyRadius: 52, bodyColor: "#1b1b1e", notch: "punch",
+    hardware: { buttons: true, speaker: true }
   },
   {
     slug: "ipad-mockup",
@@ -59,8 +82,9 @@ export const devices: Device[] = [
     kind: "tablet",
     category: "tablet",
     frameW: 900, frameH: 1200,
-    screen: { x: 30, y: 30, w: 840, h: 1140, r: 22 },
-    bodyRadius: 48, bodyColor: "#0c0c0e", notch: "camera"
+    screen: { x: 20, y: 20, w: 860, h: 1160, r: 26 },
+    bodyRadius: 46, bodyColor: "#1c1c1f", notch: "camera",
+    hardware: { buttons: true }
   },
   {
     slug: "ipad-mini-mockup",
@@ -69,8 +93,9 @@ export const devices: Device[] = [
     kind: "tablet",
     category: "tablet",
     frameW: 820, frameH: 1180,
-    screen: { x: 26, y: 26, w: 768, h: 1128, r: 26 },
-    bodyRadius: 44, bodyColor: "#0c0c0e", notch: "camera"
+    screen: { x: 18, y: 18, w: 784, h: 1144, r: 28 },
+    bodyRadius: 44, bodyColor: "#1c1c1f", notch: "camera",
+    hardware: { buttons: true }
   },
   {
     slug: "android-tablet-mockup",
@@ -79,8 +104,9 @@ export const devices: Device[] = [
     kind: "tablet",
     category: "tablet",
     frameW: 920, frameH: 1300,
-    screen: { x: 28, y: 28, w: 864, h: 1244, r: 18 },
-    bodyRadius: 40, bodyColor: "#0c0c0e", notch: "camera"
+    screen: { x: 20, y: 20, w: 880, h: 1260, r: 20 },
+    bodyRadius: 40, bodyColor: "#1a1a1d", notch: "camera",
+    hardware: { buttons: true }
   },
   {
     slug: "macbook-pro-mockup",
@@ -89,8 +115,8 @@ export const devices: Device[] = [
     kind: "laptop",
     category: "laptop",
     frameW: 1440, frameH: 960,
-    screen: { x: 60, y: 44, w: 1320, h: 792, r: 14 },
-    bodyRadius: 26, bodyColor: "#0b0b0d"
+    screen: { x: 52, y: 38, w: 1336, h: 812, r: 12 },
+    bodyRadius: 24, bodyColor: "#1b1b1e", notch: "camera"
   },
   {
     slug: "surface-laptop-mockup",
@@ -99,8 +125,8 @@ export const devices: Device[] = [
     kind: "laptop",
     category: "laptop",
     frameW: 1460, frameH: 940,
-    screen: { x: 54, y: 40, w: 1352, h: 812, r: 8 },
-    bodyRadius: 16, bodyColor: "#0c0c0e"
+    screen: { x: 46, y: 34, w: 1368, h: 830, r: 6 },
+    bodyRadius: 14, bodyColor: "#1c1c1f", notch: "camera"
   },
   {
     slug: "desktop-monitor-mockup",
@@ -118,9 +144,65 @@ export const devices: Device[] = [
     seoTitle: "Free Browser Mockup Generator",
     kind: "browser",
     category: "browser",
-    frameW: 1320, frameH: 880,
-    screen: { x: 0, y: 56, w: 1320, h: 824, r: 0 },
-    bodyRadius: 18, bodyColor: "#141416"
+    frameW: 1440, frameH: 952,
+    screen: { x: 0, y: 52, w: 1440, h: 900, r: 0 },
+    bodyRadius: 14, bodyColor: "#1f2023",
+    browser: { os: "mac", theme: "dark", tabs: false, label: "easyframe.app" }
+  },
+  {
+    slug: "safari-mockup",
+    name: "Safari",
+    seoTitle: "Free Safari Browser Mockup Generator",
+    kind: "browser",
+    category: "browser",
+    frameW: 1440, frameH: 978,
+    screen: { x: 0, y: 78, w: 1440, h: 900, r: 0 },
+    bodyRadius: 12, bodyColor: "#e9e9ea",
+    browser: { os: "mac", theme: "light", tabs: false, label: "easyframe.app" }
+  },
+  {
+    slug: "safari-dark-mockup",
+    name: "Safari Dark",
+    seoTitle: "Free Safari Dark Mode Mockup Generator",
+    kind: "browser",
+    category: "browser",
+    frameW: 1440, frameH: 978,
+    screen: { x: 0, y: 78, w: 1440, h: 900, r: 0 },
+    bodyRadius: 12, bodyColor: "#2c2c2e",
+    browser: { os: "mac", theme: "dark", tabs: false, label: "easyframe.app" }
+  },
+  {
+    slug: "chrome-mockup",
+    name: "Chrome",
+    seoTitle: "Free Chrome Browser Mockup Generator",
+    kind: "browser",
+    category: "browser",
+    frameW: 1440, frameH: 988,
+    screen: { x: 0, y: 88, w: 1440, h: 900, r: 0 },
+    bodyRadius: 12, bodyColor: "#dee1e6",
+    browser: { os: "mac", theme: "light", tabs: true, label: "easyframe.app" }
+  },
+  {
+    slug: "chrome-dark-mockup",
+    name: "Chrome Dark",
+    seoTitle: "Free Chrome Dark Mode Mockup Generator",
+    kind: "browser",
+    category: "browser",
+    frameW: 1440, frameH: 988,
+    screen: { x: 0, y: 88, w: 1440, h: 900, r: 0 },
+    bodyRadius: 12, bodyColor: "#202124",
+    browser: { os: "mac", theme: "dark", tabs: true, label: "easyframe.app" }
+  },
+  {
+    slug: "windows-browser-mockup",
+    name: "Windows Browser",
+    seoTitle: "Free Windows Browser Mockup Generator",
+    kind: "browser",
+    category: "browser",
+    frameW: 1440, frameH: 988,
+    screen: { x: 0, y: 88, w: 1440, h: 900, r: 0 },
+    bodyRadius: 8, bodyColor: "#dfe3e8",
+    browser: { os: "win", theme: "light", tabs: true, label: "easyframe.app" }
   },
   {
     slug: "apple-watch-mockup",
@@ -150,7 +232,8 @@ export const devices: Device[] = [
     category: "phone",
     frameW: 440, frameH: 884,
     screen: { x: 22, y: 96, w: 396, h: 692, r: 6 },
-    bodyRadius: 62, bodyColor: "#0a0a0c", notch: "none"
+    bodyRadius: 62, bodyColor: "#1c1c1f", notch: "none",
+    hardware: { buttons: true, speaker: true }
   },
   {
     slug: "foldable-phone-mockup",
@@ -159,8 +242,9 @@ export const devices: Device[] = [
     kind: "tablet",
     category: "tablet",
     frameW: 1000, frameH: 1040,
-    screen: { x: 26, y: 26, w: 948, h: 988, r: 16 },
-    bodyRadius: 30, bodyColor: "#0b0b0d", notch: "punch"
+    screen: { x: 18, y: 18, w: 964, h: 1004, r: 18 },
+    bodyRadius: 30, bodyColor: "#1a1a1d", notch: "punch",
+    hardware: { buttons: true }
   },
   {
     slug: "kindle-mockup",
@@ -179,8 +263,8 @@ export const devices: Device[] = [
     kind: "laptop",
     category: "laptop",
     frameW: 1420, frameH: 940,
-    screen: { x: 70, y: 44, w: 1280, h: 806, r: 8 },
-    bodyRadius: 18, bodyColor: "#0c0c0e"
+    screen: { x: 58, y: 38, w: 1304, h: 822, r: 6 },
+    bodyRadius: 16, bodyColor: "#1c1c1f", notch: "camera"
   },
   {
     slug: "smart-tv-mockup",
