@@ -8,6 +8,7 @@ import { SITE_URL } from "@/lib/site";
 import StarttFX from "@/components/site/StarttFX";
 import JsonLd from "@/components/site/JsonLd";
 import AccountLink from "@/components/auth/AccountLink";
+import SponsorLine from "@/components/SponsorLine";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
@@ -105,10 +106,11 @@ export default function HomeLanding() {
       {/* Hero */}
       <header className="bx-hero">
         <div className="bx-wrap bx-hero-in">
-          <div className="bx-badges" data-reveal>
-            <span><Gift size={15} /> Free forever</span>
-            <span><ShieldCheck size={15} /> Images never leave your browser</span>
-          </div>
+          <p className="bx-badges" data-reveal>
+            <span><Gift size={15} aria-hidden="true" /> Free forever, no account</span>
+            <i aria-hidden="true" />
+            <span><ShieldCheck size={15} aria-hidden="true" /> Your images stay on your device</span>
+          </p>
           <h1 className="bx-h1" data-reveal="blur" style={rd(1)}>Device mockups<br />without designing</h1>
           <p className="bx-lead" data-reveal style={rd(2)}>
             Drop in a screenshot and get a polished, store-ready mockup in seconds. No Figma file, no Photoshop template, no sign-up.
@@ -391,7 +393,10 @@ export default function HomeLanding() {
             <Link href="/terms">Terms</Link>
           </nav>
         </div>
-        <div className="bx-wrap bx-footer-copy">© {new Date().getFullYear()} EasyFrame</div>
+        <div className="bx-wrap bx-footer-copy">
+          <span>© {new Date().getFullYear()} EasyFrame</span>
+          <SponsorLine />
+        </div>
       </footer>
 
       <StarttFX />

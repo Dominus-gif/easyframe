@@ -1818,9 +1818,10 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .bx-lead { margin: 18px auto 0; max-width: 620px; color: var(--bx-sub); font-size: clamp(17px, 1.6vw, 21px); line-height: 1.5; text-wrap: pretty; }
 
 .bx-eyebrow { display: flex; justify-content: center; align-items: center; gap: 8px; margin: 0 0 18px; font-family: var(--bx-mono); font-weight: 500; font-size: 15px; letter-spacing: .06em; text-transform: uppercase; color: var(--bx-sub); }
-.bx-eyebrow span { padding: 5px 10px; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(10,20,40,.06), inset 0 0 0 1px var(--bx-line); color: var(--bx-ink); }
-.bx-eyebrow span.on { background: var(--bx-grad); color: #fff; box-shadow: 0 8px 18px -8px rgba(23,83,254,.7); }
-.bx-eyebrow span.amp { background: none; box-shadow: none; padding: 0; color: var(--bx-muted); }
+/* Eyebrows are plain mono text — no capsule chrome. */
+.bx-eyebrow span { color: var(--bx-ink); }
+.bx-eyebrow span.on { color: var(--bx-blue); }
+.bx-eyebrow span.amp { color: var(--bx-muted); }
 
 .bx-section { position: relative; padding: clamp(80px, 11vw, 140px) 0; }
 .bx-wash { background: url(/bg/section-wash.webp) center / cover no-repeat, var(--bx-bg); }
@@ -1842,9 +1843,12 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 /* ------------------------------ hero ------------------------------ */
 .bx-hero { position: relative; padding-top: clamp(40px, 6vw, 72px); background: url(/bg/hero-glow.webp) center bottom / cover no-repeat, var(--bx-bg); }
 .bx-hero-in { text-align: center; position: relative; z-index: 2; }
-.bx-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 26px; }
-.bx-badges span { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 999px; background: #fff; font-size: 14px; color: #373737; box-shadow: 0 1px 2px rgba(10,20,40,.05), inset 0 0 0 1px var(--bx-line); }
+/* Plain trust line — no capsules, just text with a hairline separator. */
+.bx-badges { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 16px; margin: 0 0 26px; font-size: 14.5px; color: var(--bx-sub); }
+.bx-badges span { display: inline-flex; align-items: center; gap: 7px; }
+.bx-badges i { width: 1px; height: 14px; background: var(--bx-line2); }
 .bx-badges svg { color: var(--bx-blue); }
+@media (max-width: 520px) { .bx-badges i { display: none; } }
 .bx-hero .bx-lead { max-width: 640px; }
 .bx-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin-top: 34px; }
 
@@ -1920,7 +1924,7 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .bx-marquee { overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
 .bx-marquee-track { display: flex; width: max-content; gap: 12px; animation: bx-marquee 48s linear infinite; }
 .bx-marquee:hover .bx-marquee-track { animation-play-state: paused; }
-.bx-strip .bx-marquee-track span { padding: 10px 18px; border-radius: 999px; background: #fff; font-family: var(--bx-display); font-stretch: 112%; font-weight: 700; font-size: 14px; letter-spacing: .02em; text-transform: uppercase; color: #9AA2B1; box-shadow: inset 0 0 0 1px var(--bx-line); }
+.bx-strip .bx-marquee-track span { padding: 10px 20px; font-family: var(--bx-display); font-stretch: 112%; font-weight: 700; font-size: 15px; letter-spacing: .02em; text-transform: uppercase; color: #A7AEBB; }
 @keyframes bx-marquee { to { transform: translateX(calc(-50% - 6px)); } }
 
 /* --------------------------- before / after --------------------------- */
@@ -1931,8 +1935,8 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .bx-after { background: url(/showcase/canvas-mesh.webp) center / cover; box-shadow: 0 30px 60px -30px rgba(23,53,140,.45); }
 .bx-ba-card figcaption { position: absolute; left: 0; right: 0; bottom: 22px; text-align: center; font-size: 15px; color: var(--bx-sub); }
 .bx-after figcaption { color: #1F2A44; }
-.bx-ba-tag { position: absolute; top: 18px; left: 18px; padding: 6px 12px; border-radius: 8px; background: #fff; font-family: var(--bx-mono); font-size: 13px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--bx-muted); }
-.bx-ba-tag.on { background: var(--bx-grad); color: #fff; }
+.bx-ba-tag { position: absolute; top: 20px; left: 22px; font-family: var(--bx-mono); font-size: 13px; font-weight: 500; letter-spacing: .1em; text-transform: uppercase; color: var(--bx-muted); }
+.bx-ba-tag.on { color: #1B3A8F; }
 .bx-ba-line { margin: 44px auto 0; max-width: 640px; text-align: center; font-size: clamp(18px, 1.7vw, 21px); line-height: 1.5; color: var(--bx-ink); }
 .bx-ba-line span { font-family: var(--bx-hand); font-weight: 600; font-size: 1.45em; color: var(--bx-blue); }
 
@@ -2098,8 +2102,10 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .mk h3, .mk-feat h3, .mk-step h3, .mk-card-body h3, .mk-card h3 { font-family: var(--bx-body) !important; font-weight: 600 !important; letter-spacing: -.01em !important; color: var(--bx-ink); }
 .mk-sub, .mk-section-head p, .mk-card-body p, .mk-feat p, .mk-step p, .mk-prose p, .mk-bullets li { color: var(--bx-sub); }
 .mk-eyebrow { font-family: var(--bx-mono); text-transform: uppercase; letter-spacing: .08em; color: var(--bx-sub); }
-.mk-kicker { font-family: var(--bx-body); color: #373737; background: #fff; border: 0; box-shadow: 0 1px 2px rgba(10,20,40,.05), inset 0 0 0 1px var(--bx-line); }
+/* Kickers/badges: plain text, no capsule. */
+.mk-kicker { font-family: var(--bx-body); color: var(--bx-sub); background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; }
 .mk-kicker svg { color: var(--bx-blue); }
+.mk-badge { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: var(--bx-blue) !important; font-weight: 600; }
 
 .mk-nav { background: rgba(248,248,248,.78); border-bottom-color: var(--bx-line); backdrop-filter: blur(14px) saturate(1.3); }
 .mk-brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--bx-display) !important; font-stretch: 112%; font-weight: 800 !important; color: var(--bx-ink) !important; }
@@ -2199,3 +2205,18 @@ html, body:has(.bx), body:has(.mk) { background: var(--bx-bg); }
 .legal-shell .legal-hero small { color: var(--bx-muted) !important; }
 .legal-shell .legal-footer, .legal-shell .legal-footer a { color: var(--bx-sub) !important; }
 .legal-shell .legal-card section + section { border-top-color: var(--bx-line) !important; }
+
+/* ==================== Pricing alert + plan note ==================== */
+.mk-alert { display: inline-flex; align-items: flex-start; gap: 10px; max-width: 620px; margin: 18px auto 0; padding: 12px 16px; border-radius: 14px; background: #FFF4E8; color: #7A3E00; box-shadow: inset 0 0 0 1px #FFD9AE; font-size: 14.5px; line-height: 1.5; text-align: left; }
+.mk-alert svg { flex: none; margin-top: 2px; color: #C26A00; }
+.mk-plan-note { margin: 16px 0 0; font-size: 13px; line-height: 1.5; color: var(--bx-sub); }
+
+/* Flatten the last capsule-style labels (legal hero eyebrow). */
+.legal-hero span { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: var(--bx-sub) !important; font-family: var(--bx-mono); font-size: 12.5px; letter-spacing: .1em; text-transform: uppercase; }
+
+/* ==================== Sponsor credit (every page) ==================== */
+.sponsor-credit { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; line-height: 1.4; color: var(--bx-sub, #324454); text-decoration: none; }
+.sponsor-credit b { font-weight: 700; color: var(--bx-blue, #1753FE); }
+.sponsor-credit:hover b { text-decoration: underline; }
+.bx-footer-sponsor { margin-top: 10px; }
+.bx-footer-copy { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }

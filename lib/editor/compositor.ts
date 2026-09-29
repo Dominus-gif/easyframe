@@ -48,6 +48,11 @@ export type EditorSettings = {
   perspective: number; // 0..100 — strength of the 3D perspective
   deviceZ: number; // how many overlay layers render BELOW the device (0 = device beneath all overlays)
   crop?: CropRect | null; // keep only this region of the final output
+  /** Exact output canvas in CSS px. When set, the scene is letterboxed to this
+   *  aspect and exported at canvasW*density x canvasH*density. null = automatic. */
+  canvasW?: number | null;
+  canvasH?: number | null;
+  canvasDensity?: number; // 1 | 2 | 3
 };
 
 export const defaultSettings: EditorSettings = {
@@ -67,8 +72,27 @@ export const defaultSettings: EditorSettings = {
   rotateY: 0,
   rotateZ: 0,
   perspective: 45,
-  deviceZ: 0
+  deviceZ: 0,
+  canvasW: null,
+  canvasH: null,
+  canvasDensity: 1
 };
+
+/** The requested exact output canvas, or null when sizing is automatic. */
+export function canvasTarget(s: EditorSettings): { w: number; h: number; density: number } | null {
+  const w = s.canvasW;
+  const h = s.canvasH;
+  if (!w || !h || w < 16 || h < 16) return null;
+  const density = Math.max(1, Math.min(3, Math.round(s.canvasDensity || 1)));
+  return { w, h, density };
+}
+
+/** Grow a scene box to the requested canvas aspect (letterboxing with background). */
+function fitSceneToCanvas(sceneW: number, sceneH: number, target: { w: number; h: number } | null) {
+  if (!target) return { sceneW, sceneH };
+  const ar = target.w / target.h;
+  return sceneW / sceneH < ar ? { sceneW: sceneH * ar, sceneH } : { sceneW, sceneH: sceneW / ar };
+}
 
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
@@ -647,11 +671,12 @@ export function composite(
   const belowOverlays = overlays?.slice(0, dz);
   const aboveOverlays = overlays?.slice(dz);
 
+  const target = canvasTarget(settings);
+
   if (!tilted) {
     // Flat fast path — crisp 1:1 device, single clean shadow.
-    const sceneW = dW + pad * 2;
-    const sceneH = dH + pad * 2;
-    const outScale = outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
+    const { sceneW, sceneH } = fitSceneToCanvas(dW + pad * 2, dH + pad * 2, target);
+    const outScale = target ? (target.w * target.density) / sceneW : outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
     const layer = renderDeviceLayer(device, img, settings, renderScaleFor(outScale));
     canvas.width = Math.round(sceneW * outScale);
     canvas.height = Math.round(sceneH * outScale);
@@ -670,7 +695,11 @@ export function composite(
       ctx.shadowBlur = settings.shadow * maxDim * 0.09 * outScale;
       ctx.shadowOffsetY = settings.shadow * dH * 0.03 * outScale;
     }
-    ctx.drawImage(layer.canvas, pad * outScale + (settings.frameOffsetX || 0) * canvas.width, pad * outScale + (settings.frameOffsetY || 0) * canvas.height, dW * outScale, dH * outScale);
+    // Centre the device in the scene (identical to `pad` when sizing is automatic,
+    // and correctly centred inside the letterbox when a canvas size is set).
+    const devX = (sceneW - dW) / 2;
+    const devY = (sceneH - dH) / 2;
+    ctx.drawImage(layer.canvas, devX * outScale + (settings.frameOffsetX || 0) * canvas.width, devY * outScale + (settings.frameOffsetY || 0) * canvas.height, dW * outScale, dH * outScale);
     ctx.restore();
     drawOverlays(ctx, aboveOverlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -705,12 +734,11 @@ export function composite(
   // then centred and scaled down (never up) to stay inside the content box.
   const projW = Math.max(1e-6, maxX - minX);
   const projH = Math.max(1e-6, maxY - minY);
-  const sceneW = dW + pad * 2;
-  const sceneH = dH + pad * 2;
+  const { sceneW, sceneH } = fitSceneToCanvas(dW + pad * 2, dH + pad * 2, target);
   const fit = Math.min(1, dW / projW, dH / projH);
-  const offX = pad + (dW - projW * fit) / 2;
-  const offY = pad + (dH - projH * fit) / 2;
-  const outScale = outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
+  const offX = (sceneW - projW * fit) / 2;
+  const offY = (sceneH - projH * fit) / 2;
+  const outScale = target ? (target.w * target.density) / sceneW : outputScale(sceneW, sceneH, opts.maxEdge, settings.crop);
   const layer = renderDeviceLayer(device, img, settings, renderScaleFor(outScale));
   canvas.width = Math.round(sceneW * outScale);
   canvas.height = Math.round(sceneH * outScale);

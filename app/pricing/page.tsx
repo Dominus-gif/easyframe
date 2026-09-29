@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check, Crown, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Crown, Sparkles } from "lucide-react";
 import SiteNav from "@/components/site/SiteNav";
 import SiteFooter from "@/components/site/SiteFooter";
 import PremiumButtons from "@/components/PremiumButtons";
@@ -34,8 +34,18 @@ const premiumFeatures = [
   "Custom background image uploads"
 ];
 
-export default function PricingPage({ searchParams }: { searchParams?: { reason?: string } }) {
+export default function PricingPage({ searchParams }: { searchParams?: { reason?: string; checkout?: string; why?: string } }) {
   const reason = searchParams?.reason;
+  const checkout = searchParams?.checkout;
+  // Checkout never dead-ends on an error page: explain what happened and how to
+  // get moving again. `why` is a short code the server logged alongside detail.
+  const checkoutMessage =
+    checkout === "missing"
+      ? "Checkout isn't configured yet, so no payment was taken. Please try again shortly — we've been notified."
+      : checkout === "error"
+        ? "We couldn't start checkout just now and you have not been charged. Please try again — if it keeps happening, email contact@easyframe.app and we'll sort it out."
+        : null;
+
   return (
     <main className="mk mk-pricing">
       <SiteNav />
@@ -47,6 +57,12 @@ export default function PricingPage({ searchParams }: { searchParams?: { reason?
           <p className="mk-sub">The mockup tool is free and unlimited. Premium removes ads and unlocks pro export options — support the tool and get more done.</p>
           {reason === "trial-ended" || reason === "plan-required" ? (
             <p className="mk-sub" style={{ marginTop: 14, color: "var(--accent)" }}>Sign in to manage or upgrade your plan.</p>
+          ) : null}
+          {checkoutMessage ? (
+            <p className="mk-alert" role="alert">
+              <AlertCircle size={17} aria-hidden="true" />
+              <span>{checkoutMessage}</span>
+            </p>
           ) : null}
         </div>
       </header>
@@ -75,10 +91,13 @@ export default function PricingPage({ searchParams }: { searchParams?: { reason?
               <div style={{ fontSize: 52, fontWeight: 800, letterSpacing: "-0.04em", margin: "10px 0 2px" }}>
                 ${MONTHLY}<span style={{ fontSize: 18, fontWeight: 500, color: "var(--text-muted)" }}> /month</span>
               </div>
-              <p style={{ color: "var(--text-muted)", margin: "0 0 20px", fontSize: 14 }}>or ${LIFETIME} once — lifetime access</p>
+              <p style={{ color: "var(--text-muted)", margin: "0 0 20px", fontSize: 14 }}>or ${LIFETIME} once — pay once, keep it forever</p>
               <ul className="mk-bullets">
                 {premiumFeatures.map((f) => (<li key={f}>{f}</li>))}
               </ul>
+              <p className="mk-plan-note">
+                Monthly and Lifetime unlock exactly the same features — Lifetime is simply billed once instead of every month.
+              </p>
               <PremiumButtons monthly={MONTHLY} lifetime={LIFETIME} />
             </div>
           </div>

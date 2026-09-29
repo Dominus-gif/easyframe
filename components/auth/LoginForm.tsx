@@ -1,5 +1,6 @@
 "use client";
 
+import SponsorLine from "@/components/SponsorLine";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, KeyRound, Mail, MailCheck } from "lucide-react";
@@ -256,6 +257,7 @@ export default function LoginForm({ next, notice }: { next: string; notice: stri
       <p className="auth-foot">
         The editor is free without an account. By continuing you agree to our <a href="/terms">Terms</a> and <a href="/privacy">Privacy Policy</a>.
       </p>
+      <p className="auth-foot"><SponsorLine /></p>
     </div>
   );
 }

@@ -29,19 +29,29 @@ export async function middleware(request: NextRequest) {
   }
 
   // Refreshes an expiring session and writes the new cookies onto the response.
-  const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll: () => request.cookies.getAll(),
-      setAll: (list) => {
-        list.forEach(({ name, value }) => request.cookies.set(name, value));
-        response = NextResponse.next({ request });
-        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+  // Any failure here (Supabase unreachable, malformed cookie) must not throw:
+  // an uncaught error in middleware surfaces as a Cloudflare "Error 1101" page.
+  let user = null;
+  try {
+    const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (list) => {
+          list.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        }
       }
-    }
-  });
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+    });
+    ({
+      data: { user }
+    } = await supabase.auth.getUser());
+  } catch (e) {
+    console.error("[middleware] session refresh failed", e instanceof Error ? e.message : e);
+    // Let the request through: the route itself re-checks auth and can render a
+    // proper error, which is far better than a raw Worker exception.
+    return response;
+  }
 
   if (isProtected && !user && !localBypass) return toLogin(request);
   return response;

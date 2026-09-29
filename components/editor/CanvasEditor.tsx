@@ -9,7 +9,9 @@ import AccountLink from "@/components/auth/AccountLink";
 import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
 import { CAROUSEL_ASPECTS, defaultCarousel, exportCarousel, renderCarousel, type CarouselState } from "@/lib/editor/carousel";
 import { makeZip } from "@/lib/editor/zip";
+import { blobToImage, getBlob, imageToBlob, pruneBlobs, putBlob } from "@/lib/editor/store";
 import {
+  canvasTarget,
   composite,
   defaultSettings,
   exportScene,
@@ -120,7 +122,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [settings, setSettings] = useState<EditorSettings>({ ...defaultSettings, deviceSlug: startSlug });
   const [imgVersion, setImgVersion] = useState(0);
   const [hasImage, setHasImage] = useState(false);
-  const [previewZoom, setPreviewZoom] = useState(1);
+  const [previewZoom, setPreviewZoom] = useState(0.8);
   const [dropActive, setDropActive] = useState(false);
   const [format, setFormat] = useState<ExportFormat>("png");
   const [quality, setQuality] = useState(92);
@@ -202,14 +204,33 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     } catch { /* ignore */ }
   }, []);
 
-  // Local, in-browser save: restore the editor "look" (device, background, adjust,
-  // collage/carousel config, mode) on load. Images are never persisted — they stay
-  // on the device. Free for everyone; nothing is uploaded.
+  // ---- Local, in-browser save --------------------------------------------
+  // Everything you do in the editor survives navigating away or closing the
+  // browser: the small stuff (device, background, sliders, layouts, layer
+  // positions) goes to localStorage, and the images go to IndexedDB. It is all
+  // local to this browser — nothing is uploaded.
+  type SavedOverlay = Record<string, unknown> & { id: string; kind: "text" | "element" | "image" };
+  const restoredRef = useRef(false);
+
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem("ef-editor-state");
-      if (!raw) return;
-      const s = JSON.parse(raw) as { mode?: string; settings?: Partial<EditorSettings>; collage?: Partial<CollageState>; carousel?: Partial<CarouselState> };
+    let cancelled = false;
+    (async () => {
+      let s: {
+        mode?: string;
+        settings?: Partial<EditorSettings>;
+        collage?: Partial<CollageState>;
+        collagePhotos?: ({ zoom: number; ox: number; oy: number } | null)[];
+        carousel?: Partial<CarouselState>;
+        overlays?: SavedOverlay[];
+        hasMockup?: boolean;
+        hasCarousel?: boolean;
+      } | null = null;
+      try {
+        const raw = localStorage.getItem("ef-editor-state");
+        s = raw ? JSON.parse(raw) : null;
+      } catch { /* ignore */ }
+      if (!s || cancelled) { restoredRef.current = true; return; }
+
       if (s.settings) {
         setSettings((prev) => {
           const next = { ...prev, ...s.settings, background: s.settings?.background ?? prev.background } as EditorSettings;
@@ -222,23 +243,106 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       if (s.collage) setCollage((c) => ({ ...c, ...s.collage, photos: c.photos }));
       if (s.carousel) setCarousel((c) => ({ ...c, ...s.carousel }));
       if (!initialDevice && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel")) setMode(s.mode);
-    } catch { /* ignore */ }
+
+      // Images.
+      if (s.hasMockup) {
+        const blob = await getBlob("mockup");
+        const img = blob ? await blobToImage(blob) : null;
+        if (img && !cancelled) { imgRef.current = img; setHasImage(true); setImgVersion((v) => v + 1); }
+      }
+      if (s.hasCarousel) {
+        const blob = await getBlob("carousel");
+        const img = blob ? await blobToImage(blob) : null;
+        if (img && !cancelled) { carouselImgRef.current = img; setCarouselVersion((v) => v + 1); }
+      }
+      if (s.collagePhotos?.length) {
+        const photos: (CollagePhoto | null)[] = [];
+        for (let i = 0; i < s.collagePhotos.length; i++) {
+          const meta = s.collagePhotos[i];
+          if (!meta) { photos.push(null); continue; }
+          // eslint-disable-next-line no-await-in-loop
+          const blob = await getBlob(`collage-${i}`);
+          // eslint-disable-next-line no-await-in-loop
+          const img = blob ? await blobToImage(blob) : null;
+          photos.push(img ? { img, zoom: meta.zoom, ox: meta.ox, oy: meta.oy } : null);
+        }
+        if (!cancelled && photos.some(Boolean)) setCollage((c) => ({ ...c, photos }));
+      }
+      if (s.overlays?.length) {
+        const rebuilt: Overlay[] = [];
+        for (const o of s.overlays) {
+          if (o.kind === "text") {
+            rebuilt.push({ ...(o as unknown as TextOverlay), type: "text" });
+          } else if (o.kind === "element" && typeof o.svgTemplate === "string") {
+            const svg = (o.svgTemplate as string).split("__C__").join((o.color as string) || EL_INK);
+            // eslint-disable-next-line no-await-in-loop
+            const img = await new Promise<HTMLImageElement | null>((res) => {
+              const i = new Image();
+              i.onload = () => res(i);
+              i.onerror = () => res(null);
+              i.src = "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+            });
+            if (img) rebuilt.push({ ...(o as unknown as ImageOverlay), type: "image", img });
+          } else if (o.kind === "image") {
+            // eslint-disable-next-line no-await-in-loop
+            const blob = await getBlob(`ovl-${o.id}`);
+            // eslint-disable-next-line no-await-in-loop
+            const img = blob ? await blobToImage(blob) : null;
+            if (img) rebuilt.push({ ...(o as unknown as ImageOverlay), type: "image", img });
+          }
+        }
+        if (!cancelled && rebuilt.length) setOverlays(rebuilt);
+      }
+      restoredRef.current = true;
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced autosave of the same look (no images).
+  // Debounced autosave. Runs only after the initial restore so an empty first
+  // render can't wipe a saved session.
   useEffect(() => {
+    if (!restoredRef.current) return;
     const id = window.setTimeout(() => {
       try {
         const st: Partial<EditorSettings> = { ...settings };
         if (st.background && st.background.type === "image") delete st.background; // can't serialize an <img>
-        const { photos: _photos, ...collageCfg } = collage;
-        void _photos;
-        localStorage.setItem("ef-editor-state", JSON.stringify({ v: 1, mode, settings: st, collage: collageCfg, carousel }));
-      } catch { /* ignore */ }
+        const { photos, ...collageCfg } = collage;
+        const savedOverlays: SavedOverlay[] = overlays.map((o) => {
+          const base = { id: o.id, x: o.x, y: o.y, scale: o.scale, rotation: o.rotation, opacity: o.opacity, hidden: o.hidden, name: o.name };
+          if (o.type === "text") {
+            const { text, fontFamily, fontWeight, fontSize, color, align } = o;
+            return { ...base, kind: "text", text, fontFamily, fontWeight, fontSize, color, align };
+          }
+          return o.svgTemplate
+            ? { ...base, kind: "element", svgTemplate: o.svgTemplate, color: o.color }
+            : { ...base, kind: "image" };
+        });
+        localStorage.setItem(
+          "ef-editor-state",
+          JSON.stringify({
+            v: 2,
+            mode,
+            settings: st,
+            collage: collageCfg,
+            collagePhotos: photos.map((p) => (p ? { zoom: p.zoom, ox: p.ox, oy: p.oy } : null)),
+            carousel,
+            overlays: savedOverlays,
+            hasMockup: !!imgRef.current,
+            hasCarousel: !!carouselImgRef.current
+          })
+        );
+        // Drop blobs nothing points at any more (removed photos, deleted layers).
+        const keep = new Set<string>();
+        if (imgRef.current) keep.add("mockup");
+        if (carouselImgRef.current) keep.add("carousel");
+        photos.forEach((p, i) => { if (p) keep.add(`collage-${i}`); });
+        overlays.forEach((o) => { if (o.type === "image" && !o.svgTemplate) keep.add(`ovl-${o.id}`); });
+        void pruneBlobs(keep);
+      } catch { /* quota or private mode — the session just won't persist */ }
     }, 600);
     return () => window.clearTimeout(id);
-  }, [settings, collage, carousel, mode]);
+  }, [settings, collage, carousel, mode, overlays, imgVersion, carouselVersion]);
 
   // Close the export menu on outside-click; close menu + dialog on Escape.
   useEffect(() => {
@@ -357,6 +461,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     try {
       const img = await loadImageSafely(file);
       const o: ImageOverlay = { id: uid(), type: "image", img, x: 0.5, y: 0.5, scale: 0.6, rotation: 0, opacity: 1 };
+      void imageToBlob(img, img.naturalWidth || img.width, img.naturalHeight || img.height).then((b) => {
+        if (b) void putBlob(`ovl-${o.id}`, b);
+      });
       setOverlays((prev) => [...prev, o]);
       setSelectedId(o.id);
     } catch {
@@ -490,16 +597,25 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   // Effective export resolution (free is capped at 2K) and the resulting output dimensions.
   const maxAllowedEdge = premium ? PREMIUM_MAX_EDGE : FREE_MAX_EDGE;
   const effResolution = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
-  const outDims = previewDims
-    ? (() => {
-        const m = Math.max(previewDims.width, previewDims.height) || 1;
-        return { w: Math.round((previewDims.width * effResolution) / m), h: Math.round((previewDims.height * effResolution) / m) };
-      })()
-    : null;
+  // An exact canvas size (mockup mode) wins over the size presets.
+  const activeCanvas = mode === "mockup" ? canvasTarget(settings) : null;
+  const outDims = activeCanvas
+    ? { w: activeCanvas.w * activeCanvas.density, h: activeCanvas.h * activeCanvas.density }
+    : previewDims
+      ? (() => {
+          const m = Math.max(previewDims.width, previewDims.height) || 1;
+          return { w: Math.round((previewDims.width * effResolution) / m), h: Math.round((previewDims.height * effResolution) / m) };
+        })()
+      : null;
 
   // Shared export controls (used in the dialog and the split-button dropdown).
   const renderExportControls = () => (
     <>
+      {activeCanvas ? (
+        <p className="ed-hint" style={{ marginTop: 0 }}>
+          Using your custom canvas: <b>{activeCanvas.w * activeCanvas.density} × {activeCanvas.h * activeCanvas.density}px</b>. Switch Canvas size back to Auto to use these presets.
+        </p>
+      ) : null}
       <div className="ed-subhead">Size</div>
       <div className="ed-seg">
         {RES_PRESETS.map((p) => (
@@ -568,6 +684,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     imgRef.current = img;
     setHasImage(!!img);
     setImgVersion((v) => v + 1);
+    // Keep a copy in this browser so the screenshot survives a reload.
+    if (img) {
+      void imageToBlob(img, img.naturalWidth || img.width, img.naturalHeight || img.height).then((b) => {
+        if (b) void putBlob("mockup", b);
+      });
+    }
   };
 
   const ingest = useCallback(async (source: Blob | string) => {
@@ -611,6 +733,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         const t = targets[placed];
         if (t == null) break;
         photos[t] = { img, zoom: 1, ox: 0, oy: 0 };
+        // Keep a local copy so the collage survives a reload.
+        void imageToBlob(img, img.naturalWidth || img.width, img.naturalHeight || img.height).then((b) => {
+          if (b) void putBlob(`collage-${t}`, b);
+        });
         placed++;
       }
       setCollage({ ...c, photos });
@@ -650,8 +776,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     }
     setBusy(true);
     try {
-      carouselImgRef.current = await loadImageSafely(file);
+      const img = await loadImageSafely(file);
+      carouselImgRef.current = img;
       setCarouselVersion((v) => v + 1);
+      void imageToBlob(img, img.naturalWidth || img.width, img.naturalHeight || img.height).then((b) => {
+        if (b) void putBlob("carousel", b);
+      });
       track("carousel_image_added", {});
     } catch {
       flash("Could not load that image.");
@@ -1614,6 +1744,68 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           {mode === "carousel" ? null : mode === "collage" ? collageRight : (<>
           <section className="ed-card">
           <div className="ed-card-title ed-card-title-row">
+            <span>Canvas size</span>
+            {activeCanvas ? (
+              <button className="ed-mini-reset" onClick={() => update({ canvasW: null, canvasH: null })} title="Back to automatic sizing">
+                <RotateCcw size={12} /> Auto
+              </button>
+            ) : null}
+          </div>
+          <div className="ed-seg" role="group" aria-label="Canvas sizing">
+            <button className={!activeCanvas ? "on" : ""} onClick={() => update({ canvasW: null, canvasH: null })}>Auto</button>
+            <button
+              className={activeCanvas ? "on" : ""}
+              onClick={() => {
+                if (activeCanvas) return;
+                // Seed from what's on screen so switching to custom doesn't jump.
+                const w = previewDims?.width ?? 1200;
+                const h = previewDims?.height ?? 1200;
+                const scale = 1200 / Math.max(w, h);
+                update({ canvasW: Math.round(w * scale), canvasH: Math.round(h * scale), canvasDensity: settings.canvasDensity || 1 });
+              }}
+            >
+              Custom
+            </button>
+          </div>
+          {activeCanvas ? (
+            <>
+              <div className="ed-size-row">
+                <label>
+                  <span>Width</span>
+                  <input
+                    type="number" min={16} max={8000} value={settings.canvasW ?? ""}
+                    onChange={(e) => update({ canvasW: Math.max(0, Math.round(Number(e.target.value) || 0)) || null })}
+                    aria-label="Canvas width in pixels"
+                  />
+                </label>
+                <span className="ed-size-x" aria-hidden="true">×</span>
+                <label>
+                  <span>Height</span>
+                  <input
+                    type="number" min={16} max={8000} value={settings.canvasH ?? ""}
+                    onChange={(e) => update({ canvasH: Math.max(0, Math.round(Number(e.target.value) || 0)) || null })}
+                    aria-label="Canvas height in pixels"
+                  />
+                </label>
+              </div>
+              <div className="ed-subhead">Density</div>
+              <div className="ed-seg" role="group" aria-label="Pixel density">
+                {[1, 2, 3].map((d) => (
+                  <button key={d} className={(settings.canvasDensity || 1) === d ? "on" : ""} onClick={() => update({ canvasDensity: d })}>{d}×</button>
+                ))}
+              </div>
+              <p className="ed-hint">
+                Exports at <b>{activeCanvas.w * activeCanvas.density} × {activeCanvas.h * activeCanvas.density}px</b>
+                {activeCanvas.density > 1 ? ` (${activeCanvas.w} × ${activeCanvas.h} at ${activeCanvas.density}×)` : ""}. The mockup is centred and the background fills the rest.
+              </p>
+            </>
+          ) : (
+            <p className="ed-hint">Automatic: the canvas follows the device and padding. Choose <b>Custom</b> to set exact width, height and density.</p>
+          )}
+          </section>
+
+          <section className="ed-card">
+          <div className="ed-card-title ed-card-title-row">
             <span>Adjust</span>
             <button className="ed-mini-reset" onClick={resetAdjust} title="Reset these sliders to default"><RotateCcw size={12} /> Reset</button>
           </div>
@@ -2061,6 +2253,12 @@ function EditorStyles() {
       .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
       .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
       .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      .ed-size-row { display: flex; align-items: flex-end; gap: 8px; margin-top: 4px; }
+      .ed-size-row label { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--muted); }
+      .ed-size-row input { width: 100%; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }
+      .ed-size-row input:focus { outline: none; border-color: var(--acc); }
+      .ed-light .ed-size-row input { background: #fff; color: #16181d; }
+      .ed-size-x { padding-bottom: 8px; color: var(--muted); font-size: 12px; }
       .ed-custom-res { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
       .ed-custom-res input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }
       .ed-custom-res input:focus { outline: none; border-color: var(--acc); }
