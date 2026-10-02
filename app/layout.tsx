@@ -9,9 +9,12 @@ export const metadata: Metadata = {
   title: "EasyFrame - Create polished visuals",
   description: "Turn Images into polished mockups for social, websites, and product launches.",
   icons: {
-    icon: "/brand/favicon.svg",
-    shortcut: "/brand/favicon.svg",
-    apple: "/brand/easyframe-app-icon.svg"
+    icon: [
+      { url: "/brand/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/icon-192.png", sizes: "192x192", type: "image/png" }
+    ],
+    shortcut: "/brand/icon-32.png",
+    apple: "/brand/apple-touch-icon.png"
   },
   openGraph: {
     title: "EasyFrame - Create polished visuals",

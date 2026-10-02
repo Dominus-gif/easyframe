@@ -22,8 +22,7 @@ export default function LegalPage({ eyebrow, title, updated, intro, sections }: 
       <nav className="legal-nav">
         <Link className="legal-brand" href="/">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
-          <strong>EasyFrame</strong>
+          <img src="/brand/logo.png" alt="EasyFrame" width={900} height={92} />
         </Link>
         <div className="legal-links">
           <Link href="/privacy">Privacy</Link>

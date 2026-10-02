@@ -89,8 +89,7 @@ export default function HomeLanding() {
         <div className="bx-wrap bx-nav-in">
           <Link href="/" className="bx-logo" aria-label="EasyFrame home">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/easyframe-app-icon.svg" alt="" width={34} height={34} />
-            <span>EasyFrame</span>
+            <img src="/brand/logo.png" alt="EasyFrame" width={900} height={92} />
           </Link>
           <div className="bx-nav-links">
             <Link href="#features">Features</Link>
@@ -369,8 +368,7 @@ export default function HomeLanding() {
           <div className="bx-footer-brand">
             <Link href="/" className="bx-logo">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
-              <span>EasyFrame</span>
+              <img src="/brand/logo.png" alt="EasyFrame" width={900} height={92} />
             </Link>
             <p>Free device mockups, made in your browser.</p>
           </div>

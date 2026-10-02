@@ -22,8 +22,7 @@ export default function SiteNav() {
       <div className="mk-wrap mk-nav-inner">
         <Link href="/" className="mk-brand">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
-          EasyFrame
+          <img src="/brand/logo.png" alt="EasyFrame" width={900} height={92} />
         </Link>
         <div className="mk-nav-links">
           {LINKS.map((l) => (

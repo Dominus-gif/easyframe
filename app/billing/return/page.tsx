@@ -83,8 +83,7 @@ export default function BillingReturnPage() {
     <main className="billing-return-shell">
       <Link className="billing-return-brand" href="/">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/brand/easyframe-app-icon.svg" alt="" width={30} height={30} />
-        EasyFrame
+        <img src="/brand/logo.png" alt="EasyFrame" width={900} height={92} />
       </Link>
 
       <section className="billing-return-card">
@@ -132,8 +131,9 @@ export default function BillingReturnPage() {
           text-decoration: none;
         }
         .billing-return-brand img {
-          border-radius: 9px;
-          box-shadow: 0 6px 16px -6px rgba(10, 20, 40, 0.35);
+          height: 22px;
+          width: auto;
+          display: block;
         }
         .billing-return-card {
           width: min(100%, 520px);

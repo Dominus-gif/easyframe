@@ -1273,8 +1273,12 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     >
       <header className="ed-top">
         <a className="ed-brand" href="/">
-          <span className="ed-logo" aria-hidden="true"><i /></span>
-          <span className="ed-brand-name">EasyFrame</span>
+          {/* Two variants: the wordmark is black, so the dark chrome needs the
+              white one. CSS shows whichever matches the editor theme. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="ed-logo-dark" src="/brand/logo-white.png" alt="EasyFrame" width={900} height={92} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="ed-logo-light" src="/brand/logo.png" alt="" aria-hidden="true" width={900} height={92} />
           <span className="ed-brand-tag">Editor</span>
         </a>
         <div className="ed-modes" role="tablist" aria-label="Editor mode">
@@ -1986,9 +1990,11 @@ function EditorStyles() {
 
       .ed-top { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
       .ed-brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
-      .ed-logo { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--acc), var(--acc2)); display: grid; place-items: center; box-shadow: 0 4px 14px rgba(255,255,255,.4); }
-      .ed-logo i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid rgba(255,255,255,.92); }
-      .ed-brand-name { font-weight: 700; font-size: 15px; letter-spacing: -.02em; }
+      .ed-brand img { height: 20px; width: auto; display: block; }
+      /* .ed-brand img is class+element, so the variant toggles must out-rank it. */
+      .ed-brand img.ed-logo-light { display: none; }
+      .ed-light .ed-brand img.ed-logo-dark { display: none; }
+      .ed-light .ed-brand img.ed-logo-light { display: block; }
       .ed-brand-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border: 1px solid var(--line-2); padding: 2px 7px; border-radius: 999px; }
       .ed-top-actions { display: flex; align-items: center; gap: 8px; }
       .ed-btn-group { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.03); }
@@ -2330,7 +2336,6 @@ function EditorStyles() {
       .ed-upload:hover { background: rgba(255,255,255,.11); }
       .ed-light .ed-upload { background: rgba(15,18,25,.05); }
       .ed-light .ed-upload:hover { background: rgba(15,18,25,.09); }
-      .ed-logo { background: var(--acc); box-shadow: none; }
       .ed-card-title::before { box-shadow: none; }
       .ed-layer-add button { background: rgba(255,255,255,.06); border-color: var(--line-2); color: var(--text); }
       .ed-light .ed-layer-add button { background: rgba(15,18,25,.05); }
