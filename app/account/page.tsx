@@ -14,29 +14,59 @@ export const dynamic = "force-dynamic";
 
 const PREMIUM_PLANS = ["monthly", "lifetime", "premium"];
 
-// Dates are formatted here, on the server, with an explicit locale and time zone.
-// Formatting them in the client component instead produced a different string on
+// Dates are formatted here, on the server, with an explicit locale and time zone:
+// formatting them in the client component instead produced a different string on
 // the server (UTC) than in the browser (local time) whenever the two fell on
-// different days, and that hydration mismatch crashed the page with
-// "Application error: a client-side exception has occurred".
-const dateLabel = (d: Date) =>
-  new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(d);
+// different days, and that hydration mismatch crashed the page.
+//
+// It must never throw. Intl.DateTimeFormat.format() raises a RangeError for a
+// date *string* or an invalid Date, and Prisma's wasm client over the pg driver
+// adapter (the Workers path) does not always hand back real Date objects the way
+// the Node client does locally. An uncaught throw here takes the whole page down
+// with "Application error: a client-side exception has occurred".
+const DATE_FMT = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+/** Safe ISO string for <time dateTime>, or "" when the value is unusable. */
+function isoValue(value: Date | string | number | null | undefined): string {
+  if (value === null || value === undefined) return "";
+  const d = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(d.getTime()) ? "" : d.toISOString();
+}
+
+function dateLabel(value: Date | string | number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  try {
+    return DATE_FMT.format(d);
+  } catch {
+    return null;
+  }
+}
 
 export default async function AccountPage({ searchParams }: { searchParams?: { reset?: string } }) {
   const session = await getAppSession();
   if (!session) redirect("/login?next=/account");
 
-  const [access, payments] = await Promise.all([
-    getUserAccess(session.user.id),
-    prisma.paymentEvent.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: { id: true, eventType: true, createdAt: true }
-    })
-  ]);
+  // A database hiccup should degrade the page, not blow it up: the account
+  // screen is still useful (email, password, sign out) without the plan row or
+  // the purchase history.
+  let access: Awaited<ReturnType<typeof getUserAccess>> | null = null;
+  let payments: { id: string; eventType: string; createdAt: Date }[] = [];
+  try {
+    [access, payments] = await Promise.all([
+      getUserAccess(session.user.id),
+      prisma.paymentEvent.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: { id: true, eventType: true, createdAt: true }
+      })
+    ]);
+  } catch (e) {
+    console.error("[account] could not load plan or purchases", e instanceof Error ? `${e.name}: ${e.message}` : e);
+  }
 
-  const premium = Boolean(access.hasAccess) && PREMIUM_PLANS.includes(access.planType);
+  const premium = Boolean(access?.hasAccess) && PREMIUM_PLANS.includes(access?.planType ?? "free");
 
   return (
     <main className="mk mk-auth">
@@ -45,10 +75,15 @@ export default async function AccountPage({ searchParams }: { searchParams?: { r
         email={session.user.email}
         plan={{
           premium,
-          label: premium ? (access.planType === "lifetime" ? "Premium · Lifetime" : "Premium · Monthly") : "Free",
-          renews: access.expiresAt ? dateLabel(new Date(access.expiresAt)) : null
+          label: premium ? (access?.planType === "lifetime" ? "Premium · Lifetime" : "Premium · Monthly") : "Free",
+          renews: dateLabel(access?.expiresAt)
         }}
-        purchases={payments.map((p) => ({ id: p.id, type: p.eventType, date: p.createdAt.toISOString(), dateLabel: dateLabel(p.createdAt) }))}
+        purchases={payments.map((p) => ({
+          id: p.id,
+          type: p.eventType ?? "",
+          date: isoValue(p.createdAt),
+          dateLabel: dateLabel(p.createdAt) ?? "—"
+        }))}
         resetMode={searchParams?.reset === "1"}
       />
     </main>
