@@ -2065,7 +2065,8 @@ function EditorStyles() {
       .ed-brand img.ed-logo-light { display: none; }
       .ed-light .ed-brand img.ed-logo-dark { display: none; }
       .ed-light .ed-brand img.ed-logo-light { display: block; }
-      .ed-brand-tag { font-family: var(--bx-display, "Archivo", system-ui, sans-serif); font-stretch: 125%; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: var(--acc-ink); background: var(--acc); border: 0; padding: 3px 8px; border-radius: 6px; line-height: 1; }
+      /* Plain bold type — no capsule, matching the rest of the site. */
+      .ed-brand-tag { font-family: var(--bx-display, "Archivo", system-ui, sans-serif); font-stretch: 125%; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .16em; color: var(--text); opacity: .72; background: none; border: 0; padding: 0; border-radius: 0; line-height: 1; }
       .ed-top-actions { display: flex; align-items: center; gap: 8px; }
       .ed-btn-group { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.03); }
       .ed-icon-btn { width: 34px; height: 34px; display: grid; place-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; transition: background .12s, color .12s; }

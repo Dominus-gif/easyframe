@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import SiteNav from "@/components/site/SiteNav";
 import AccountPanel from "@/components/auth/AccountPanel";
-import { getAppSession } from "@/lib/auth/session";
+import { getAppSession, getAuthUser } from "@/lib/auth/session";
 import { getUserAccess } from "@/lib/subscription";
 import { prisma } from "@/lib/prisma";
 
@@ -55,24 +55,32 @@ async function withRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
 }
 
 export default async function AccountPage({ searchParams }: { searchParams?: { reset?: string } }) {
-  const session = await withRetry("session", () => getAppSession());
-  if (!session) redirect("/login?next=/account");
+  // Identity comes from Supabase alone, so the page still renders when the
+  // database is unreachable. Plan and purchases are the only parts that need it,
+  // and both degrade below rather than taking the page down.
+  const authUser = await getAuthUser();
+  if (!authUser) redirect("/login?next=/account");
 
-  // A database hiccup should degrade the page, not blow it up: the account
-  // screen is still useful (email, password, sign out) without the plan row or
-  // the purchase history.
   let access: Awaited<ReturnType<typeof getUserAccess>> | null = null;
   let payments: { id: string; eventType: string; createdAt: Date }[] = [];
+  let planKnown = false;
+
   try {
-    [access, payments] = await withRetry("plan/purchases", () => Promise.all([
-      getUserAccess(session.user.id),
-      prisma.paymentEvent.findMany({
-        where: { userId: session.user.id },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-        select: { id: true, eventType: true, createdAt: true }
-      })
-    ]));
+    const session = await withRetry("session", () => getAppSession());
+    if (session) {
+      [access, payments] = await withRetry("plan/purchases", () =>
+        Promise.all([
+          getUserAccess(session.user.id),
+          prisma.paymentEvent.findMany({
+            where: { userId: session.user.id },
+            orderBy: { createdAt: "desc" },
+            take: 20,
+            select: { id: true, eventType: true, createdAt: true }
+          })
+        ])
+      );
+      planKnown = true;
+    }
   } catch (e) {
     console.error("[account] could not load plan or purchases", e instanceof Error ? `${e.name}: ${e.message}` : e);
   }
@@ -83,7 +91,8 @@ export default async function AccountPage({ searchParams }: { searchParams?: { r
     <main className="mk mk-auth">
       <SiteNav />
       <AccountPanel
-        email={session.user.email}
+        email={authUser.email}
+        planKnown={planKnown}
         plan={{
           premium,
           label: premium ? (access?.planType === "lifetime" ? "Premium · Lifetime" : "Premium · Monthly") : "Free",

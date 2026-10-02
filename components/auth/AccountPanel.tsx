@@ -11,6 +11,8 @@ type Props = {
   /** `renews` is already formatted on the server — never re-format dates here. */
   plan: { premium: boolean; label: string; renews: string | null };
   purchases: { id: string; type: string; date: string; dateLabel: string }[];
+  /** False when the plan/purchase lookup failed — never show "Free" on a guess. */
+  planKnown?: boolean;
   /** Arrived from a password-reset email: open straight onto "set new password". */
   resetMode: boolean;
 };
@@ -22,7 +24,7 @@ const eventLabel = (type: string) =>
     .replace(/[._]/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-export default function AccountPanel({ email, plan, purchases, resetMode }: Props) {
+export default function AccountPanel({ email, plan, purchases, resetMode, planKnown = true }: Props) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<{ kind: "idle" | "busy" | "ok" | "error"; message?: string }>({ kind: "idle" });
@@ -55,16 +57,18 @@ export default function AccountPanel({ email, plan, purchases, resetMode }: Prop
             <Crown size={18} />
           </div>
           <div className="auth-row-main">
-            <strong>{plan.label}</strong>
+            <strong>{planKnown ? plan.label : "Plan unavailable"}</strong>
             <span>
-              {plan.premium
-                ? plan.renews
-                  ? `Renews ${plan.renews}`
-                  : "Active. Thanks for supporting EasyFrame."
-                : "Unlimited mockups, exports up to 2K."}
+              {!planKnown
+                ? "We couldn't reach your plan details just now. Your plan and purchases are unaffected — refresh in a moment."
+                : plan.premium
+                  ? plan.renews
+                    ? `Renews ${plan.renews}`
+                    : "Active. Thanks for supporting EasyFrame."
+                  : "Unlimited mockups, exports up to 2K."}
             </span>
           </div>
-          {!plan.premium ? (
+          {planKnown && !plan.premium ? (
             <Link className="auth-btn primary small" href="/pricing">
               Upgrade
             </Link>
@@ -116,7 +120,7 @@ export default function AccountPanel({ email, plan, purchases, resetMode }: Prop
             ))}
           </ul>
         ) : (
-          <p className="auth-note">No purchases yet. Anything you buy with {email} shows up here.</p>
+          <p className="auth-note">{planKnown ? `No purchases yet. Anything you buy with ${email} shows up here.` : "Purchase history is temporarily unavailable."}</p>
         )}
       </section>
 

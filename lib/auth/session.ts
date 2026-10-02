@@ -15,6 +15,27 @@ export type AppSession = {
  * sign-ins) keep their plan and purchase history when they sign in with the
  * same address.
  */
+/**
+ * The verified signed-in user straight from Supabase, WITHOUT touching the
+ * database. Pages that only need to know "who is this" (and can degrade without
+ * plan data) should use this: getAppSession() additionally resolves the Prisma
+ * user row, so a database outage makes it throw and takes the page down with it.
+ */
+export async function getAuthUser(): Promise<{ email: string; name: string | null } | null> {
+  const supabase = getServerSupabase();
+  if (!supabase) return null;
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    const authUser = data.user;
+    const email = authUser?.email?.trim().toLowerCase();
+    if (error || !authUser || !email || !authUser.email_confirmed_at) return null;
+    return { email, name: (authUser.user_metadata?.name as string | undefined) ?? null };
+  } catch (e) {
+    console.error("[auth] getAuthUser failed", e instanceof Error ? `${e.name}: ${e.message}` : e);
+    return null;
+  }
+}
+
 export async function getAppSession(): Promise<AppSession | null> {
   const supabase = getServerSupabase();
   if (!supabase) return null;
