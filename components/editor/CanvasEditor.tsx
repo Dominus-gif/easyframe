@@ -182,6 +182,10 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [customText, setCustomText] = useState(String(FREE_MAX_EDGE));
   const [previewDims, setPreviewDims] = useState<{ width: number; height: number } | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  // Batch export progress (Premium): rendering runs file-by-file so the queue
+  // stays responsive and cancellable.
+  const [batch, setBatch] = useState<{ total: number; done: number; current: string; status: "running" | "done" | "error"; message?: string } | null>(null);
+  const batchCancel = useRef(false);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [rememberExport, setRememberExport] = useState(false);
 
@@ -1001,28 +1005,43 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       flash("Batch export is a Premium feature.");
       return;
     }
-    setBusy(true);
+    batchCancel.current = false;
+    setBatch({ total: list.length, done: 0, current: list[0].name, status: "running" });
     try {
       const maxEdge = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
       const ext = format === "jpeg" ? "jpg" : format;
       const out: { name: string; blob: Blob }[] = [];
+      const used = new Set<string>();
       for (let i = 0; i < list.length; i++) {
+        if (batchCancel.current) break;
+        setBatch({ total: list.length, done: i, current: list[i].name, status: "running" });
+        // Yield so the dialog can paint between renders. setTimeout, not
+        // requestAnimationFrame: rAF is paused while the tab is in the
+        // background, which would stall the whole export until you came back.
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((r) => setTimeout(r, 0));
         // eslint-disable-next-line no-await-in-loop
         const img = await loadImageSafely(list[i]);
         // eslint-disable-next-line no-await-in-loop
         const blob = await exportScene(img, settings, format, quality / 100, maxEdge, overlays);
-        const base = list[i].name.replace(/\.[^.]+$/, "") || `mockup-${i + 1}`;
+        let base = (list[i].name.replace(/\.[^.]+$/, "") || `mockup-${i + 1}`).slice(0, 60);
+        while (used.has(base)) base = `${base}-1`;
+        used.add(base);
         out.push({ name: `${base}-${settings.deviceSlug}.${ext}`, blob });
       }
+      if (batchCancel.current || !out.length) {
+        setBatch(null);
+        if (batchCancel.current) flash("Batch export cancelled.");
+        return;
+      }
+      setBatch({ total: list.length, done: out.length, current: "Packaging…", status: "running" });
       const zip = await makeZip(out);
       const name = `easyframe-batch-${out.length}.zip`;
       triggerBlobDownload(zip, name);
       track("batch_exported", { count: out.length, device: settings.deviceSlug });
-      flash(`✓ Exported ${out.length} mockups as ${name}`);
+      setBatch({ total: list.length, done: out.length, current: name, status: "done" });
     } catch {
-      flash("Batch export failed — one of the images may be too large.");
-    } finally {
-      setBusy(false);
+      setBatch({ total: list.length, done: 0, current: "", status: "error", message: "Something went wrong — one of the images may be too large." });
     }
   };
 
@@ -1904,11 +1923,59 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
                 {premium ? "Premium: up to 4K (3840px) + transparent backgrounds." : <>Free up to {FREE_MAX_EDGE}px · <a href="/pricing" className="ed-prolink">4K &amp; transparent are Premium →</a></>}
               </p>
             </div>
+            {mode === "mockup" ? (
+              <div className="ed-batch-row">
+                <div>
+                  <strong>Batch export{premium ? "" : " · Premium"}</strong>
+                  <span>Apply this exact frame, background and layers to many screenshots at once and download them as one .zip.</span>
+                </div>
+                <button
+                  className="ed-ghost"
+                  onClick={() => { if (premium) { setExportOpen(false); batchFileRef.current?.click(); } else flash("Batch export is a Premium feature."); }}
+                  disabled={busy}
+                >
+                  <Package size={15} /> Choose images…
+                </button>
+              </div>
+            ) : null}
             <div className="ed-modal-actions">
               <button className="ed-ghost" onClick={() => setExportOpen(false)}>Cancel</button>
               <button className="ed-primary" onClick={() => onDownload()} disabled={busy}>
                 <Download size={16} /> {busy ? "Working…" : "Download"}
               </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {batch ? (
+        <div className="ed-modal-backdrop">
+          <div className="ed-modal ed-batch-modal" role="dialog" aria-modal="true" aria-label="Batch export">
+            <div className="ed-modal-head">
+              <h2>{batch.status === "done" ? "Batch export complete" : batch.status === "error" ? "Batch export failed" : "Exporting your mockups"}</h2>
+            </div>
+            <div className="ed-modal-body">
+              {batch.status === "error" ? (
+                <p className="ed-hint">{batch.message}</p>
+              ) : (
+                <>
+                  <div className="ed-batch-bar" role="progressbar" aria-valuemin={0} aria-valuemax={batch.total} aria-valuenow={batch.done}>
+                    <span style={{ width: `${Math.round((batch.done / Math.max(1, batch.total)) * 100)}%` }} />
+                  </div>
+                  <p className="ed-batch-status">
+                    {batch.status === "done"
+                      ? `Saved ${batch.done} mockup${batch.done === 1 ? "" : "s"} to ${batch.current}`
+                      : `${batch.done} of ${batch.total} · ${batch.current}`}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="ed-modal-actions">
+              {batch.status === "running" ? (
+                <button className="ed-ghost" onClick={() => { batchCancel.current = true; }}>Cancel</button>
+              ) : (
+                <button className="ed-primary" onClick={() => setBatch(null)}>Done</button>
+              )}
             </div>
           </div>
         </div>
@@ -1988,7 +2055,9 @@ function EditorStyles() {
         .ed-ghost span, .ed-primary { font-size: 12.5px; }
       }
 
-      .ed-top { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
+      /* backdrop-filter makes this a stacking context, so without a z-index the
+         rails below would paint over the export dropdown inside it. */
+      .ed-top { position: relative; z-index: 50; display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(12,14,18,.72); backdrop-filter: blur(12px); }
       .ed-brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; color: var(--text); }
       .ed-brand img { height: 20px; width: auto; display: block; }
       /* .ed-brand img is class+element, so the variant toggles must out-rank it. */
@@ -2304,6 +2373,16 @@ function EditorStyles() {
       .ed-custom-res input { flex: 1; min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }
       .ed-custom-res input:focus { outline: none; border-color: var(--acc); }
       .ed-light .ed-custom-res input { background: #fff; color: #16181d; }
+      .ed-batch-row { display: flex; align-items: center; gap: 14px; margin: 4px 0 2px; padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+      .ed-batch-row > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+      .ed-batch-row strong { font-size: 13px; font-weight: 700; }
+      .ed-batch-row span { font-size: 12px; line-height: 1.45; color: var(--muted); }
+      .ed-batch-row button { flex: none; white-space: nowrap; }
+      .ed-light .ed-batch-row { background: rgba(15,18,25,.03); }
+      .ed-batch-modal { max-width: 420px; }
+      .ed-batch-bar { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+      .ed-batch-bar span { display: block; height: 100%; border-radius: 999px; background: var(--acc); transition: width .25s ease; }
+      .ed-batch-status { margin: 12px 0 0; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
       .ed-dl-menu-batch { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 9px; background: transparent; border: 1px solid var(--line-2); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .12s, background .12s; }
       .ed-dl-menu-batch:hover { border-color: var(--acc); background: rgba(255,255,255,.04); }
       .ed-dl-menu-batch:disabled { opacity: .5; cursor: default; }

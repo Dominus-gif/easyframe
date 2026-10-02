@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Crown, Sparkles, Star, X } from "lucide-react";
 import { useAppSession } from "@/lib/auth/client";
 import { usePremium } from "@/lib/entitlement";
@@ -18,6 +19,8 @@ export default function UpgradeStar({ className }: { className?: string }) {
   const { status } = useAppSession();
   const { premium, ready } = usePremium();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const show = status === "authenticated" && ready && !premium;
 
@@ -42,7 +45,11 @@ export default function UpgradeStar({ className }: { className?: string }) {
         <Star size={17} />
       </button>
 
-      {open ? (
+      {/* Portalled to <body>: the navs use backdrop-filter, which makes them a
+          containing block for position:fixed children and would otherwise clip
+          this dialog into the nav bar. */}
+      {open && mounted
+        ? createPortal(
         <div className="upgrade-modal" role="dialog" aria-modal="true" aria-labelledby="upgrade-title" onClick={() => setOpen(false)}>
           <div className="upgrade-card" onClick={(e) => e.stopPropagation()}>
             <button className="upgrade-close" onClick={() => setOpen(false)} aria-label="Close"><X size={16} /></button>
@@ -61,8 +68,10 @@ export default function UpgradeStar({ className }: { className?: string }) {
 
             <a className="upgrade-compare" href="/pricing">Compare plans</a>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body
+          )
+        : null}
     </>
   );
 }

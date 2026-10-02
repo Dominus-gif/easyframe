@@ -10,7 +10,14 @@ export default function AccountLink({ className, icon = false }: { className?: s
   const { status } = useAppSession();
   const pathname = usePathname() || "/";
   const signedIn = status === "authenticated";
-  const href = signedIn ? "/account" : `/login?next=${encodeURIComponent(pathname)}`;
+  // Signing in takes you straight to the editor (safeNext's default). Pages
+  // where coming back matters — checkout, for one — pass their own `next`.
+  const keepPlace = pathname.startsWith("/pricing") || pathname.startsWith("/account");
+  const href = signedIn
+    ? "/account"
+    : keepPlace
+      ? `/login?next=${encodeURIComponent(pathname)}`
+      : "/login";
   const label = signedIn ? "Account" : "Sign in";
 
   return (
