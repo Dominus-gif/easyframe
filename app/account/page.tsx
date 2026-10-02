@@ -43,8 +43,19 @@ function dateLabel(value: Date | string | number | null | undefined): string | n
   }
 }
 
+/** Retry a transient failure once before giving up (cold DB, dropped connection). */
+async function withRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (first) {
+    console.error(`[account] ${label} failed, retrying`, first instanceof Error ? `${first.name}: ${first.message}` : first);
+    await new Promise((r) => setTimeout(r, 300));
+    return fn();
+  }
+}
+
 export default async function AccountPage({ searchParams }: { searchParams?: { reset?: string } }) {
-  const session = await getAppSession();
+  const session = await withRetry("session", () => getAppSession());
   if (!session) redirect("/login?next=/account");
 
   // A database hiccup should degrade the page, not blow it up: the account
@@ -53,7 +64,7 @@ export default async function AccountPage({ searchParams }: { searchParams?: { r
   let access: Awaited<ReturnType<typeof getUserAccess>> | null = null;
   let payments: { id: string; eventType: string; createdAt: Date }[] = [];
   try {
-    [access, payments] = await Promise.all([
+    [access, payments] = await withRetry("plan/purchases", () => Promise.all([
       getUserAccess(session.user.id),
       prisma.paymentEvent.findMany({
         where: { userId: session.user.id },
@@ -61,7 +72,7 @@ export default async function AccountPage({ searchParams }: { searchParams?: { r
         take: 20,
         select: { id: true, eventType: true, createdAt: true }
       })
-    ]);
+    ]));
   } catch (e) {
     console.error("[account] could not load plan or purchases", e instanceof Error ? `${e.name}: ${e.message}` : e);
   }

@@ -135,7 +135,8 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [overlays, setOverlays] = useState<Overlay[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: false, elements: false, threeD: false });
+  // Devices start collapsed: the list is long and most sessions keep one device.
+  const [collapsed, setCollapsed] = useState<{ devices: boolean; elements: boolean; threeD: boolean }>({ devices: true, elements: false, threeD: false });
   const [dragRotate, setDragRotate] = useState(false);
   const [showAllBg, setShowAllBg] = useState(false);
   const [cropMode, setCropMode] = useState(false);
@@ -2064,7 +2065,7 @@ function EditorStyles() {
       .ed-brand img.ed-logo-light { display: none; }
       .ed-light .ed-brand img.ed-logo-dark { display: none; }
       .ed-light .ed-brand img.ed-logo-light { display: block; }
-      .ed-brand-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); border: 1px solid var(--line-2); padding: 2px 7px; border-radius: 999px; }
+      .ed-brand-tag { font-family: var(--bx-display, "Archivo", system-ui, sans-serif); font-stretch: 125%; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .14em; color: var(--acc-ink); background: var(--acc); border: 0; padding: 3px 8px; border-radius: 6px; line-height: 1; }
       .ed-top-actions { display: flex; align-items: center; gap: 8px; }
       .ed-btn-group { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(255,255,255,.03); }
       .ed-icon-btn { width: 34px; height: 34px; display: grid; place-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; transition: background .12s, color .12s; }
