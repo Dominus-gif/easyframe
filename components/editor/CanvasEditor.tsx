@@ -1495,6 +1495,26 @@ export default function CanvasEditor({
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="ed-card">
+        <div className="ed-card-title">Layout</div>
+        <div className="ed-subhead">Size</div>
+        <div className="ed-seg" role="group" aria-label="Card size">
+          {([["s", "S"], ["m", "M"], ["l", "L"]] as ["s" | "m" | "l", string][]).map(([id, label]) => (
+            <button
+              key={id}
+              className={card.size === id ? "on" : ""}
+              onClick={() => {
+                setCard((c) => ({ ...c, size: id }));
+                // Size is the margin the card sits in: smaller card, more room.
+                update({ padding: id === "s" ? 0.3 : id === "l" ? 0.08 : 0.18 });
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <div className="ed-subhead">Theme</div>
         <div className="ed-seg" role="group" aria-label="Card theme">
           <button className={card.theme === "light" ? "on" : ""} onClick={() => setCard((c) => ({ ...c, theme: "light" }))}>Light</button>

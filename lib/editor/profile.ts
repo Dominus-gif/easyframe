@@ -22,9 +22,12 @@ export type ProfileData = {
   banner: HTMLImageElement | null;
 };
 
+export type ProfileCardSize = "s" | "m" | "l";
+
 export type ProfileCardSettings = {
   style: ProfileCardStyle;
   theme: ProfileTheme;
+  size: ProfileCardSize;
   showStats: boolean;
   showVerified: boolean;
   showBio: boolean;
@@ -51,6 +54,7 @@ export const defaultProfile: ProfileData = {
 export const defaultCardSettings: ProfileCardSettings = {
   style: "native",
   theme: "dark",
+  size: "m",
   showStats: true,
   showVerified: true,
   showBio: true,
@@ -217,228 +221,266 @@ function drawPlatformLogo(
   ctx.restore();
 }
 
-function statsRow(
+
+/** A throwaway context used to measure text before the real canvas is sized. */
+function measuringCtx(): CanvasRenderingContext2D | null {
+  const c = document.createElement("canvas");
+  c.width = 8;
+  c.height = 8;
+  return c.getContext("2d");
+}
+
+/** A compact row of numbers, in the "31 followers  63 following" style. */
+function drawStats(
   ctx: CanvasRenderingContext2D,
   stats: ProfileStat[],
   x: number,
   y: number,
   pal: Palette,
-  scale: number
+  W: number,
+  centred = false
 ) {
-  let cursor = x;
-  ctx.textAlign = "left";
+  const valueFont = "700 " + Math.round(W * 0.034) + "px " + FONT;
+  const labelFont = "400 " + Math.round(W * 0.034) + "px " + FONT;
+  const gap = W * 0.035;
   ctx.textBaseline = "alphabetic";
-  for (const s of stats) {
-    ctx.font = "700 " + Math.round(26 * scale) + "px " + FONT;
-    ctx.fillStyle = pal.fg;
-    ctx.fillText(s.value, cursor, y);
+  const parts = stats.map((s) => {
+    ctx.font = valueFont;
     const vw = ctx.measureText(s.value).width;
-    ctx.font = "500 " + Math.round(24 * scale) + "px " + FONT;
+    ctx.font = labelFont;
+    const lw = ctx.measureText(" " + s.label.toLowerCase()).width;
+    return { s, vw, lw };
+  });
+  const total = parts.reduce((a, b) => a + b.vw + b.lw, 0) + gap * Math.max(0, parts.length - 1);
+  let cursor = centred ? x - total / 2 : x;
+  ctx.textAlign = "left";
+  for (const p of parts) {
+    ctx.font = valueFont;
+    ctx.fillStyle = pal.fg;
+    ctx.fillText(p.s.value, cursor, y);
+    ctx.font = labelFont;
     ctx.fillStyle = pal.dim;
-    const label = " " + s.label;
-    ctx.fillText(label, cursor + vw, y);
-    cursor += vw + ctx.measureText(label).width + 34 * scale;
+    ctx.fillText(" " + p.s.label.toLowerCase(), cursor + p.vw, y);
+    cursor += p.vw + p.lw + gap;
   }
 }
 
-/** Natural card height for a style, at the given width. */
-function cardHeight(style: ProfileCardStyle, w: number) {
-  if (style === "minimal") return Math.round(w * 0.62);
-  if (style === "ticket") return Math.round(w * 0.42);
-  return Math.round(w * 0.58);
-}
-
-/** Draw the card to its own canvas; height follows the chosen style. */
+/**
+ * Draw the card to its own canvas.
+ *
+ * Height follows the content rather than a fixed ratio: a long bio makes the
+ * card taller, a short one keeps it tight. A fixed height is what left a block
+ * of dead space between the bio and the numbers and forced the card into a wide
+ * letterbox, where a profile card wants to be close to square. Every metric is
+ * a fraction of the width, so the card is resolution-independent.
+ */
 export function renderProfileCard(
   profile: ProfileData,
   cfg: ProfileCardSettings,
   width = 1200
 ): HTMLCanvasElement {
-  const w = Math.max(320, Math.round(width));
-  const h = cardHeight(cfg.style, w);
-  const scale = w / 1200;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return canvas;
+  const W = Math.max(320, Math.round(width));
   const pal = palette(cfg.theme);
-
-  ctx.save();
-  rr(ctx, 0, 0, w, h, 36 * scale);
-  ctx.clip();
-  ctx.fillStyle = pal.bg;
-  ctx.fillRect(0, 0, w, h);
-
-  const pad = 64 * scale;
+  const pad = W * 0.05;
   const name = profile.name || profile.handle;
   const handleText = handlePrefix(profile.platform) + profile.handle;
+  const bioSize = W * 0.034;
+  const bioLH = bioSize * 1.42;
+
+  // Measure first, so the canvas can be sized to its content.
+  const m = measuringCtx();
+  const bioMaxW = cfg.style === "minimal" ? W * 0.76 : W - pad * 2;
+  let bioLines: string[] = [];
+  if (m && cfg.showBio && profile.bio) {
+    m.font = "400 " + Math.round(bioSize) + "px " + FONT;
+    bioLines = wrap(m, profile.bio, bioMaxW, 3);
+  }
+
+  const bannerH = cfg.showBanner && cfg.style === "native" ? W * 0.27 : 0;
+  const avR = cfg.style === "minimal" ? W * 0.105 : W * 0.095;
+
+  let H: number;
+  if (cfg.style === "ticket") {
+    H = W * 0.38;
+  } else if (cfg.style === "minimal") {
+    H =
+      W * 0.1 +
+      avR * 2 +
+      W * 0.07 +
+      W * 0.052 +
+      W * 0.045 +
+      (bioLines.length ? W * 0.03 + bioLines.length * bioLH : 0) +
+      (cfg.showStats && profile.stats.length ? W * 0.075 : 0) +
+      W * 0.07;
+  } else {
+    const avBottom = (bannerH || pad + avR) + avR;
+    H =
+      avBottom +
+      W * 0.062 +
+      W * 0.044 +
+      (bioLines.length ? W * 0.018 + bioLines.length * bioLH : 0) +
+      (cfg.showStats && profile.stats.length ? W * 0.072 : 0) +
+      pad;
+  }
+  H = Math.round(H);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return canvas;
+
+  ctx.save();
+  rr(ctx, 0, 0, W, H, W * 0.045);
+  ctx.clip();
+  ctx.fillStyle = pal.bg;
+  ctx.fillRect(0, 0, W, H);
 
   if (cfg.style === "native") {
-    const bannerH = cfg.showBanner ? Math.round(h * 0.3) : 0;
     if (bannerH) {
       if (profile.banner) {
         const iw = profile.banner.naturalWidth || 1;
         const ih = profile.banner.naturalHeight || 1;
-        const s = Math.max(w / iw, bannerH / ih);
-        ctx.drawImage(profile.banner, (w - iw * s) / 2, (bannerH - ih * s) / 2, iw * s, ih * s);
+        const s = Math.max(W / iw, bannerH / ih);
+        ctx.drawImage(profile.banner, (W - iw * s) / 2, (bannerH - ih * s) / 2, iw * s, ih * s);
       } else {
-        const g = ctx.createLinearGradient(0, 0, w, bannerH);
+        const g = ctx.createLinearGradient(0, 0, W, bannerH);
         g.addColorStop(0, cfg.accent);
-        g.addColorStop(1, cfg.theme === "dark" ? "#0B1020" : "#BFD4FF");
+        g.addColorStop(1, cfg.theme === "dark" ? "#0B1020" : "#C7D9FF");
         ctx.fillStyle = g;
-        ctx.fillRect(0, 0, w, bannerH);
+        ctx.fillRect(0, 0, W, bannerH);
       }
     }
-    const avR = 86 * scale;
-    const avCy = bannerH ? bannerH + avR * 0.18 : pad + avR;
+    const avCy = bannerH ? bannerH : pad + avR;
     drawAvatar(ctx, profile, pad + avR, avCy, avR, pal);
 
-    let y = avCy + avR + 54 * scale;
+    let y = avCy + avR + W * 0.062;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    ctx.font = "800 " + Math.round(44 * scale) + "px " + FONT;
+    ctx.font = "800 " + Math.round(W * 0.052) + "px " + FONT;
     ctx.fillStyle = pal.fg;
     ctx.fillText(name, pad, y);
     if (cfg.showVerified && profile.verified) {
-      drawVerified(ctx, pad + ctx.measureText(name).width + 26 * scale, y - 14 * scale, 30 * scale, cfg.accent);
+      drawVerified(ctx, pad + ctx.measureText(name).width + W * 0.022, y - W * 0.017, W * 0.032, cfg.accent);
     }
-    y += 36 * scale;
-    ctx.font = "500 " + Math.round(27 * scale) + "px " + FONT;
+    y += W * 0.044;
+    ctx.font = "400 " + Math.round(W * 0.036) + "px " + FONT;
     ctx.fillStyle = pal.dim;
     ctx.fillText(handleText, pad, y);
 
-    if (cfg.showBio && profile.bio) {
-      y += 46 * scale;
-      ctx.font = "400 " + Math.round(27 * scale) + "px " + FONT;
+    if (bioLines.length) {
+      y += W * 0.018 + bioLH * 0.78;
+      ctx.font = "400 " + Math.round(bioSize) + "px " + FONT;
       ctx.fillStyle = pal.fg;
-      for (const l of wrap(ctx, profile.bio, w - pad * 2 - 120 * scale, 2)) {
+      for (const l of bioLines) {
         ctx.fillText(l, pad, y);
-        y += 38 * scale;
+        y += bioLH;
       }
+      y -= bioLH;
     }
     if (cfg.showStats && profile.stats.length) {
-      statsRow(ctx, profile.stats, pad, h - pad * 0.72, pal, scale);
+      drawStats(ctx, profile.stats, pad, y + W * 0.062, pal, W);
     }
     if (cfg.showLogo && profile.platform !== "custom") {
-      drawPlatformLogo(ctx, profile.platform, w - pad - 34 * scale, bannerH ? bannerH + 34 * scale : pad, 34 * scale, pal.dim);
+      drawPlatformLogo(ctx, profile.platform, W - pad - W * 0.028, pad * 0.82, W * 0.028, pal.dim);
     }
   } else if (cfg.style === "minimal") {
-    const cx = w / 2;
-    const avR = 92 * scale;
-    let y = h * 0.2;
+    const cx = W / 2;
+    let y = W * 0.1 + avR;
     drawAvatar(ctx, profile, cx, y, avR, pal);
-    y += avR + 56 * scale;
+    y += avR + W * 0.07;
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    ctx.font = "800 " + Math.round(46 * scale) + "px " + FONT;
+    ctx.font = "800 " + Math.round(W * 0.052) + "px " + FONT;
     ctx.fillStyle = pal.fg;
     ctx.fillText(name, cx, y);
     if (cfg.showVerified && profile.verified) {
-      drawVerified(ctx, cx + ctx.measureText(name).width / 2 + 28 * scale, y - 14 * scale, 30 * scale, cfg.accent);
+      drawVerified(ctx, cx + ctx.measureText(name).width / 2 + W * 0.024, y - W * 0.017, W * 0.032, cfg.accent);
     }
-    y += 40 * scale;
-    ctx.font = "500 " + Math.round(27 * scale) + "px " + FONT;
+    y += W * 0.045;
+    ctx.font = "400 " + Math.round(W * 0.036) + "px " + FONT;
     ctx.fillStyle = pal.dim;
     ctx.fillText(handleText, cx, y);
-    if (cfg.showBio && profile.bio) {
-      y += 48 * scale;
-      ctx.font = "400 " + Math.round(26 * scale) + "px " + FONT;
+    if (bioLines.length) {
+      y += W * 0.03 + bioLH * 0.78;
+      ctx.font = "400 " + Math.round(bioSize) + "px " + FONT;
       ctx.fillStyle = pal.fg;
-      for (const l of wrap(ctx, profile.bio, w * 0.66, 2)) {
+      for (const l of bioLines) {
         ctx.fillText(l, cx, y);
-        y += 36 * scale;
+        y += bioLH;
       }
+      y -= bioLH;
     }
     if (cfg.showStats && profile.stats.length) {
-      ctx.font = "600 " + Math.round(25 * scale) + "px " + FONT;
-      const gap = 52 * scale;
-      const items = profile.stats.map((s) => {
-        ctx.font = "700 " + Math.round(25 * scale) + "px " + FONT;
-        const vw = ctx.measureText(s.value).width;
-        ctx.font = "500 " + Math.round(24 * scale) + "px " + FONT;
-        const lw = ctx.measureText("  " + s.label).width;
-        return { s, vw, lw, total: vw + lw };
-      });
-      const total = items.reduce((a, b) => a + b.total, 0) + gap * (items.length - 1);
-      let cursor = cx - total / 2;
-      const sy = h - pad * 0.78;
-      for (const it of items) {
-        ctx.textAlign = "left";
-        ctx.font = "700 " + Math.round(25 * scale) + "px " + FONT;
-        ctx.fillStyle = pal.fg;
-        ctx.fillText(it.s.value, cursor, sy);
-        ctx.font = "500 " + Math.round(24 * scale) + "px " + FONT;
-        ctx.fillStyle = pal.dim;
-        ctx.fillText("  " + it.s.label, cursor + it.vw, sy);
-        cursor += it.total + gap;
-      }
+      drawStats(ctx, profile.stats, cx, y + W * 0.07, pal, W, true);
     }
     if (cfg.showLogo && profile.platform !== "custom") {
-      drawPlatformLogo(ctx, profile.platform, cx - 16 * scale, pad * 0.5, 32 * scale, pal.dim);
+      drawPlatformLogo(ctx, profile.platform, cx - W * 0.014, W * 0.042, W * 0.028, pal.dim);
     }
   } else {
-    // Ticket: body on the left, perforated stub on the right.
-    const stubX = w * 0.7;
+    const stubX = W * 0.71;
     ctx.strokeStyle = pal.line;
-    ctx.lineWidth = Math.max(2, 3 * scale);
-    ctx.setLineDash([12 * scale, 12 * scale]);
+    ctx.lineWidth = Math.max(2, W * 0.0025);
+    ctx.setLineDash([W * 0.01, W * 0.01]);
     ctx.beginPath();
-    ctx.moveTo(stubX, 26 * scale);
-    ctx.lineTo(stubX, h - 26 * scale);
+    ctx.moveTo(stubX, W * 0.022);
+    ctx.lineTo(stubX, H - W * 0.022);
     ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalCompositeOperation = "destination-out";
-    for (const cy of [0, h]) {
+    for (const cy of [0, H]) {
       ctx.beginPath();
-      ctx.arc(stubX, cy, 22 * scale, 0, Math.PI * 2);
+      ctx.arc(stubX, cy, W * 0.018, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalCompositeOperation = "source-over";
 
-    const avR = 68 * scale;
-    const avCx = pad + avR;
-    const avCy = h / 2 - 22 * scale;
-    drawAvatar(ctx, profile, avCx, avCy, avR, pal);
+    const tAvR = W * 0.072;
+    const avCx = pad + tAvR;
+    const avCy = H / 2 - W * 0.012;
+    drawAvatar(ctx, profile, avCx, avCy, tAvR, pal);
 
-    const tx = avCx + avR + 42 * scale;
+    const tx = avCx + tAvR + W * 0.035;
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
-    ctx.font = "800 " + Math.round(40 * scale) + "px " + FONT;
+    ctx.font = "800 " + Math.round(W * 0.044) + "px " + FONT;
     ctx.fillStyle = pal.fg;
-    ctx.fillText(name, tx, avCy - 6 * scale);
+    ctx.fillText(name, tx, avCy - W * 0.004);
     if (cfg.showVerified && profile.verified) {
-      drawVerified(ctx, tx + ctx.measureText(name).width + 24 * scale, avCy - 19 * scale, 28 * scale, cfg.accent);
+      drawVerified(ctx, tx + ctx.measureText(name).width + W * 0.02, avCy - W * 0.019, W * 0.03, cfg.accent);
     }
-    ctx.font = "500 " + Math.round(25 * scale) + "px " + FONT;
+    ctx.font = "400 " + Math.round(W * 0.032) + "px " + FONT;
     ctx.fillStyle = pal.dim;
-    ctx.fillText(handleText, tx, avCy + 30 * scale);
-    if (cfg.showBio && profile.bio) {
-      ctx.font = "400 " + Math.round(23 * scale) + "px " + FONT;
+    ctx.fillText(handleText, tx, avCy + W * 0.032);
+    if (m && cfg.showBio && profile.bio) {
+      const tSize = Math.round(W * 0.028);
+      m.font = "400 " + tSize + "px " + FONT;
+      const lines = wrap(m, profile.bio, stubX - tx - W * 0.03, 2);
+      ctx.font = "400 " + tSize + "px " + FONT;
       ctx.fillStyle = pal.dim;
-      let by = avCy + 72 * scale;
-      for (const l of wrap(ctx, profile.bio, stubX - tx - 40 * scale, 2)) {
+      let by = avCy + W * 0.072;
+      for (const l of lines) {
         ctx.fillText(l, tx, by);
-        by += 31 * scale;
+        by += W * 0.038;
       }
     }
     if (cfg.showStats && profile.stats.length) {
-      const sx = stubX + (w - stubX) / 2;
+      const sx = stubX + (W - stubX) / 2;
       ctx.textAlign = "center";
       const shown = profile.stats.slice(0, 3);
-      let sy = h / 2 - (shown.length - 1) * 38 * scale;
-      for (const s of shown) {
-        ctx.font = "800 " + Math.round(32 * scale) + "px " + FONT;
+      let sy = H / 2 - (shown.length - 1) * W * 0.035 - W * 0.004;
+      for (const st of shown) {
+        ctx.font = "800 " + Math.round(W * 0.032) + "px " + FONT;
         ctx.fillStyle = pal.fg;
-        ctx.fillText(s.value, sx, sy);
-        ctx.font = "500 " + Math.round(19 * scale) + "px " + FONT;
+        ctx.fillText(st.value, sx, sy);
+        ctx.font = "500 " + Math.round(W * 0.017) + "px " + FONT;
         ctx.fillStyle = pal.dim;
-        ctx.fillText(s.label.toUpperCase(), sx, sy + 26 * scale);
-        sy += 76 * scale;
+        ctx.fillText(st.label.toUpperCase(), sx, sy + W * 0.024);
+        sy += W * 0.07;
       }
     }
     if (cfg.showLogo && profile.platform !== "custom") {
-      drawPlatformLogo(ctx, profile.platform, pad - 6 * scale, pad * 0.42, 28 * scale, pal.dim);
+      drawPlatformLogo(ctx, profile.platform, pad - W * 0.005, pad * 0.6, W * 0.026, pal.dim);
     }
   }
 
