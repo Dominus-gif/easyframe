@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Copy, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AtSign, AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Copy, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { deviceBySlug, editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
@@ -10,6 +10,16 @@ import UpgradeStar from "@/components/auth/UpgradeStar";
 import { COLLAGE_ASPECTS, COLLAGE_TEMPLATES, defaultCollage, exportCollage, hitCell, panPhoto, renderCollage, templateById, type CollagePhoto, type CollageState } from "@/lib/editor/collage";
 import { CAROUSEL_ASPECTS, defaultCarousel, exportCarousel, renderCarousel, type CarouselState } from "@/lib/editor/carousel";
 import { makeZip } from "@/lib/editor/zip";
+import {
+  defaultCardSettings,
+  defaultProfile,
+  renderProfileCard,
+  PLATFORM_LABEL,
+  type ProfileCardSettings,
+  type ProfileCardStyle,
+  type ProfileData,
+  type ProfilePlatform
+} from "@/lib/editor/profile";
 import { blobToImage, getBlob, imageToBlob, pruneBlobs, putBlob } from "@/lib/editor/store";
 import {
   canvasTarget,
@@ -161,7 +171,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [draftCrop, setDraftCrop] = useState<CropRect>({ x: 0, y: 0, w: 1, h: 1 });
   const [cropAspect, setCropAspect] = useState("free");
   // Collage mode
-  const [mode, setMode] = useState<"mockup" | "collage" | "carousel">("mockup");
+  const [mode, setMode] = useState<"mockup" | "collage" | "carousel" | "profile">("mockup");
   const [collage, setCollage] = useState<CollageState>(defaultCollage);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const collageFileRef = useRef<HTMLInputElement>(null);
@@ -177,6 +187,20 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [carouselVersion, setCarouselVersion] = useState(0);
   const carouselFileRef = useRef<HTMLInputElement>(null);
   const batchFileRef = useRef<HTMLInputElement>(null);
+  // Profile card mode
+  const [profile, setProfile] = useState<ProfileData>(defaultProfile);
+  const [card, setCard] = useState<ProfileCardSettings>(defaultCardSettings);
+  const [handleInput, setHandleInput] = useState("");
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [cardVersion, setCardVersion] = useState(0);
+
+  /** In profile mode the subject is the rendered card, not the screenshot. */
+  const subjectFor = (m: typeof mode) => (m === "profile" ? cardCanvasRef.current : imgRef.current);
+  /** The card is frameless: it is its own artwork, so it uses the blank device. */
+  const settingsFor = (m: typeof mode, base: EditorSettings) =>
+    m === "profile" ? ({ ...base, deviceSlug: "blank", crop: null } as EditorSettings) : base;
   const hasCarousel = carouselVersion > 0 && !!carouselImgRef.current;
 
   useEffect(() => {
@@ -266,7 +290,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       }
       if (s.collage) setCollage((c) => ({ ...c, ...s.collage, photos: c.photos }));
       if (s.carousel) setCarousel((c) => ({ ...c, ...s.carousel }));
-      if (!initialDevice && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel")) setMode(s.mode);
+      if (!initialDevice && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel" || s.mode === "profile")) setMode(s.mode);
 
       // Images.
       if (s.hasMockup) {
@@ -404,10 +428,17 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       return;
     }
     // While cropping, show the full frame so the region can be chosen from it.
-    const renderSettings = cropMode ? { ...settings, crop: null } : settings;
-    const res = composite(canvas, imgRef.current, renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
+    const renderSettings = settingsFor(mode, cropMode ? ({ ...settings, crop: null } as EditorSettings) : settings);
+    const res = composite(canvas, subjectFor(mode), renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
     if (res.width && res.height) setPreviewDims(res);
-  }, [settings, overlays, cropMode, mode, collage, selectedCell, carousel, carouselVersion]);
+  }, [settings, overlays, cropMode, mode, collage, selectedCell, carousel, carouselVersion, cardVersion]);
+
+  // Redraw the card whenever the profile or its styling changes.
+  useEffect(() => {
+    if (mode !== "profile") return;
+    cardCanvasRef.current = renderProfileCard(profile, card, 1200);
+    setCardVersion((v) => v + 1);
+  }, [mode, profile, card]);
 
   useEffect(() => {
     recompose();
@@ -782,7 +813,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     collageTarget.current = target;
     collageFileRef.current?.click();
   };
-  const switchMode = (next: "mockup" | "collage" | "carousel") => {
+  const switchMode = (next: "mockup" | "collage" | "carousel" | "profile") => {
     if (next === mode) return;
     setMode(next);
     setCropMode(false);
@@ -1095,7 +1126,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           ? await exportCollage(collage, exportSettings.background, overlays, "png", 1, maxEdge)
           : mode === "carousel"
             ? (await exportCarousel(carouselImgRef.current, exportSettings.background, carousel, "png", 1, 1440))[0]?.blob
-            : await exportScene(imgRef.current, exportSettings, "png", 1, maxEdge, overlays);
+            : await exportScene(subjectFor(mode), settingsFor(mode, exportSettings), "png", 1, maxEdge, overlays);
       if (!blob) { flash("Nothing to copy yet."); return; }
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       track("export_completed", { device: settings.deviceSlug, format: "png", premium });
@@ -1106,6 +1137,54 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       setBusy(false);
     }
   };
+
+  /** Load a public profile and drop it into the card. */
+  const loadProfile = async (platform: ProfilePlatform, raw: string) => {
+    const handle = raw.trim();
+    if (!handle) { setProfileError("Enter a handle first."); return; }
+    setProfileBusy(true);
+    setProfileError(null);
+    try {
+      const res = await fetch(`/api/profile?platform=${platform}&handle=${encodeURIComponent(handle)}`, { cache: "no-store" });
+      const data = (await res.json().catch(() => null)) as
+        | { error?: string; handle?: string; name?: string; bio?: string; verified?: boolean; avatarUrl?: string | null; bannerUrl?: string | null; stats?: { label: string; value: string }[] }
+        | null;
+      if (!res.ok || !data || data.error) {
+        setProfileError(data?.error || "That lookup failed.");
+        return;
+      }
+      // Avatars come through our own origin so the canvas stays exportable.
+      const viaProxy = (u?: string | null) =>
+        u ? `/api/profile/img?url=${encodeURIComponent(u)}` : null;
+      const load = (src: string | null) =>
+        new Promise<HTMLImageElement | null>((resolve) => {
+          if (!src) return resolve(null);
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+      const [avatar, banner] = await Promise.all([load(viaProxy(data.avatarUrl)), load(viaProxy(data.bannerUrl))]);
+      setProfile({
+        platform,
+        handle: data.handle || handle,
+        name: data.name || handle,
+        bio: data.bio || "",
+        verified: Boolean(data.verified),
+        stats: data.stats?.length ? data.stats : [],
+        avatar,
+        banner
+      });
+      track("profile_loaded", { platform });
+    } catch {
+      setProfileError("That lookup failed. Fill the card in by hand instead.");
+    } finally {
+      setProfileBusy(false);
+    }
+  };
+
+  const patchStat = (i: number, patch: Partial<{ label: string; value: string }>) =>
+    setProfile((p) => ({ ...p, stats: p.stats.map((st, idx) => (idx === i ? { ...st, ...patch } : st)) }));
 
   const onDownload = async () => {
     if (mode === "carousel") { await onExportCarousel(); return; }
@@ -1124,7 +1203,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       const blob =
         mode === "collage"
           ? await exportCollage(collage, exportSettings.background, overlays, format, quality / 100, maxEdge)
-          : await exportScene(imgRef.current, exportSettings, format, quality / 100, maxEdge, overlays);
+          : await exportScene(subjectFor(mode), settingsFor(mode, exportSettings), format, quality / 100, maxEdge, overlays);
       track("export_completed", { device: settings.deviceSlug, format, premium });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -1330,6 +1409,104 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       <p className="ed-hint">Drag on the canvas to reposition. Export bundles all {carousel.panels} panels into a ZIP{premium ? "" : " (Premium)"}.</p>
     </section>
   );
+  const CARD_STYLES: { id: ProfileCardStyle; label: string }[] = [
+    { id: "native", label: "Native" },
+    { id: "minimal", label: "Minimal" },
+    { id: "ticket", label: "Ticket" }
+  ];
+
+  const profileLeft = (
+    <>
+      <section className="ed-card">
+        <div className="ed-card-title">Profile</div>
+        <div className="ed-seg" role="group" aria-label="Platform">
+          {(["github", "x", "custom"] as ProfilePlatform[]).map((pf) => (
+            <button
+              key={pf}
+              className={profile.platform === pf ? "on" : ""}
+              onClick={() => { setProfile((p) => ({ ...p, platform: pf })); setProfileError(null); }}
+            >
+              {PLATFORM_LABEL[pf]}
+            </button>
+          ))}
+        </div>
+        {profile.platform === "custom" ? (
+          <p className="ed-hint">Fill the card in below — nothing is fetched.</p>
+        ) : (
+          <>
+            <div className="ed-handle-row">
+              <input
+                type="text"
+                value={handleInput}
+                placeholder={profile.platform === "github" ? "octocat" : "handle"}
+                onChange={(e) => setHandleInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") void loadProfile(profile.platform, handleInput); }}
+                aria-label="Profile handle"
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <button className="ed-upload" onClick={() => void loadProfile(profile.platform, handleInput)} disabled={profileBusy}>
+                {profileBusy ? "Loading…" : "Load"}
+              </button>
+            </div>
+            {profileError ? <p className="ed-msg-error" role="alert">{profileError}</p> : null}
+            <p className="ed-hint">A full profile URL or a leading @ works too. Nothing is stored.</p>
+          </>
+        )}
+      </section>
+
+      <section className="ed-card">
+        <div className="ed-card-title">Card style</div>
+        <div className="ed-seg" role="group" aria-label="Card style">
+          {CARD_STYLES.map((st) => (
+            <button key={st.id} className={card.style === st.id ? "on" : ""} onClick={() => setCard((c) => ({ ...c, style: st.id }))}>
+              {st.label}
+            </button>
+          ))}
+        </div>
+        <div className="ed-subhead">Theme</div>
+        <div className="ed-seg" role="group" aria-label="Card theme">
+          <button className={card.theme === "light" ? "on" : ""} onClick={() => setCard((c) => ({ ...c, theme: "light" }))}>Light</button>
+          <button className={card.theme === "dark" ? "on" : ""} onClick={() => setCard((c) => ({ ...c, theme: "dark" }))}>Dark</button>
+        </div>
+        <div className="ed-subhead">Show</div>
+        <div className="ed-toggles">
+          {([
+            ["showBio", "Bio"],
+            ["showStats", "Numbers"],
+            ["showVerified", "Verified badge"],
+            ["showBanner", "Banner"],
+            ["showLogo", "Platform logo"]
+          ] as [keyof ProfileCardSettings, string][]).map(([key, label]) => (
+            <label key={String(key)} className="ed-toggle">
+              <input
+                type="checkbox"
+                checked={Boolean(card[key])}
+                onChange={(e) => setCard((c) => ({ ...c, [key]: e.target.checked }))}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <section className="ed-card">
+        <div className="ed-card-title">Details</div>
+        <label className="ed-url-field"><input type="text" value={profile.name} placeholder="Name" aria-label="Name" onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))} /></label>
+        <label className="ed-url-field" style={{ marginTop: 8 }}><input type="text" value={profile.handle} placeholder="Handle" aria-label="Handle" onChange={(e) => setProfile((p) => ({ ...p, handle: e.target.value }))} /></label>
+        <label className="ed-url-field" style={{ marginTop: 8 }}><input type="text" value={profile.bio} placeholder="Bio" aria-label="Bio" onChange={(e) => setProfile((p) => ({ ...p, bio: e.target.value }))} /></label>
+        <div className="ed-subhead">Numbers</div>
+        {profile.stats.map((st, i) => (
+          <div className="ed-stat-row" key={i}>
+            <input type="text" value={st.value} aria-label={`Stat ${i + 1} value`} onChange={(e) => patchStat(i, { value: e.target.value })} />
+            <input type="text" value={st.label} aria-label={`Stat ${i + 1} label`} onChange={(e) => patchStat(i, { label: e.target.value })} />
+          </div>
+        ))}
+        <p className="ed-hint">Everything here is editable — fix anything the platform returned, or write it yourself.</p>
+      </section>
+    </>
+  );
+
   // Background swatches: show the first 8, reveal the rest behind "Show more".
   const bgSwatches: Array<{ id: string; label: string; bg: BackgroundSetting }> = [
     ...BACKGROUND_PRESETS,
@@ -1362,9 +1539,6 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <img className="ed-logo-light" src="/brand/logo.png" alt="" aria-hidden="true" width={900} height={92} />
           <span className="ed-brand-tag">Editor</span>
         </a>
-        <span className="ed-outname" aria-live="polite">
-          {outputName}{outDims ? ` · ${outDims.w}×${outDims.h}` : ""}
-        </span>
         <div className="ed-modes" role="tablist" aria-label="Editor mode">
           <button role="tab" aria-selected={mode === "mockup"} className={mode === "mockup" ? "on" : ""} onClick={() => switchMode("mockup")}>
             <Smartphone size={14} /> Mockup
@@ -1374,6 +1548,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           </button>
           <button role="tab" aria-selected={mode === "carousel"} className={mode === "carousel" ? "on" : ""} onClick={() => switchMode("carousel")}>
             <Images size={14} /> Carousel
+          </button>
+          <button role="tab" aria-selected={mode === "profile"} className={mode === "profile" ? "on" : ""} onClick={() => switchMode("profile")}>
+            <AtSign size={14} /> Profile
           </button>
         </div>
         <div className="ed-top-actions">
@@ -1425,6 +1602,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
         <aside className="ed-rail ed-rail-left" aria-label={mode === "collage" ? "Collage" : mode === "carousel" ? "Carousel" : "Devices"}>
           {mode === "collage" ? collageLeft : null}
           {mode === "carousel" ? carouselLeft : null}
+          {mode === "profile" ? profileLeft : null}
           {mode === "mockup" ? (
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, devices: !c.devices }))} aria-expanded={!collapsed.devices}>
@@ -1492,7 +1670,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             </section>
           ) : null}
 
-          {mode !== "carousel" ? (<>
+          {mode !== "carousel" && mode !== "profile" ? (<>
           <section className="ed-card">
             <button className="ed-card-title ed-collapse-head" onClick={() => setCollapsed((c) => ({ ...c, elements: !c.elements }))} aria-expanded={!collapsed.elements}>
               <span>Elements</span>
@@ -1632,6 +1810,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               onPointerCancel={onPointerUp}
             />
           </div>
+          {mode === "profile" ? null : (
           <div className={`ed-uploadbar ${(mode === "collage" ? collageFilled > 0 : mode === "carousel" ? hasCarousel : hasImage) ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
             {mode === "collage" ? (
               <button className="ed-upload-btn" onClick={() => pickPhotos(null)}>
@@ -1657,6 +1836,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               <span className="ed-upload-hint">or drop / paste anywhere · PNG, JPG, WebP · never leaves your device</span>
             ) : null}
           </div>
+          )}
           <input ref={carouselFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => { void loadCarouselImage(e.target.files?.[0]); e.currentTarget.value = ""; }} />
           <input ref={batchFileRef} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={(e) => { void onBatchFiles(e.target.files); e.currentTarget.value = ""; }} />
           {dropActive ? (
@@ -1862,7 +2042,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           ) : null}
           </section>
 
-          {mode === "carousel" ? null : mode === "collage" ? collageRight : (<>
+          {mode === "carousel" || mode === "profile" ? null : mode === "collage" ? collageRight : (<>
           <section className="ed-card">
           <div className="ed-card-title ed-card-title-row">
             <span>Canvas size</span>
@@ -2487,11 +2667,24 @@ function EditorStyles() {
       .ed-format.on { background: rgba(255,255,255,.08); border-color: var(--line-2); color: var(--text); font-weight: 600; }
       .ed-light .ed-format.on { background: rgba(15,18,25,.06); }
       .ed-format em { font-style: normal; font-family: var(--mono, ui-monospace, monospace); font-size: 11px; opacity: .65; }
-      /* Output name + size, centred in the top bar. */
-      .ed-outname { flex: 1; min-width: 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 12px; }
       .ed-copy-btn { flex: none; }
-      @media (max-width: 1100px) { .ed-outname { display: none; } }
       @media (max-width: 760px) { .ed-copy-btn { display: none; } }
+      .ed-handle-row { display: flex; gap: 8px; margin-top: 8px; }
+      .ed-handle-row input { flex: 1; min-width: 0; height: 34px; padding: 0 12px; border-radius: 9px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; }
+      .ed-handle-row input:focus { outline: none; border-color: var(--acc); }
+      .ed-light .ed-handle-row input { background: #fff; color: #16181d; }
+      .ed-handle-row button { flex: none; height: 34px; padding: 0 14px; }
+      .ed-msg-error { margin: 8px 0 0; font-size: 12.5px; line-height: 1.45; color: #ff8d8d; }
+      .ed-light .ed-msg-error { color: #c0392b; }
+      .ed-toggles { display: grid; gap: 7px; margin-top: 4px; }
+      .ed-toggle { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--text); cursor: pointer; }
+      .ed-toggle input { width: 15px; height: 15px; accent-color: var(--acc); cursor: pointer; flex: none; }
+      .ed-stat-row { display: flex; gap: 8px; margin-top: 8px; }
+      .ed-stat-row input { min-width: 0; height: 32px; padding: 0 10px; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 12.5px; }
+      .ed-stat-row input:first-child { width: 38%; }
+      .ed-stat-row input:last-child { flex: 1; }
+      .ed-stat-row input:focus { outline: none; border-color: var(--acc); }
+      .ed-light .ed-stat-row input { background: #fff; color: #16181d; }
       .ed-url-field { display: block; margin-top: 4px; }
       .ed-url-field input { width: 100%; height: 34px; padding: 0 12px; border-radius: 9px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; }
       .ed-url-field input::placeholder { color: var(--muted); }
