@@ -15,7 +15,8 @@ export type AnalyticsEvent =
   | "carousel_image_added"
   | "carousel_exported"
   | "batch_exported"
-  | "profile_loaded";
+  | "profile_loaded"
+  | "profile_cta";
 
 export function track(event: AnalyticsEvent, params: Record<string, unknown> = {}): void {
   if (typeof window === "undefined") return;

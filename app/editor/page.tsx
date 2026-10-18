@@ -14,11 +14,16 @@ export const metadata: Metadata = {
   }
 };
 
-export default function EditorPage({ searchParams }: { searchParams?: { device?: string } }) {
+export default function EditorPage({ searchParams }: { searchParams?: { device?: string; mode?: string; platform?: string; handle?: string } }) {
   return (
     <>
       <h1 className="sr-only">EasyFrame Mockup Editor — frame screenshots in device mockups</h1>
-      <EditorClient initialDevice={searchParams?.device} />
+      <EditorClient
+        initialDevice={searchParams?.device}
+        initialMode={searchParams?.mode}
+        initialPlatform={searchParams?.platform}
+        initialHandle={searchParams?.handle}
+      />
     </>
   );
 }

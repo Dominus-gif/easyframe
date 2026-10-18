@@ -13,6 +13,23 @@ const CanvasEditor = dynamic(() => import("@/components/editor/CanvasEditor"), {
   )
 });
 
-export default function EditorClient({ initialDevice }: { initialDevice?: string }) {
-  return <CanvasEditor initialDevice={initialDevice} />;
+export default function EditorClient({
+  initialDevice,
+  initialMode,
+  initialPlatform,
+  initialHandle
+}: {
+  initialDevice?: string;
+  initialMode?: string;
+  initialPlatform?: string;
+  initialHandle?: string;
+}) {
+  return (
+    <CanvasEditor
+      initialDevice={initialDevice}
+      initialMode={initialMode}
+      initialPlatform={initialPlatform}
+      initialHandle={initialHandle}
+    />
+  );
 }

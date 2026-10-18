@@ -10,6 +10,7 @@ import JsonLd from "@/components/site/JsonLd";
 import AccountLink from "@/components/auth/AccountLink";
 import UpgradeStar from "@/components/auth/UpgradeStar";
 import SponsorLine from "@/components/SponsorLine";
+import ProfileCardCTA from "@/components/site/ProfileCardCTA";
 
 const rd = (i: number): CSSProperties => ({ "--d": i } as CSSProperties);
 
@@ -93,6 +94,7 @@ export default function HomeLanding() {
           </Link>
           <div className="bx-nav-links">
             <Link href="#features">Features</Link>
+            <Link href="#profile-cards">Profile cards</Link>
             <Link href="/pricing">Pricing</Link>
           </div>
           <div className="bx-nav-right">
@@ -184,6 +186,8 @@ export default function HomeLanding() {
           </div>
         </div>
       </section>
+
+      <ProfileCardCTA />
 
       {/* Before & after */}
       <section className="bx-section">

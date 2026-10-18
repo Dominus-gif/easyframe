@@ -138,7 +138,17 @@ const ANGLE_PRESETS = [
   { id: "tilt", label: "Tilt", x: 12, y: 14, z: 2, p: 65 }
 ];
 
-export default function CanvasEditor({ initialDevice }: { initialDevice?: string }) {
+export default function CanvasEditor({
+  initialDevice,
+  initialMode,
+  initialPlatform,
+  initialHandle
+}: {
+  initialDevice?: string;
+  initialMode?: string;
+  initialPlatform?: string;
+  initialHandle?: string;
+}) {
   const startSlug = editorDevices.some((d) => d.slug === initialDevice) ? (initialDevice as string) : defaultSettings.deviceSlug;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -171,7 +181,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const [draftCrop, setDraftCrop] = useState<CropRect>({ x: 0, y: 0, w: 1, h: 1 });
   const [cropAspect, setCropAspect] = useState("free");
   // Collage mode
-  const [mode, setMode] = useState<"mockup" | "collage" | "carousel" | "profile">("mockup");
+  const [mode, setMode] = useState<"mockup" | "collage" | "carousel" | "profile">(initialMode === "profile" ? "profile" : "mockup");
   const [collage, setCollage] = useState<CollageState>(defaultCollage);
   const [selectedCell, setSelectedCell] = useState<number | null>(null);
   const collageFileRef = useRef<HTMLInputElement>(null);
@@ -188,9 +198,13 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
   const carouselFileRef = useRef<HTMLInputElement>(null);
   const batchFileRef = useRef<HTMLInputElement>(null);
   // Profile card mode
-  const [profile, setProfile] = useState<ProfileData>(defaultProfile);
+  const [profile, setProfile] = useState<ProfileData>(() =>
+    initialPlatform === "x" || initialPlatform === "github" || initialPlatform === "custom"
+      ? { ...defaultProfile, platform: initialPlatform }
+      : defaultProfile
+  );
   const [card, setCard] = useState<ProfileCardSettings>(defaultCardSettings);
-  const [handleInput, setHandleInput] = useState("");
+  const [handleInput, setHandleInput] = useState(initialHandle ?? "");
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -290,7 +304,7 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       }
       if (s.collage) setCollage((c) => ({ ...c, ...s.collage, photos: c.photos }));
       if (s.carousel) setCarousel((c) => ({ ...c, ...s.carousel }));
-      if (!initialDevice && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel" || s.mode === "profile")) setMode(s.mode);
+      if (!initialDevice && !initialMode && (s.mode === "mockup" || s.mode === "collage" || s.mode === "carousel" || s.mode === "profile")) setMode(s.mode);
 
       // Images.
       if (s.hasMockup) {
@@ -1182,6 +1196,18 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
       setProfileBusy(false);
     }
   };
+
+  // Arriving from the homepage with ?handle=... loads it straight away.
+  const autoLoaded = useRef(false);
+  useEffect(() => {
+    if (autoLoaded.current) return;
+    if (initialMode !== "profile" || !initialHandle) return;
+    const pf: ProfilePlatform =
+      initialPlatform === "x" || initialPlatform === "github" || initialPlatform === "custom" ? initialPlatform : "github";
+    autoLoaded.current = true;
+    if (pf !== "custom") void loadProfile(pf, initialHandle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const patchStat = (i: number, patch: Partial<{ label: string; value: string }>) =>
     setProfile((p) => ({ ...p, stats: p.stats.map((st, idx) => (idx === i ? { ...st, ...patch } : st)) }));
