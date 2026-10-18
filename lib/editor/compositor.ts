@@ -56,6 +56,14 @@ export type EditorSettings = {
   /** Address shown in the browser chrome (browser frames only). Falls back to
    *  the device's own default when empty. */
   browserUrl?: string;
+  /** A card drawn between the background and the mockup. */
+  frameStyle?: "none" | "glass" | "solid" | "line";
+  /** Frame inset/thickness, in design units. */
+  frameWidth?: number;
+  /** Background-only adjustments, applied as a canvas filter. */
+  bgHue?: number;       // degrees, 0..360
+  bgIntensity?: number; // saturation %, 100 = unchanged
+  bgBlur?: number;      // px at design scale
 };
 
 export const defaultSettings: EditorSettings = {
@@ -79,8 +87,108 @@ export const defaultSettings: EditorSettings = {
   canvasW: null,
   canvasH: null,
   canvasDensity: 1,
-  browserUrl: ""
+  browserUrl: "",
+  frameStyle: "none",
+  frameWidth: 12,
+  bgHue: 0,
+  bgIntensity: 100,
+  bgBlur: 0
 };
+
+/** True when any background adjustment is away from its neutral value. */
+function hasBgAdjust(s: EditorSettings) {
+  return (s.bgHue ?? 0) !== 0 || (s.bgIntensity ?? 100) !== 100 || (s.bgBlur ?? 0) > 0;
+}
+
+/**
+ * Paint the background, applying hue / intensity / blur when asked. The filter
+ * is applied to an offscreen copy rather than to live fills: blurring a fillRect
+ * would soften its edges and leak the canvas through, so the copy is drawn
+ * slightly oversized to keep the bleed outside the frame.
+ */
+function paintBackgroundAdjusted(
+  ctx: CanvasRenderingContext2D,
+  settings: EditorSettings,
+  bg: BackgroundSetting,
+  w: number,
+  h: number
+) {
+  if (!hasBgAdjust(settings)) {
+    paintBackground(ctx, bg, w, h);
+    return;
+  }
+  const off = document.createElement("canvas");
+  off.width = Math.max(1, Math.round(w));
+  off.height = Math.max(1, Math.round(h));
+  const octx = off.getContext("2d");
+  if (!octx) {
+    paintBackground(ctx, bg, w, h);
+    return;
+  }
+  paintBackground(octx, bg, off.width, off.height);
+
+  const blur = Math.max(0, settings.bgBlur ?? 0);
+  const parts: string[] = [];
+  if ((settings.bgHue ?? 0) !== 0) parts.push(`hue-rotate(${settings.bgHue}deg)`);
+  if ((settings.bgIntensity ?? 100) !== 100) parts.push(`saturate(${settings.bgIntensity}%)`);
+  if (blur > 0) parts.push(`blur(${blur}px)`);
+
+  ctx.save();
+  ctx.filter = parts.join(" ") || "none";
+  // Overdraw by twice the blur radius so the softened edge falls outside.
+  const bleed = blur * 2;
+  ctx.drawImage(off, -bleed, -bleed, w + bleed * 2, h + bleed * 2);
+  ctx.restore();
+}
+
+/** The card drawn between background and mockup (Kado-style frame styles). */
+function drawFrame(ctx: CanvasRenderingContext2D, settings: EditorSettings, w: number, h: number) {
+  const style = settings.frameStyle ?? "none";
+  if (style === "none") return;
+  const short = Math.min(w, h);
+  // frameWidth is authored around 12; scale it against the canvas so the frame
+  // reads the same at any export size.
+  const m = Math.max(2, (settings.frameWidth ?? 12) * (short / 900));
+  const x = m;
+  const y = m;
+  const rw = Math.max(1, w - m * 2);
+  const rh = Math.max(1, h - m * 2);
+  const radius = Math.min(short * 0.045, Math.min(rw, rh) / 2);
+
+  ctx.save();
+  if (style === "line") {
+    rr(ctx, x, y, rw, rh, radius);
+    ctx.lineWidth = Math.max(1, m * 0.35);
+    ctx.strokeStyle = "rgba(255,255,255,0.75)";
+    ctx.stroke();
+  } else if (style === "solid") {
+    rr(ctx, x, y, rw, rh, radius);
+    ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(10,20,40,0.18)";
+    ctx.shadowBlur = m * 2.2;
+    ctx.shadowOffsetY = m * 0.6;
+    ctx.fill();
+  } else if (style === "glass") {
+    rr(ctx, x, y, rw, rh, radius);
+    ctx.fillStyle = "rgba(255,255,255,0.22)";
+    ctx.shadowColor = "rgba(10,20,40,0.16)";
+    ctx.shadowBlur = m * 2;
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    // Two hairlines: a dark one so the edge still reads on pale backgrounds,
+    // and a white one inside it for the lit-glass highlight.
+    rr(ctx, x, y, rw, rh, radius);
+    ctx.lineWidth = Math.max(1, m * 0.16);
+    ctx.strokeStyle = "rgba(10,20,40,0.12)";
+    ctx.stroke();
+    const i = Math.max(1, m * 0.1);
+    rr(ctx, x + i, y + i, Math.max(1, rw - i * 2), Math.max(1, rh - i * 2), Math.max(0, radius - i));
+    ctx.lineWidth = Math.max(1, m * 0.14);
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 
 /** The requested exact output canvas, or null when sizing is automatic. */
 export function canvasTarget(s: EditorSettings): { w: number; h: number; density: number } | null {
@@ -908,7 +1016,8 @@ export function composite(
       rr(ctx, 0, 0, sceneW, sceneH, settings.cornerRadius * (Math.min(sceneW, sceneH) / 2));
       ctx.clip();
     }
-    paintBackground(ctx, settings.background, sceneW, sceneH);
+    paintBackgroundAdjusted(ctx, settings, settings.background, sceneW, sceneH);
+    drawFrame(ctx, settings, sceneW, sceneH);
     drawOverlays(ctx, belowOverlays, sceneW, sceneH, outScale);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.save();
@@ -971,7 +1080,8 @@ export function composite(
     rr(ctx, 0, 0, sceneW, sceneH, settings.cornerRadius * (Math.min(sceneW, sceneH) / 2));
     ctx.clip();
   }
-  paintBackground(ctx, settings.background, sceneW, sceneH);
+  paintBackgroundAdjusted(ctx, settings, settings.background, sceneW, sceneH);
+  drawFrame(ctx, settings, sceneW, sceneH);
   drawOverlays(ctx, belowOverlays, sceneW, sceneH, outScale);
 
   // Warp device onto the projected grid (in pixel space) on an offscreen canvas.

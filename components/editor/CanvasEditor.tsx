@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
+import { AppWindow, ArrowLeftRight, ArrowUp, Check, ChevronDown, ChevronUp, CircleDot, Copy, Crop, Download, LayoutGrid, Eye, EyeOff, Image as ImageIcon, ImagePlus, Images, Laptop, Layers, Monitor, Moon, Move3d, Package, Plus, Redo2, RotateCcw, Smartphone, Sun, Tablet, Trash2, Type, Undo2, Upload, Watch, X } from "lucide-react";
 import { deviceBySlug, editorDevices, type DeviceKind } from "@/lib/editor/devices";
 import { BACKGROUND_PRESETS, backgroundCss, meshFromColors, paletteOf } from "@/lib/editor/backgrounds";
 import CropOverlay, { CROP_ASPECTS, fitAspect } from "@/components/editor/CropOverlay";
@@ -39,6 +39,24 @@ const RES_PRESETS: { v: number; label: string; pro?: boolean }[] = [
   { v: 1080, label: "1080p" },
   { v: FREE_MAX_EDGE, label: "2K" },
   { v: PREMIUM_MAX_EDGE, label: "4K", pro: true }
+];
+
+// Named output sizes for the places people actually post. Each sets an exact
+// canvas; density then multiplies it (2x of "X post" is 2400x1350).
+const FORMAT_PRESETS: { id: string; label: string; ratio: string; w: number; h: number }[] = [
+  { id: "x", label: "X post", ratio: "16:9", w: 1200, h: 675 },
+  { id: "li", label: "LinkedIn post", ratio: "1.91:1", w: 1200, h: 628 },
+  { id: "ig", label: "Instagram post", ratio: "4:5", w: 1080, h: 1350 },
+  { id: "sq", label: "Square", ratio: "1:1", w: 1080, h: 1080 },
+  { id: "story", label: "Story / Reel", ratio: "9:16", w: 1080, h: 1920 },
+  { id: "gh", label: "GitHub preview", ratio: "2:1", w: 1280, h: 640 }
+];
+
+const FRAME_STYLES: { id: "none" | "glass" | "solid" | "line"; label: string }[] = [
+  { id: "none", label: "None" },
+  { id: "glass", label: "Glass" },
+  { id: "solid", label: "Solid" },
+  { id: "line", label: "Line" }
 ];
 
 const DEVICE_GROUPS: { key: string; label: string }[] = [
@@ -1046,6 +1064,49 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
     }
   };
 
+  /** The name a download would get, also shown in the top bar. */
+  const outputName = (() => {
+    const ext = format === "jpeg" ? "jpg" : format;
+    const base =
+      mode === "collage"
+        ? `collage-${collage.aspect.replace(":", "x")}`
+        : mode === "carousel"
+          ? `carousel-${carousel.panels}up`
+          : settings.deviceSlug;
+    return `easyframe-${base}.${ext}`;
+  })();
+
+  /** Put the current mockup on the clipboard as a PNG, ready to paste. */
+  const onCopy = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard || typeof ClipboardItem === "undefined") {
+      flash("Your browser can't copy images — use Download instead.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const maxEdge = premium ? resolution : Math.min(resolution, FREE_MAX_EDGE);
+      const exportSettings =
+        (settings.background.type === "transparent" || settings.background.type === "image") && !premium
+          ? { ...settings, background: { type: "solid" as const, color: "#0b0d0f" } }
+          : settings;
+      // Clipboard images must be PNG.
+      const blob =
+        mode === "collage"
+          ? await exportCollage(collage, exportSettings.background, overlays, "png", 1, maxEdge)
+          : mode === "carousel"
+            ? (await exportCarousel(carouselImgRef.current, exportSettings.background, carousel, "png", 1, 1440))[0]?.blob
+            : await exportScene(imgRef.current, exportSettings, "png", 1, maxEdge, overlays);
+      if (!blob) { flash("Nothing to copy yet."); return; }
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+      track("export_completed", { device: settings.deviceSlug, format: "png", premium });
+      flash("✓ Copied — paste it straight into a post");
+    } catch {
+      flash("Couldn't copy to the clipboard. Try Download instead.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onDownload = async () => {
     if (mode === "carousel") { await onExportCarousel(); return; }
     setBusy(true);
@@ -1301,6 +1362,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           <img className="ed-logo-light" src="/brand/logo.png" alt="" aria-hidden="true" width={900} height={92} />
           <span className="ed-brand-tag">Editor</span>
         </a>
+        <span className="ed-outname" aria-live="polite">
+          {outputName}{outDims ? ` · ${outDims.w}×${outDims.h}` : ""}
+        </span>
         <div className="ed-modes" role="tablist" aria-label="Editor mode">
           <button role="tab" aria-selected={mode === "mockup"} className={mode === "mockup" ? "on" : ""} onClick={() => switchMode("mockup")}>
             <Smartphone size={14} /> Mockup
@@ -1328,6 +1392,9 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
             <button className="ed-icon-btn" onClick={redo} disabled={!canRedo} aria-label="Redo" title="Redo (Ctrl+Y)"><Redo2 size={16} /></button>
           </div>
           <button className="ed-ghost" onClick={resetAll} aria-label="Reset all"><RotateCcw size={15} /> Reset</button>
+          <button className="ed-ghost ed-copy-btn" onClick={() => onCopy()} disabled={busy} title="Copy the image to your clipboard">
+            <Copy size={15} /> Copy
+          </button>
           <div className="ed-dl-split">
             <button className="ed-primary ed-dl-main" onClick={() => setExportOpen(true)} disabled={busy}>
               <Download size={16} /> {busy ? "Working…" : "Download"}
@@ -1805,6 +1872,23 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
               </button>
             ) : null}
           </div>
+          <div className="ed-formats" role="group" aria-label="Output format">
+            {FORMAT_PRESETS.map((f) => {
+              const on = settings.canvasW === f.w && settings.canvasH === f.h;
+              return (
+                <button
+                  key={f.id}
+                  className={`ed-format ${on ? "on" : ""}`}
+                  // Social formats export at 2x so text stays sharp in a feed.
+                  onClick={() => update({ canvasW: f.w, canvasH: f.h, canvasDensity: Math.max(2, settings.canvasDensity ?? 1) })}
+                  title={`${f.w} × ${f.h}`}
+                >
+                  <span>{f.label}</span>
+                  <em>{f.ratio}</em>
+                </button>
+              );
+            })}
+          </div>
           <div className="ed-seg" role="group" aria-label="Canvas sizing">
             <button className={!activeCanvas ? "on" : ""} onClick={() => update({ canvasW: null, canvasH: null })}>Auto</button>
             <button
@@ -1856,6 +1940,41 @@ export default function CanvasEditor({ initialDevice }: { initialDevice?: string
           ) : (
             <p className="ed-hint">Automatic: the canvas follows the device and padding. Choose <b>Custom</b> to set exact width, height and density.</p>
           )}
+          </section>
+
+          <section className="ed-card">
+          <div className="ed-card-title ed-card-title-row">
+            <span>Frame</span>
+            {(settings.frameStyle ?? "none") !== "none" ? (
+              <button className="ed-mini-reset" onClick={() => update({ frameStyle: "none" })} title="Remove the frame">
+                <RotateCcw size={12} /> Off
+              </button>
+            ) : null}
+          </div>
+          <div className="ed-seg" role="group" aria-label="Frame style">
+            {FRAME_STYLES.map((f) => (
+              <button key={f.id} className={(settings.frameStyle ?? "none") === f.id ? "on" : ""} onClick={() => update({ frameStyle: f.id })}>
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {(settings.frameStyle ?? "none") !== "none" ? (
+            <Range label="Width" value={settings.frameWidth ?? 12} min={4} max={60} step={1} onChange={(v) => update({ frameWidth: v })} />
+          ) : (
+            <p className="ed-hint">A card between the background and your mockup.</p>
+          )}
+          </section>
+
+          <section className="ed-card">
+          <div className="ed-card-title ed-card-title-row">
+            <span>Background tune</span>
+            <button className="ed-mini-reset" onClick={() => update({ bgHue: 0, bgIntensity: 100, bgBlur: 0 })} title="Reset background adjustments">
+              <RotateCcw size={12} /> Reset
+            </button>
+          </div>
+          <Range label="Hue" value={settings.bgHue ?? 0} min={0} max={360} step={1} onChange={(v) => update({ bgHue: v })} />
+          <Range label="Intensity" value={settings.bgIntensity ?? 100} min={0} max={200} step={1} onChange={(v) => update({ bgIntensity: v })} />
+          <Range label="Blur" value={settings.bgBlur ?? 0} min={0} max={40} step={1} onChange={(v) => update({ bgBlur: v })} />
           </section>
 
           <section className="ed-card">
@@ -2360,6 +2479,19 @@ function EditorStyles() {
       .ed-dl-menu { position: absolute; top: calc(100% + 8px); right: 0; z-index: 30; width: 264px; padding: 14px; border-radius: 14px; background: #16181c; border: 1px solid var(--line-2); box-shadow: 0 24px 60px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 10px; text-align: left; }
       .ed-dl-menu-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: #b7bcc4; }
       .ed-dl-menu-go { justify-content: center; margin-top: 4px; padding: 0 16px; height: 38px; }
+      /* Named output formats, listed like a menu with the ratio on the right. */
+      .ed-formats { display: grid; gap: 4px; margin-bottom: 10px; }
+      .ed-format { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 9px; border: 1px solid transparent; background: transparent; color: var(--muted); font: inherit; font-size: 12.5px; cursor: pointer; text-align: left; transition: background .12s, color .12s, border-color .12s; }
+      .ed-format:hover { background: rgba(255,255,255,.05); color: var(--text); }
+      .ed-light .ed-format:hover { background: rgba(15,18,25,.05); }
+      .ed-format.on { background: rgba(255,255,255,.08); border-color: var(--line-2); color: var(--text); font-weight: 600; }
+      .ed-light .ed-format.on { background: rgba(15,18,25,.06); }
+      .ed-format em { font-style: normal; font-family: var(--mono, ui-monospace, monospace); font-size: 11px; opacity: .65; }
+      /* Output name + size, centred in the top bar. */
+      .ed-outname { flex: 1; min-width: 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 12px; }
+      .ed-copy-btn { flex: none; }
+      @media (max-width: 1100px) { .ed-outname { display: none; } }
+      @media (max-width: 760px) { .ed-copy-btn { display: none; } }
       .ed-url-field { display: block; margin-top: 4px; }
       .ed-url-field input { width: 100%; height: 34px; padding: 0 12px; border-radius: 9px; background: rgba(0,0,0,.25); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; }
       .ed-url-field input::placeholder { color: var(--muted); }
