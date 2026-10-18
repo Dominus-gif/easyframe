@@ -207,12 +207,17 @@ export default function CanvasEditor({
   const [handleInput, setHandleInput] = useState(initialHandle ?? "");
   const [profileBusy, setProfileBusy] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  // In mockup mode the subject can be an uploaded screenshot or a profile card.
+  const [mockupSource, setMockupSource] = useState<"screenshot" | "profile">("screenshot");
   const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [cardVersion, setCardVersion] = useState(0);
 
-  /** In profile mode the subject is the rendered card, not the screenshot. */
-  const subjectFor = (m: typeof mode) => (m === "profile" ? cardCanvasRef.current : imgRef.current);
-  /** The card is frameless: it is its own artwork, so it uses the blank device. */
+  /** True when the card — not an uploaded screenshot — is the subject. */
+  const cardIsSubject = mode === "profile" || (mode === "mockup" && mockupSource === "profile");
+  const subjectFor = (m: typeof mode) =>
+    m === "profile" || (m === "mockup" && mockupSource === "profile") ? cardCanvasRef.current : imgRef.current;
+  /** Standalone profile mode is frameless; inside a mockup the card fills the
+   *  device screen like any other screenshot, so the device is left alone. */
   const settingsFor = (m: typeof mode, base: EditorSettings) =>
     m === "profile" ? ({ ...base, deviceSlug: "blank", crop: null } as EditorSettings) : base;
   const hasCarousel = carouselVersion > 0 && !!carouselImgRef.current;
@@ -445,14 +450,14 @@ export default function CanvasEditor({
     const renderSettings = settingsFor(mode, cropMode ? ({ ...settings, crop: null } as EditorSettings) : settings);
     const res = composite(canvas, subjectFor(mode), renderSettings, { maxEdge: PREVIEW_MAX_EDGE }, overlays);
     if (res.width && res.height) setPreviewDims(res);
-  }, [settings, overlays, cropMode, mode, collage, selectedCell, carousel, carouselVersion, cardVersion]);
+  }, [settings, overlays, cropMode, mode, collage, selectedCell, carousel, carouselVersion, cardVersion, mockupSource]);
 
   // Redraw the card whenever the profile or its styling changes.
   useEffect(() => {
-    if (mode !== "profile") return;
+    if (!cardIsSubject) return;
     cardCanvasRef.current = renderProfileCard(profile, card, 1200);
     setCardVersion((v) => v + 1);
-  }, [mode, profile, card]);
+  }, [cardIsSubject, profile, card]);
 
   useEffect(() => {
     recompose();
@@ -1717,6 +1722,29 @@ export default function CanvasEditor({
           </section>
 
           {mode === "mockup" ? (
+          <>
+          <section className="ed-card">
+            <div className="ed-card-title">What goes in the frame</div>
+            <div className="ed-seg" role="group" aria-label="Subject">
+              <button className={mockupSource === "screenshot" ? "on" : ""} onClick={() => setMockupSource("screenshot")}>Screenshot</button>
+              <button
+                className={mockupSource === "profile" ? "on" : ""}
+                onClick={() => {
+                  setMockupSource("profile");
+                  // A card is finished artwork, so show all of it rather than
+                  // cropping to fill the screen the way a screenshot would.
+                  update({ fit: "contain", imageScale: 1, imageOffsetX: 0, imageOffsetY: 0 });
+                }}
+              >
+                Profile card
+              </button>
+            </div>
+            {mockupSource === "profile" ? (
+              <p className="ed-hint">Your profile card, framed in the device above. A browser or laptop frame suits its shape best.</p>
+            ) : null}
+          </section>
+
+          {mockupSource === "screenshot" ? (
           <section className="ed-card">
             <div className="ed-card-title">Image</div>
             <button className="ed-upload" onClick={() => fileRef.current?.click()}>
@@ -1734,7 +1762,8 @@ export default function CanvasEditor({
               </button>
             ) : null}
           </section>
-
+          ) : profileLeft}
+          </>
           ) : null}
           <section className="ed-card">
             <div className="ed-card-title"><Layers size={12} style={{ marginRight: -2 }} /> Layers</div>
@@ -1836,7 +1865,7 @@ export default function CanvasEditor({
               onPointerCancel={onPointerUp}
             />
           </div>
-          {mode === "profile" ? null : (
+          {cardIsSubject ? null : (
           <div className={`ed-uploadbar ${(mode === "collage" ? collageFilled > 0 : mode === "carousel" ? hasCarousel : hasImage) ? "has-image" : ""}`} style={dragRotate || cropMode ? { pointerEvents: "none", opacity: cropMode ? 0 : 1 } : undefined}>
             {mode === "collage" ? (
               <button className="ed-upload-btn" onClick={() => pickPhotos(null)}>
