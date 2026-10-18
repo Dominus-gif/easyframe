@@ -46,6 +46,16 @@ function cleanHandle(raw: string): string {
   return h.slice(0, 40);
 }
 
+/**
+ * Twitter serves avatars at a size baked into the filename, and the API hands
+ * back the "_normal" variant — 48x48, about 1.8KB, which is unusably soft on a
+ * card. Dropping the suffix returns the original upload (roughly 32KB here).
+ */
+function fullSizeAvatar(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url.replace(/_(normal|bigger|mini|reasonably_small|\d+x\d+)(\.[a-zA-Z]+)(\?.*)?$/, "$2$3");
+}
+
 const TIMEOUT_MS = 8000;
 
 async function getJson(url: string, headers: Record<string, string>) {
@@ -119,7 +129,7 @@ export async function GET(request: Request) {
         name: String(u.name || u.screen_name || handle),
         bio: String(u.description || ""),
         verified: Boolean(u.verified),
-        avatarUrl: u.avatar_url ? String(u.avatar_url) : null,
+        avatarUrl: fullSizeAvatar(u.avatar_url ? String(u.avatar_url) : null),
         bannerUrl: u.banner_url ? String(u.banner_url) : null,
         stats: [
           { label: "Followers", value: compact(u.followers as number) },

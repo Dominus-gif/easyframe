@@ -216,6 +216,16 @@ export default function CanvasEditor({
   const cardIsSubject = mode === "profile" || (mode === "mockup" && mockupSource === "profile");
   const subjectFor = (m: typeof mode) =>
     m === "profile" || (m === "mockup" && mockupSource === "profile") ? cardCanvasRef.current : imgRef.current;
+  /**
+   * The preview card is drawn at 1200px, which is ample on screen but would be
+   * upscaled (and softened) by a 2x or 4K export. Exports redraw it large
+   * instead — it is vector work, so this costs nothing but a few milliseconds.
+   */
+  const CARD_EXPORT_W = 2600;
+  const exportSubjectFor = (m: typeof mode) =>
+    m === "profile" || (m === "mockup" && mockupSource === "profile")
+      ? renderProfileCard(profile, card, CARD_EXPORT_W)
+      : imgRef.current;
   /** Standalone profile mode is frameless; inside a mockup the card fills the
    *  device screen like any other screenshot, so the device is left alone. */
   const settingsFor = (m: typeof mode, base: EditorSettings) =>
@@ -1145,7 +1155,7 @@ export default function CanvasEditor({
           ? await exportCollage(collage, exportSettings.background, overlays, "png", 1, maxEdge)
           : mode === "carousel"
             ? (await exportCarousel(carouselImgRef.current, exportSettings.background, carousel, "png", 1, 1440))[0]?.blob
-            : await exportScene(subjectFor(mode), settingsFor(mode, exportSettings), "png", 1, maxEdge, overlays);
+            : await exportScene(exportSubjectFor(mode), settingsFor(mode, exportSettings), "png", 1, maxEdge, overlays);
       if (!blob) { flash("Nothing to copy yet."); return; }
       await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
       track("export_completed", { device: settings.deviceSlug, format: "png", premium });
@@ -1234,7 +1244,7 @@ export default function CanvasEditor({
       const blob =
         mode === "collage"
           ? await exportCollage(collage, exportSettings.background, overlays, format, quality / 100, maxEdge)
-          : await exportScene(subjectFor(mode), settingsFor(mode, exportSettings), format, quality / 100, maxEdge, overlays);
+          : await exportScene(exportSubjectFor(mode), settingsFor(mode, exportSettings), format, quality / 100, maxEdge, overlays);
       track("export_completed", { device: settings.deviceSlug, format, premium });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
